@@ -687,21 +687,7 @@ def main():
     
     with col1:
         # TradingView Chart Section
-        col_chart1, col_chart2 = st.columns([4, 1])
-        
-        with col_chart1:
-            st.subheader("📊 TradingView Chart")
-        
-        with col_chart2:
-            # Fullscreen button
-            if st.button("🔍 Fullscreen", help="Open TradingView chart in new tab"):
-                st.markdown(f"""
-                <div style="text-align: center; padding: 10px; background-color: #1e1e1e; border-radius: 5px; margin: 10px 0;">
-                    <a href="https://www.tradingview.com/chart/?symbol=BINANCE:{selected_symbol}" target="_blank" style="color: #00ff88; text-decoration: none; font-weight: bold;">
-                        🔍 Open {selected_symbol} Chart in TradingView
-                    </a>
-                </div>
-                """, unsafe_allow_html=True)
+        st.subheader("📊 TradingView Chart")
         
         # Display TradingView widget (Advanced Chart by default)
         create_tradingview_advanced_chart(selected_symbol, "1h", height=600)
