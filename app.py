@@ -10,10 +10,12 @@ import time
 import requests
 import json
 from typing import Dict, List
+import streamlit.components.v1 as components
 
 # Import our modules
 from trading_engine import portfolio, OrderSide, OrderType, OrderStatus
 from config import SUPPORTED_CRYPTOS, INITIAL_BALANCE, TRADING_FEE
+from tradingview_widget import create_tradingview_widget, create_tradingview_advanced_chart, create_tradingview_screener, create_tradingview_crypto_heatmap
 
 # Page configuration
 st.set_page_config(
@@ -650,11 +652,11 @@ def main():
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        # Price chart with timeframe selector
+        # TradingView Chart Section
         col_chart1, col_chart2 = st.columns([3, 1])
         
         with col_chart1:
-            st.subheader("📊 Price Chart")
+            st.subheader("📊 TradingView Chart")
         
         with col_chart2:
             timeframe = st.selectbox(
@@ -664,32 +666,53 @@ def main():
                 key="timeframe_selector"
             )
         
-        chart = create_price_chart(selected_symbol, timeframe)
-        if chart.data:
-            st.plotly_chart(chart, use_container_width=True)
-        else:
-            st.info("Loading chart data...")
+        # Chart type selector
+        chart_type = st.radio(
+            "Chart Type",
+            ["Basic Widget", "Advanced Chart"],
+            horizontal=True,
+            key="chart_type_selector"
+        )
         
-        # Market data table
-        st.subheader("📈 Market Data")
-        if current_prices:
-            market_data = []
-            for symbol in SUPPORTED_CRYPTOS:
-                price = current_prices.get(symbol, 0)
-                if price > 0:
-                    market_data.append({
-                        'Symbol': symbol,
-                        'Price (USDT)': f"${price:,.2f}",
-                        'Last Update': st.session_state.last_update.strftime("%H:%M:%S") if st.session_state.last_update else "N/A"
-                    })
-            
-            if market_data:
-                df_market = pd.DataFrame(market_data)
-                st.dataframe(df_market, use_container_width=True)
+        # Display TradingView widget
+        if chart_type == "Basic Widget":
+            create_tradingview_widget(selected_symbol, timeframe, height=500)
+        else:
+            create_tradingview_advanced_chart(selected_symbol, timeframe, height=600)
+        
+        # Market Overview Section
+        st.subheader("📈 Market Overview")
+        
+        # Add tabs for different market views
+        tab1, tab2, tab3 = st.tabs(["Market Data", "Crypto Heatmap", "Market Screener"])
+        
+        with tab1:
+            if current_prices:
+                market_data = []
+                for symbol in SUPPORTED_CRYPTOS:
+                    price = current_prices.get(symbol, 0)
+                    if price > 0:
+                        market_data.append({
+                            'Symbol': symbol,
+                            'Price (USDT)': f"${price:,.2f}",
+                            'Last Update': st.session_state.last_update.strftime("%H:%M:%S") if st.session_state.last_update else "N/A"
+                        })
+                
+                if market_data:
+                    df_market = pd.DataFrame(market_data)
+                    st.dataframe(df_market, use_container_width=True)
+                else:
+                    st.info("No market data available")
             else:
                 st.info("No market data available")
-        else:
-            st.info("No market data available")
+        
+        with tab2:
+            st.subheader("🔥 Cryptocurrency Heatmap")
+            create_tradingview_crypto_heatmap()
+        
+        with tab3:
+            st.subheader("🔍 Market Screener")
+            create_tradingview_screener()
     
     with col2:
         # Positions
