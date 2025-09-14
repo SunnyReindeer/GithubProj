@@ -568,14 +568,36 @@ def main():
         order_side = st.radio("Order Type", ["Buy", "Sell"])
         order_type = st.selectbox("Order Type", ["Market", "Limit"])
         
-        quantity = st.number_input(
-            "Quantity",
-            min_value=0.001,
-            max_value=1000.0,
-            value=0.1,
-            step=0.001,
-            format="%.3f"
+        # Quantity input with options
+        quantity_type = st.radio(
+            "Quantity Type",
+            ["Coin Amount", "Cash Amount (USDT)"],
+            horizontal=True
         )
+        
+        if quantity_type == "Coin Amount":
+            quantity = st.number_input(
+                f"Quantity ({selected_symbol.replace('USDT', '')})",
+                min_value=0.001,
+                max_value=1000.0,
+                value=0.1,
+                step=0.001,
+                format="%.3f"
+            )
+        else:
+            cash_amount = st.number_input(
+                "Cash Amount (USDT)",
+                min_value=1.0,
+                max_value=10000.0,
+                value=100.0,
+                step=1.0,
+                format="%.2f"
+            )
+            # Convert cash amount to coin quantity
+            if current_price > 0:
+                quantity = cash_amount / current_price
+            else:
+                quantity = 0
         
         if order_type == "Limit":
             limit_price = st.number_input(
@@ -589,15 +611,27 @@ def main():
             limit_price = None
         
         # Calculate order details
-        if current_price > 0:
+        if current_price > 0 and quantity > 0:
             if order_side == "Buy":
                 total_cost = quantity * current_price
                 fee = total_cost * TRADING_FEE
-                st.info(f"Total Cost: ${total_cost + fee:.2f} (Fee: ${fee:.2f})")
+                st.info(f"""
+                **Order Summary:**
+                - Quantity: {quantity:.6f} {selected_symbol.replace('USDT', '')}
+                - Price: ${current_price:.2f}
+                - Total Cost: ${total_cost + fee:.2f}
+                - Fee: ${fee:.2f}
+                """)
             else:
                 total_proceeds = quantity * current_price
                 fee = total_proceeds * TRADING_FEE
-                st.info(f"Net Proceeds: ${total_proceeds - fee:.2f} (Fee: ${fee:.2f})")
+                st.info(f"""
+                **Order Summary:**
+                - Quantity: {quantity:.6f} {selected_symbol.replace('USDT', '')}
+                - Price: ${current_price:.2f}
+                - Net Proceeds: ${total_proceeds - fee:.2f}
+                - Fee: ${fee:.2f}
+                """)
         
         # Place order button
         if st.button("🚀 Place Order", type="primary"):
@@ -653,32 +687,24 @@ def main():
     
     with col1:
         # TradingView Chart Section
-        col_chart1, col_chart2 = st.columns([3, 1])
+        col_chart1, col_chart2 = st.columns([4, 1])
         
         with col_chart1:
             st.subheader("📊 TradingView Chart")
         
         with col_chart2:
-            timeframe = st.selectbox(
-                "Timeframe",
-                options=["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w", "1M"],
-                index=4,  # Default to 1h
-                key="timeframe_selector"
-            )
+            # Fullscreen button
+            if st.button("🔍 Fullscreen", help="Open TradingView chart in new tab"):
+                st.markdown(f"""
+                <div style="text-align: center; padding: 10px; background-color: #1e1e1e; border-radius: 5px; margin: 10px 0;">
+                    <a href="https://www.tradingview.com/chart/?symbol=BINANCE:{selected_symbol}" target="_blank" style="color: #00ff88; text-decoration: none; font-weight: bold;">
+                        🔍 Open {selected_symbol} Chart in TradingView
+                    </a>
+                </div>
+                """, unsafe_allow_html=True)
         
-        # Chart type selector
-        chart_type = st.radio(
-            "Chart Type",
-            ["Basic Widget", "Advanced Chart"],
-            horizontal=True,
-            key="chart_type_selector"
-        )
-        
-        # Display TradingView widget
-        if chart_type == "Basic Widget":
-            create_tradingview_widget(selected_symbol, timeframe, height=500)
-        else:
-            create_tradingview_advanced_chart(selected_symbol, timeframe, height=600)
+        # Display TradingView widget (Advanced Chart by default)
+        create_tradingview_advanced_chart(selected_symbol, "1h", height=600)
         
         # Market Overview Section
         st.subheader("📈 Market Overview")
