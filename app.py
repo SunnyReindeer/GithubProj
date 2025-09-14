@@ -82,8 +82,7 @@ def get_current_prices() -> Dict[str, float]:
         
         return prices
     except Exception as e:
-        st.warning(f"Binance API unavailable: {e}")
-        # Return mock prices for demo purposes
+        # Return mock prices for demo purposes (don't show error in main UI)
         return get_mock_prices()
 
 def get_mock_prices() -> Dict[str, float]:
@@ -145,8 +144,7 @@ def get_price_chart_data(symbol: str, interval: str = "1h", limit: int = 24) -> 
         return df[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
         
     except Exception as e:
-        st.warning(f"Chart data unavailable: {e}")
-        # Return mock chart data
+        # Return mock chart data (don't show error in main UI)
         return get_mock_chart_data(symbol, limit)
 
 def get_mock_chart_data(symbol: str, limit: int = 24) -> pd.DataFrame:
@@ -241,11 +239,9 @@ def main():
         st.session_state.current_prices = current_prices
         st.session_state.last_update = datetime.now()
         
-        # Check if we're using mock data
-        if not current_prices:
-            st.error("⚠️ Using demo data - Binance API unavailable")
-        elif len(current_prices) < len(SUPPORTED_CRYPTOS):
-            st.warning("⚠️ Some data unavailable - using demo prices where needed")
+        # Show demo mode indicator
+        if current_prices:
+            st.info("🎮 Demo Mode - Using simulated market data")
     
     # Sidebar
     with st.sidebar:
