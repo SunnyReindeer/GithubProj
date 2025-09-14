@@ -720,11 +720,91 @@ def main():
         
         with tab2:
             st.subheader("🔥 Cryptocurrency Heatmap")
-            create_tradingview_crypto_heatmap()
+            # Create a crypto market overview widget
+            components.html("""
+            <div class="tradingview-widget-container">
+                <div id="tradingview_crypto_overview"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                <script type="text/javascript">
+                new TradingView.widget({
+                    "width": "100%",
+                    "height": 500,
+                    "symbol": "CRYPTOCAP:TOTAL",
+                    "interval": "1D",
+                    "timezone": "Etc/UTC",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "en",
+                    "toolbar_bg": "#1e1e1e",
+                    "enable_publishing": false,
+                    "withdateranges": true,
+                    "hide_side_toolbar": false,
+                    "allow_symbol_change": true,
+                    "save_image": false,
+                    "container_id": "tradingview_crypto_overview",
+                    "studies": [
+                        "Volume@tv-basicstudies"
+                    ],
+                    "show_popup_button": true,
+                    "popup_width": "1000",
+                    "popup_height": "650",
+                    "no_referral_id": true,
+                    "referral_id": "",
+                    "details": true,
+                    "hotlist": true,
+                    "calendar": true,
+                    "news": [
+                        "headlines"
+                    ]
+                });
+                </script>
+            </div>
+            """, height=550)
         
         with tab3:
             st.subheader("🔍 Market Screener")
-            create_tradingview_screener()
+            # Create a market screener widget
+            components.html("""
+            <div class="tradingview-widget-container">
+                <div id="tradingview_market_screener"></div>
+                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                <script type="text/javascript">
+                new TradingView.widget({
+                    "width": "100%",
+                    "height": 500,
+                    "symbol": "BINANCE:BTCUSDT",
+                    "interval": "1D",
+                    "timezone": "Etc/UTC",
+                    "theme": "dark",
+                    "style": "1",
+                    "locale": "en",
+                    "toolbar_bg": "#1e1e1e",
+                    "enable_publishing": false,
+                    "withdateranges": true,
+                    "hide_side_toolbar": false,
+                    "allow_symbol_change": true,
+                    "save_image": false,
+                    "container_id": "tradingview_market_screener",
+                    "studies": [
+                        "RSI@tv-basicstudies",
+                        "MACD@tv-basicstudies",
+                        "Volume@tv-basicstudies"
+                    ],
+                    "show_popup_button": true,
+                    "popup_width": "1000",
+                    "popup_height": "650",
+                    "no_referral_id": true,
+                    "referral_id": "",
+                    "details": true,
+                    "hotlist": true,
+                    "calendar": true,
+                    "news": [
+                        "headlines"
+                    ]
+                });
+                </script>
+            </div>
+            """, height=550)
     
     with col2:
         # Positions
