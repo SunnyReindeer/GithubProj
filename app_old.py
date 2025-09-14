@@ -1,5 +1,5 @@
 """
-Crypto Trading Simulator - Streamlit Cloud Compatible Version
+Crypto Trading Simulator - Streamlit App
 """
 import streamlit as st
 import pandas as pd
@@ -7,11 +7,11 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 import time
-import requests
-import json
+import threading
 from typing import Dict, List
 
 # Import our modules
+from data_fetcher import data_fetcher
 from trading_engine import portfolio, OrderSide, OrderType, OrderStatus
 from config import SUPPORTED_CRYPTOS, INITIAL_BALANCE, TRADING_FEE
 
@@ -52,6 +52,7 @@ st.markdown("""
 # Initialize session state
 if 'portfolio_initialized' not in st.session_state:
     st.session_state.portfolio_initialized = False
+    st.session_state.data_fetcher_started = False
     st.session_state.current_prices = {}
     st.session_state.last_update = None
 
@@ -61,60 +62,22 @@ def initialize_portfolio():
         portfolio.__init__(INITIAL_BALANCE)
         st.session_state.portfolio_initialized = True
 
-def get_current_prices() -> Dict[str, float]:
-    """Get current prices from Binance API"""
-    try:
-        url = "https://api.binance.com/api/v3/ticker/price"
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
+def start_data_fetcher():
+    """Start the data fetcher if not already running"""
+    if not st.session_state.data_fetcher_started:
+        def price_update_callback(price_data):
+            # Store price data in a thread-safe way
+            if hasattr(st.session_state, 'current_prices'):
+                st.session_state.current_prices[price_data['symbol']] = price_data['price']
+                st.session_state.last_update = datetime.now()
         
-        prices = {}
-        data = response.json()
-        
-        for item in data:
-            symbol = item['symbol']
-            if symbol in SUPPORTED_CRYPTOS:
-                prices[symbol] = float(item['price'])
-        
-        return prices
-    except Exception as e:
-        st.error(f"Error fetching prices: {e}")
-        return {}
+        data_fetcher.add_subscriber(price_update_callback)
+        data_fetcher.start_websocket()
+        st.session_state.data_fetcher_started = True
 
 def get_price_chart_data(symbol: str, interval: str = "1h", limit: int = 24) -> pd.DataFrame:
     """Get price chart data"""
-    try:
-        url = f"https://api.binance.com/api/v3/klines"
-        params = {
-            'symbol': symbol.upper(),
-            'interval': interval,
-            'limit': limit
-        }
-        
-        response = requests.get(url, params=params, timeout=5)
-        response.raise_for_status()
-        
-        data = response.json()
-        
-        df = pd.DataFrame(data, columns=[
-            'timestamp', 'open', 'high', 'low', 'close', 'volume',
-            'close_time', 'quote_volume', 'trades', 'taker_buy_base',
-            'taker_buy_quote', 'ignore'
-        ])
-        
-        # Convert to proper data types
-        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-        df['open'] = df['open'].astype(float)
-        df['high'] = df['high'].astype(float)
-        df['low'] = df['low'].astype(float)
-        df['close'] = df['close'].astype(float)
-        df['volume'] = df['volume'].astype(float)
-        
-        return df[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
-        
-    except Exception as e:
-        st.error(f"Error fetching chart data: {e}")
-        return pd.DataFrame()
+    return data_fetcher.get_historical_data(symbol, interval, limit)
 
 def create_price_chart(symbol: str) -> go.Figure:
     """Create a candlestick chart for a symbol"""
@@ -144,15 +107,10 @@ def create_price_chart(symbol: str) -> go.Figure:
 def main():
     # Initialize components
     initialize_portfolio()
+    start_data_fetcher()
     
     # Header
     st.markdown('<h1 class="main-header">📈 Crypto Trading Simulator</h1>', unsafe_allow_html=True)
-    
-    # Get current prices
-    with st.spinner("Fetching current prices..."):
-        current_prices = get_current_prices()
-        st.session_state.current_prices = current_prices
-        st.session_state.last_update = datetime.now()
     
     # Sidebar
     with st.sidebar:
@@ -166,15 +124,15 @@ def main():
         )
         
         # Current price display
-        current_price = current_prices.get(selected_symbol, 0)
+        current_price = st.session_state.current_prices.get(selected_symbol, 0)
         if current_price > 0:
             st.metric(
                 f"{selected_symbol} Price",
                 f"${current_price:,.2f}",
-                delta=f"Live"
+                delta=f"Real-time"
             )
         else:
-            st.info("No price data available")
+            st.info("Connecting to market data...")
         
         st.divider()
         
@@ -245,8 +203,8 @@ def main():
         
         # Portfolio summary
         st.subheader("💰 Portfolio Summary")
-        if current_prices:
-            summary = portfolio.get_portfolio_summary(current_prices)
+        if st.session_state.current_prices:
+            summary = portfolio.get_portfolio_summary(st.session_state.current_prices)
             
             st.metric("Total Value", f"${summary['total_value']:,.2f}")
             st.metric("Cash Balance", f"${summary['cash_balance']:,.2f}")
@@ -278,10 +236,10 @@ def main():
         
         # Market data table
         st.subheader("📈 Market Data")
-        if current_prices:
+        if st.session_state.current_prices:
             market_data = []
             for symbol in SUPPORTED_CRYPTOS:
-                price = current_prices.get(symbol, 0)
+                price = st.session_state.current_prices.get(symbol, 0)
                 if price > 0:
                     market_data.append({
                         'Symbol': symbol,
@@ -293,15 +251,15 @@ def main():
                 df_market = pd.DataFrame(market_data)
                 st.dataframe(df_market, use_container_width=True)
             else:
-                st.info("No market data available")
+                st.info("Waiting for market data...")
         else:
-            st.info("No market data available")
+            st.info("Connecting to market data...")
     
     with col2:
         # Positions
         st.subheader("💼 Current Positions")
-        if current_prices:
-            positions_df = portfolio.get_positions_dataframe(current_prices)
+        if st.session_state.current_prices:
+            positions_df = portfolio.get_positions_dataframe(st.session_state.current_prices)
             if not positions_df.empty:
                 st.dataframe(positions_df, use_container_width=True)
             else:
@@ -336,8 +294,8 @@ def main():
     with col4:
         # Performance metrics
         st.subheader("📊 Performance Metrics")
-        if current_prices:
-            summary = portfolio.get_portfolio_summary(current_prices)
+        if st.session_state.current_prices:
+            summary = portfolio.get_portfolio_summary(st.session_state.current_prices)
             
             # Create performance chart
             performance_data = {
@@ -355,8 +313,9 @@ def main():
             fig.update_layout(height=300)
             st.plotly_chart(fig, use_container_width=True)
     
-    # Auto-refresh button
-    if st.button("🔄 Refresh Data"):
+    # Auto-refresh
+    if st.session_state.data_fetcher_started:
+        time.sleep(1)
         st.rerun()
 
 if __name__ == "__main__":
