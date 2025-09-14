@@ -25,6 +25,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Navigation
+def show_navigation():
+    st.sidebar.markdown("## 🧭 Navigation")
+    page = st.sidebar.radio(
+        "Go to",
+        ["📈 Trading Simulator", "🤖 Strategy Backtesting"],
+        index=0
+    )
+    return page
+
 # Custom CSS
 st.markdown("""
 <style>
@@ -517,6 +527,15 @@ def create_price_chart(symbol: str, timeframe: str = "1h") -> go.Figure:
     return fig
 
 def main():
+    # Navigation
+    page = show_navigation()
+    
+    if page == "🤖 Strategy Backtesting":
+        # Import and run backtesting page
+        from backtesting_page import main as backtesting_main
+        backtesting_main()
+        return
+    
     # Initialize components
     initialize_portfolio()
     
