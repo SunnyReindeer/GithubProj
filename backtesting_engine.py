@@ -164,10 +164,6 @@ class Backtester:
             df = TradingStrategies.bollinger_bands_strategy(data, **strategy_params)
             buy_signal = 'bb_signal_buy'
             sell_signal = 'bb_signal_sell'
-        elif strategy_name == "Combined":
-            df = TradingStrategies.combined_strategy(data)
-            buy_signal = 'combined_signal_buy'
-            sell_signal = 'combined_signal_sell'
         else:
             raise ValueError(f"Unknown strategy: {strategy_name}")
         

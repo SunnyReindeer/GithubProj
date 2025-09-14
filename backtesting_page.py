@@ -87,26 +87,43 @@ def create_strategy_chart(data: pd.DataFrame, strategy_name: str, signals: pd.Da
             ), row=1, col=1)
     
     # Buy signals
-    buy_signals = data[signals[f'{strategy_name.lower().replace(" ", "_")}_signal_buy'] == True]
-    if not buy_signals.empty:
-        fig.add_trace(go.Scatter(
-            x=buy_signals['timestamp'],
-            y=buy_signals['close'],
-            mode='markers',
-            marker=dict(symbol='triangle-up', size=10, color='green'),
-            name='Buy Signal'
-        ), row=1, col=1)
+    buy_signal_col = None
+    sell_signal_col = None
     
-    # Sell signals
-    sell_signals = data[signals[f'{strategy_name.lower().replace(" ", "_")}_signal_sell'] == True]
-    if not sell_signals.empty:
-        fig.add_trace(go.Scatter(
-            x=sell_signals['timestamp'],
-            y=sell_signals['close'],
-            mode='markers',
-            marker=dict(symbol='triangle-down', size=10, color='red'),
-            name='Sell Signal'
-        ), row=1, col=1)
+    if strategy_name == "MACD":
+        buy_signal_col = 'macd_signal_buy'
+        sell_signal_col = 'macd_signal_sell'
+    elif strategy_name == "RSI":
+        buy_signal_col = 'rsi_signal_buy'
+        sell_signal_col = 'rsi_signal_sell'
+    elif strategy_name == "EMA Cross":
+        buy_signal_col = 'ema_signal_buy'
+        sell_signal_col = 'ema_signal_sell'
+    elif strategy_name == "Bollinger Bands":
+        buy_signal_col = 'bb_signal_buy'
+        sell_signal_col = 'bb_signal_sell'
+    
+    if buy_signal_col and buy_signal_col in signals.columns:
+        buy_signals = data[signals[buy_signal_col] == True]
+        if not buy_signals.empty:
+            fig.add_trace(go.Scatter(
+                x=buy_signals['timestamp'],
+                y=buy_signals['close'],
+                mode='markers',
+                marker=dict(symbol='triangle-up', size=10, color='green'),
+                name='Buy Signal'
+            ), row=1, col=1)
+    
+    if sell_signal_col and sell_signal_col in signals.columns:
+        sell_signals = data[signals[sell_signal_col] == True]
+        if not sell_signals.empty:
+            fig.add_trace(go.Scatter(
+                x=sell_signals['timestamp'],
+                y=sell_signals['close'],
+                mode='markers',
+                marker=dict(symbol='triangle-down', size=10, color='red'),
+                name='Sell Signal'
+            ), row=1, col=1)
     
     # Volume
     fig.add_trace(go.Bar(
@@ -246,7 +263,7 @@ def main():
         # Strategy selection
         strategy = st.selectbox(
             "Select Strategy",
-            options=["MACD", "RSI", "EMA Cross", "Bollinger Bands", "Combined"],
+            options=["MACD", "RSI", "EMA Cross", "Bollinger Bands"],
             index=0
         )
         
@@ -274,9 +291,6 @@ def main():
             period = st.slider("BB Period", 10, 30, 20)
             std_dev = st.slider("Standard Deviations", 1.0, 3.0, 2.0)
             params = {"period": period, "std_dev": std_dev}
-            
-        else:  # Combined
-            params = {}
     
     # Main content
     col1, col2 = st.columns([2, 1])
@@ -300,8 +314,6 @@ def main():
             signals = TradingStrategies.ema_cross_strategy(data, **params)
         elif strategy == "Bollinger Bands":
             signals = TradingStrategies.bollinger_bands_strategy(data, **params)
-        else:  # Combined
-            signals = TradingStrategies.combined_strategy(data)
         
         chart = create_strategy_chart(data, strategy, signals)
         st.plotly_chart(chart, use_container_width=True)
@@ -371,8 +383,7 @@ def main():
             "MACD": "MACD (Moving Average Convergence Divergence) uses the difference between fast and slow EMAs to generate buy/sell signals when the MACD line crosses above/below the signal line.",
             "RSI": "RSI (Relative Strength Index) identifies overbought (>70) and oversold (<30) conditions to generate mean reversion signals.",
             "EMA Cross": "EMA Crossover strategy generates signals when a fast EMA crosses above (buy) or below (sell) a slow EMA.",
-            "Bollinger Bands": "Bollinger Bands use price volatility to identify overbought (upper band) and oversold (lower band) conditions.",
-            "Combined": "Combined strategy uses multiple indicators and generates signals when at least 2 strategies agree."
+            "Bollinger Bands": "Bollinger Bands use price volatility to identify overbought (upper band) and oversold (lower band) conditions."
         }
         
         st.info(descriptions.get(strategy, "Strategy description not available"))
