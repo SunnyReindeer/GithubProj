@@ -161,7 +161,7 @@ def get_mock_prices() -> Dict[str, float]:
     
     return mock_prices
 
-def get_price_chart_data(symbol: str, interval: str = "1h", limit: int = 24) -> pd.DataFrame:
+def get_price_chart_data(symbol: str, interval: str = "1h", limit: int = 100) -> pd.DataFrame:
     """Get price chart data from multiple sources"""
     # Try CoinGecko first (more reliable)
     try:
@@ -181,11 +181,26 @@ def get_price_chart_data(symbol: str, interval: str = "1h", limit: int = 24) -> 
         
         coin_id = coin_mapping.get(symbol)
         if coin_id:
+            # Map intervals to CoinGecko days
+            interval_mapping = {
+                "1m": ("1", "hourly"),
+                "5m": ("1", "hourly"), 
+                "15m": ("1", "hourly"),
+                "30m": ("1", "hourly"),
+                "1h": ("1", "hourly"),
+                "4h": ("7", "hourly"),
+                "1d": ("30", "daily"),
+                "1w": ("365", "daily"),
+                "1M": ("max", "daily")
+            }
+            
+            days, interval_type = interval_mapping.get(interval, ("1", "hourly"))
+            
             url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
             params = {
                 'vs_currency': 'usd',
-                'days': '1',
-                'interval': 'hourly'
+                'days': days,
+                'interval': interval_type
             }
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -198,16 +213,19 @@ def get_price_chart_data(symbol: str, interval: str = "1h", limit: int = 24) -> 
             
             if 'prices' in data and len(data['prices']) > 0:
                 # Convert CoinGecko format to OHLC
-                prices = data['prices'][-limit:]  # Get last N hours
+                prices = data['prices'][-limit:]  # Get last N data points
                 volumes = data['total_volumes'][-limit:] if 'total_volumes' in data else []
                 
                 chart_data = []
                 for i, (timestamp, price) in enumerate(prices):
-                    # Create simple OHLC from price (CoinGecko doesn't provide OHLC)
-                    open_price = price
-                    close_price = price
-                    high_price = price * 1.01  # Add some variation
-                    low_price = price * 0.99
+                    # Create realistic OHLC from price data
+                    base_price = price
+                    volatility = 0.02  # 2% volatility
+                    
+                    open_price = base_price
+                    close_price = base_price
+                    high_price = base_price * (1 + volatility * (0.5 + i % 2))
+                    low_price = base_price * (1 - volatility * (0.5 + i % 2))
                     volume = volumes[i][1] if i < len(volumes) else 1000
                     
                     chart_data.append({
@@ -315,27 +333,183 @@ def get_mock_chart_data(symbol: str, limit: int = 24) -> pd.DataFrame:
     
     return pd.DataFrame(prices)
 
-def create_price_chart(symbol: str) -> go.Figure:
-    """Create a candlestick chart for a symbol"""
-    df = get_price_chart_data(symbol)
+def create_price_chart(symbol: str, timeframe: str = "1h") -> go.Figure:
+    """Create a TradingView-style candlestick chart"""
+    df = get_price_chart_data(symbol, timeframe)
     
     if df.empty:
         return go.Figure()
     
+    # Create candlestick chart
     fig = go.Figure(data=go.Candlestick(
         x=df['timestamp'],
         open=df['open'],
         high=df['high'],
         low=df['low'],
         close=df['close'],
-        name=symbol
+        name=symbol,
+        increasing_line_color='#00ff88',
+        decreasing_line_color='#ff4444',
+        increasing_fillcolor='#00ff88',
+        decreasing_fillcolor='#ff4444',
+        line=dict(width=1),
+        whiskerwidth=0.8,
+        showlegend=False
     ))
     
+    # Add volume subplot
+    fig.add_trace(go.Bar(
+        x=df['timestamp'],
+        y=df['volume'],
+        name='Volume',
+        marker_color='rgba(158,202,225,0.6)',
+        yaxis='y2',
+        showlegend=False
+    ))
+    
+    # Calculate technical indicators
+    if len(df) >= 20:
+        df['MA20'] = df['close'].rolling(window=20).mean()
+        fig.add_trace(go.Scatter(
+            x=df['timestamp'],
+            y=df['MA20'],
+            mode='lines',
+            name='MA20',
+            line=dict(color='orange', width=1),
+            opacity=0.8
+        ))
+    
+    if len(df) >= 50:
+        df['MA50'] = df['close'].rolling(window=50).mean()
+        fig.add_trace(go.Scatter(
+            x=df['timestamp'],
+            y=df['MA50'],
+            mode='lines',
+            name='MA50',
+            line=dict(color='blue', width=1),
+            opacity=0.8
+        ))
+    
+    # Add RSI indicator
+    if len(df) >= 14:
+        delta = df['close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        df['RSI'] = 100 - (100 / (1 + rs))
+        
+        # Add RSI as secondary chart
+        fig.add_trace(go.Scatter(
+            x=df['timestamp'],
+            y=df['RSI'],
+            mode='lines',
+            name='RSI',
+            line=dict(color='purple', width=1),
+            opacity=0.8,
+            yaxis='y3'
+        ))
+    
+    # Add Bollinger Bands
+    if len(df) >= 20:
+        df['BB_Middle'] = df['close'].rolling(window=20).mean()
+        bb_std = df['close'].rolling(window=20).std()
+        df['BB_Upper'] = df['BB_Middle'] + (bb_std * 2)
+        df['BB_Lower'] = df['BB_Middle'] - (bb_std * 2)
+        
+        fig.add_trace(go.Scatter(
+            x=df['timestamp'],
+            y=df['BB_Upper'],
+            mode='lines',
+            name='BB Upper',
+            line=dict(color='gray', width=1, dash='dash'),
+            opacity=0.6,
+            showlegend=False
+        ))
+        
+        fig.add_trace(go.Scatter(
+            x=df['timestamp'],
+            y=df['BB_Lower'],
+            mode='lines',
+            name='BB Lower',
+            line=dict(color='gray', width=1, dash='dash'),
+            opacity=0.6,
+            showlegend=False,
+            fill='tonexty',
+            fillcolor='rgba(128,128,128,0.1)'
+        ))
+    
+    # TradingView-style layout
     fig.update_layout(
-        title=f"{symbol} Price Chart",
-        xaxis_title="Time",
-        yaxis_title="Price (USDT)",
-        height=400
+        title={
+            'text': f"{symbol} - {timeframe}",
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 20, 'color': '#ffffff'}
+        },
+        xaxis=dict(
+            title="Time",
+            gridcolor='#2a2a2a',
+            color='#ffffff',
+            showgrid=True,
+            gridwidth=1,
+            type='date',
+            rangeslider=dict(visible=False)
+        ),
+        yaxis=dict(
+            title="Price (USDT)",
+            gridcolor='#2a2a2a',
+            color='#ffffff',
+            showgrid=True,
+            gridwidth=1,
+            side='right'
+        ),
+        yaxis2=dict(
+            title="Volume",
+            overlaying='y',
+            side='right',
+            showgrid=False,
+            color='#888888'
+        ),
+        yaxis3=dict(
+            title="RSI",
+            overlaying='y',
+            side='right',
+            showgrid=False,
+            color='#888888',
+            range=[0, 100]
+        ),
+        plot_bgcolor='#1e1e1e',
+        paper_bgcolor='#1e1e1e',
+        font=dict(color='#ffffff'),
+        height=500,
+        margin=dict(l=50, r=50, t=80, b=50),
+        hovermode='x unified',
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    
+    # Add crosshair
+    fig.update_layout(
+        xaxis=dict(
+            showspikes=True,
+            spikecolor="white",
+            spikesnap="cursor",
+            spikemode="across",
+            spikethickness=1
+        ),
+        yaxis=dict(
+            showspikes=True,
+            spikecolor="white",
+            spikesnap="cursor",
+            spikemode="across",
+            spikethickness=1
+        )
     )
     
     return fig
@@ -476,9 +650,21 @@ def main():
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        # Price chart
-        st.subheader("📊 Price Chart")
-        chart = create_price_chart(selected_symbol)
+        # Price chart with timeframe selector
+        col_chart1, col_chart2 = st.columns([3, 1])
+        
+        with col_chart1:
+            st.subheader("📊 Price Chart")
+        
+        with col_chart2:
+            timeframe = st.selectbox(
+                "Timeframe",
+                options=["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w", "1M"],
+                index=4,  # Default to 1h
+                key="timeframe_selector"
+            )
+        
+        chart = create_price_chart(selected_symbol, timeframe)
         if chart.data:
             st.plotly_chart(chart, use_container_width=True)
         else:
