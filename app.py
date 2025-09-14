@@ -683,14 +683,14 @@ def main():
             )
     
     # Main content area
-    col1, col2 = st.columns([2, 1])
+    col1, col2 = st.columns([3, 1])
     
     with col1:
         # TradingView Chart Section
         st.subheader("📊 TradingView Chart")
         
         # Display TradingView widget (Advanced Chart by default)
-        create_tradingview_advanced_chart(selected_symbol, "1h", height=600)
+        create_tradingview_advanced_chart(selected_symbol, "1h", height=800)
         
         # Market Overview Section
         st.subheader("📈 Market Overview")

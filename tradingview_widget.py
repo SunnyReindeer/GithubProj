@@ -131,12 +131,13 @@ def create_tradingview_advanced_chart(symbol: str, timeframe: str = "1h", height
     
     # Advanced TradingView chart HTML
     chart_html = f"""
-    <div class="tradingview-widget-container">
-        <div id="tradingview_advanced_chart"></div>
+    <div class="tradingview-widget-container" style="width: 100%; height: {height}px;">
+        <div id="tradingview_advanced_chart" style="width: 100%; height: {height}px;"></div>
         <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
         <script type="text/javascript">
         new TradingView.widget({{
-            "autosize": true,
+            "width": "100%",
+            "height": {height},
             "symbol": "{tv_symbol}",
             "interval": "{tv_timeframe}",
             "timezone": "Etc/UTC",
