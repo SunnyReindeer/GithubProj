@@ -1,6 +1,7 @@
 # Crypto Trading Simulator 📈
 
 A real-time cryptocurrency trading simulation application built with Streamlit, featuring live market data, portfolio management, and interactive trading interface.
+https://appproj-dxyustmoiqdh3nbnxwyhfb.streamlit.app/
 
 ## Features
 
