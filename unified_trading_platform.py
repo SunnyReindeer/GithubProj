@@ -74,6 +74,69 @@ if 'portfolio_initialized' not in st.session_state:
 if 'use_multi_asset' not in st.session_state:
     st.session_state.use_multi_asset = True
 
+def map_symbol_to_tradingview(symbol: str) -> str:
+    """Map our symbols to TradingView format"""
+    # Crypto symbols
+    crypto_mapping = {
+        "BTCUSDT": "BINANCE:BTCUSDT",
+        "ETHUSDT": "BINANCE:ETHUSDT",
+        "BNBUSDT": "BINANCE:BNBUSDT",
+        "ADAUSDT": "BINANCE:ADAUSDT",
+        "SOLUSDT": "BINANCE:SOLUSDT",
+        "XRPUSDT": "BINANCE:XRPUSDT",
+        "DOTUSDT": "BINANCE:DOTUSDT",
+        "DOGEUSDT": "BINANCE:DOGEUSDT",
+        "AVAXUSDT": "BINANCE:AVAXUSDT",
+        "MATICUSDT": "BINANCE:MATICUSDT"
+    }
+    
+    # Stock symbols
+    stock_mapping = {
+        "AAPL": "NASDAQ:AAPL",
+        "GOOGL": "NASDAQ:GOOGL",
+        "MSFT": "NASDAQ:MSFT",
+        "TSLA": "NASDAQ:TSLA",
+        "AMZN": "NASDAQ:AMZN",
+        "META": "NASDAQ:META",
+        "NVDA": "NASDAQ:NVDA",
+        "NFLX": "NASDAQ:NFLX",
+        "SPY": "SPDR:SPY",
+        "QQQ": "NASDAQ:QQQ"
+    }
+    
+    # Forex symbols
+    forex_mapping = {
+        "EURUSD": "FX:EURUSD",
+        "GBPUSD": "FX:GBPUSD",
+        "USDJPY": "FX:USDJPY",
+        "USDCHF": "FX:USDCHF",
+        "AUDUSD": "FX:AUDUSD",
+        "USDCAD": "FX:USDCAD",
+        "NZDUSD": "FX:NZDUSD"
+    }
+    
+    # Commodity symbols
+    commodity_mapping = {
+        "GOLD": "TVC:GOLD",
+        "SILVER": "TVC:SILVER",
+        "OIL": "TVC:CRUDE",
+        "COPPER": "TVC:COPPER",
+        "NATURAL_GAS": "TVC:NATURALGAS"
+    }
+    
+    # Check all mappings
+    if symbol in crypto_mapping:
+        return crypto_mapping[symbol]
+    elif symbol in stock_mapping:
+        return stock_mapping[symbol]
+    elif symbol in forex_mapping:
+        return forex_mapping[symbol]
+    elif symbol in commodity_mapping:
+        return commodity_mapping[symbol]
+    else:
+        # Default to crypto if not found
+        return f"BINANCE:{symbol}"
+
 def initialize_portfolio():
     """Initialize portfolio if not already done"""
     if not st.session_state.portfolio_initialized:
@@ -239,13 +302,24 @@ def display_price_charts(symbols: List[str]):
     st.markdown("## 📊 Price Charts")
     
     # Chart display options
-    col1, col2 = st.columns([1, 3])
+    col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
         chart_type = st.radio(
             "Chart Type",
-            ["📊 Standard", "📈 TradingView Style"],
-            help="Standard: Basic candlestick charts | TradingView Style: Advanced charts with more indicators"
+            ["📊 Standard", "📈 TradingView Widget"],
+            help="Standard: Basic candlestick charts | TradingView Widget: Real TradingView embedded widget"
         )
+    
+    with col2:
+        if chart_type == "📈 TradingView Widget":
+            timeframe = st.selectbox(
+                "Timeframe",
+                ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"],
+                index=4,  # Default to 1h
+                help="Select chart timeframe"
+            )
+        else:
+            timeframe = "1h"  # Default for standard charts
     
     # Always use multi-asset data provider (unified platform)
     for symbol in symbols[:4]:  # Limit to 4 charts for performance
@@ -285,75 +359,8 @@ def display_price_charts(symbols: List[str]):
                         name='MA50',
                         line=dict(color='blue', width=1)
                     ))
-                else:
-                    # TradingView style chart with more indicators
-                    fig = go.Figure(data=go.Candlestick(
-                        x=df.index,
-                        open=df['Open'],
-                        high=df['High'],
-                        low=df['Low'],
-                        close=df['Close'],
-                        name=symbol
-                    ))
                     
-                    # Add multiple moving averages
-                    df['MA9'] = df['Close'].rolling(window=9).mean()
-                    df['MA21'] = df['Close'].rolling(window=21).mean()
-                    df['MA50'] = df['Close'].rolling(window=50).mean()
-                    df['MA200'] = df['Close'].rolling(window=200).mean()
-                    
-                    # Add Bollinger Bands
-                    df['BB_Middle'] = df['Close'].rolling(window=20).mean()
-                    bb_std = df['Close'].rolling(window=20).std()
-                    df['BB_Upper'] = df['BB_Middle'] + (bb_std * 2)
-                    df['BB_Lower'] = df['BB_Middle'] - (bb_std * 2)
-                    
-                    # Add RSI
-                    delta = df['Close'].diff()
-                    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-                    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-                    rs = gain / loss
-                    df['RSI'] = 100 - (100 / (1 + rs))
-                    
-                    # Add moving averages
-                    for ma, color in [('MA9', 'yellow'), ('MA21', 'orange'), ('MA50', 'blue'), ('MA200', 'red')]:
-                        fig.add_trace(go.Scatter(
-                            x=df.index,
-                            y=df[ma],
-                            mode='lines',
-                            name=ma,
-                            line=dict(color=color, width=1)
-                        ))
-                    
-                    # Add Bollinger Bands
-                    fig.add_trace(go.Scatter(
-                        x=df.index,
-                        y=df['BB_Upper'],
-                        mode='lines',
-                        name='BB Upper',
-                        line=dict(color='gray', width=1, dash='dash')
-                    ))
-                    
-                    fig.add_trace(go.Scatter(
-                        x=df.index,
-                        y=df['BB_Lower'],
-                        mode='lines',
-                        name='BB Lower',
-                        line=dict(color='gray', width=1, dash='dash')
-                    ))
-                    
-                    # Add RSI subplot
-                    fig.add_trace(go.Scatter(
-                        x=df.index,
-                        y=df['RSI'],
-                        mode='lines',
-                        name='RSI',
-                        line=dict(color='purple', width=1),
-                        yaxis='y2'
-                    ))
-                    
-                # Update layout based on chart type
-                if chart_type == "📊 Standard":
+                    # Update layout for standard chart
                     fig.update_layout(
                         title=f"{symbol} - 3 Month Chart (Standard)",
                         xaxis_title="Date",
@@ -361,22 +368,18 @@ def display_price_charts(symbols: List[str]):
                         height=400,
                         showlegend=True
                     )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
                 else:
-                    fig.update_layout(
-                        title=f"{symbol} - 3 Month Chart (TradingView Style)",
-                        xaxis_title="Date",
-                        yaxis_title="Price",
-                        height=600,
-                        showlegend=True,
-                        yaxis2=dict(
-                            title="RSI",
-                            overlaying="y",
-                            side="right",
-                            range=[0, 100]
-                        )
-                    )
-                
-                st.plotly_chart(fig, use_container_width=True)
+                    # Use actual TradingView widget
+                    from tradingview_widget import create_tradingview_advanced_chart
+                    
+                    # Map symbol to TradingView format
+                    tv_symbol = map_symbol_to_tradingview(symbol)
+                    
+                    st.markdown(f"### {symbol} - TradingView Chart")
+                    create_tradingview_advanced_chart(tv_symbol, timeframe, height=600)
                 
         except Exception as e:
             st.error(f"Error loading chart for {symbol}: {e}")
