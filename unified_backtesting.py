@@ -311,7 +311,7 @@ def display_backtest_results(result: BacktestResult, symbol: str, strategy: Dict
         st.metric("Total Return", f"{result.total_return:.2f}%")
     
     with col2:
-        st.metric("Annualized Return", f"{result.annualized_return:.2f}%")
+        st.metric("Annualized Return", f"{result.annual_return:.2f}%")
     
     with col3:
         st.metric("Max Drawdown", f"{result.max_drawdown:.2f}%")
@@ -332,7 +332,12 @@ def display_backtest_results(result: BacktestResult, symbol: str, strategy: Dict
         st.metric("Profit Factor", f"{result.profit_factor:.2f}")
     
     with col8:
-        st.metric("Volatility", f"{result.volatility:.2f}%")
+        # Show average trade duration (if available)
+        if result.trades:
+            avg_duration = sum(trade.get('duration', 0) for trade in result.trades) / len(result.trades)
+            st.metric("Avg Trade Duration", f"{avg_duration:.1f}h")
+        else:
+            st.metric("Avg Trade Duration", "N/A")
     
     # Performance chart
     st.markdown("### 📈 Performance Chart")

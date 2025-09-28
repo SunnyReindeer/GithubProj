@@ -97,7 +97,7 @@ class StrategyRecommender:
                     "Requires discipline"
                 ],
                 market_conditions=["Bull market", "Sideways market", "Volatile market"],
-                symbols=["BTCUSDT", "ETHUSDT", "BNBUSDT"]
+                symbols=["BTCUSDT", "ETHUSDT", "BNBUSDT", "AAPL", "MSFT", "GOOGL"]
             ),
             
             StrategyRecommendation(
@@ -131,7 +131,7 @@ class StrategyRecommender:
                     "Requires market monitoring"
                 ],
                 market_conditions=["Sideways market", "Ranging market"],
-                symbols=["BTCUSDT", "ETHUSDT", "ADAUSDT", "DOTUSDT"]
+                symbols=["BTCUSDT", "ETHUSDT", "ADAUSDT", "DOTUSDT", "AAPL", "TSLA", "NVDA"]
             ),
             
             # Moderate Strategies
@@ -165,7 +165,7 @@ class StrategyRecommender:
                     "Late entries/exits"
                 ],
                 market_conditions=["Bull market", "Bear market", "Strong trends"],
-                symbols=["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"]
+                symbols=["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "SPY", "QQQ", "IWM"]
             ),
             
             StrategyRecommendation(
@@ -198,7 +198,7 @@ class StrategyRecommender:
                     "Requires volatility"
                 ],
                 market_conditions=["Sideways market", "Volatile market"],
-                symbols=["BTCUSDT", "ETHUSDT", "XRPUSDT", "ADAUSDT"]
+                symbols=["BTCUSDT", "ETHUSDT", "XRPUSDT", "ADAUSDT", "EURUSD", "GBPUSD", "USDJPY"]
             ),
             
             # Aggressive Strategies
@@ -233,7 +233,7 @@ class StrategyRecommender:
                     "Requires active management"
                 ],
                 market_conditions=["Bull market", "Strong momentum"],
-                symbols=["BTCUSDT", "ETHUSDT", "SOLUSDT", "AVAXUSDT"]
+                symbols=["BTCUSDT", "ETHUSDT", "SOLUSDT", "AVAXUSDT", "GOLD", "SILVER", "OIL"]
             ),
             
             StrategyRecommendation(
@@ -265,7 +265,7 @@ class StrategyRecommender:
                     "Requires experience"
                 ],
                 market_conditions=["Trending market", "Clear direction"],
-                symbols=["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"]
+                symbols=["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "SPY", "QQQ", "IWM", "EURUSD"]
             ),
             
             # Very Aggressive Strategies
@@ -300,7 +300,7 @@ class StrategyRecommender:
                     "Stressful"
                 ],
                 market_conditions=["High volatility", "Liquid markets"],
-                symbols=["BTCUSDT", "ETHUSDT"]
+                symbols=["BTCUSDT", "ETHUSDT", "EURUSD", "GBPUSD", "SPY", "QQQ"]
             ),
             
             StrategyRecommendation(
@@ -334,7 +334,7 @@ class StrategyRecommender:
                     "High stress"
                 ],
                 market_conditions=["Strong trends", "High conviction"],
-                symbols=["BTCUSDT", "ETHUSDT"]
+                symbols=["BTCUSDT", "ETHUSDT", "SPY", "QQQ", "EURUSD", "GOLD"]
             )
         ]
     

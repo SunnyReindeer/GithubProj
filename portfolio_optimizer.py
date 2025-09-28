@@ -57,8 +57,9 @@ class PortfolioOptimizer:
         # In a real implementation, this would fetch data from APIs
         market_data = {}
         
-        # Mock data for demonstration
+        # Mock data for demonstration - Multi-asset
         base_volatilities = {
+            # Crypto
             "BTCUSDT": 0.35,
             "ETHUSDT": 0.40,
             "BNBUSDT": 0.45,
@@ -68,10 +69,36 @@ class PortfolioOptimizer:
             "DOTUSDT": 0.50,
             "DOGEUSDT": 0.60,
             "AVAXUSDT": 0.55,
-            "MATICUSDT": 0.50
+            "MATICUSDT": 0.50,
+            # Stocks
+            "AAPL": 0.25,
+            "MSFT": 0.22,
+            "GOOGL": 0.28,
+            "TSLA": 0.45,
+            "AMZN": 0.30,
+            "META": 0.35,
+            "NVDA": 0.40,
+            "SPY": 0.18,
+            "QQQ": 0.20,
+            "IWM": 0.25,
+            # Forex
+            "EURUSD": 0.08,
+            "GBPUSD": 0.10,
+            "USDJPY": 0.09,
+            "USDCHF": 0.08,
+            "AUDUSD": 0.12,
+            "USDCAD": 0.09,
+            "NZDUSD": 0.13,
+            # Commodities
+            "GOLD": 0.15,
+            "SILVER": 0.25,
+            "OIL": 0.30,
+            "COPPER": 0.20,
+            "NATURAL_GAS": 0.40
         }
         
         base_returns = {
+            # Crypto
             "BTCUSDT": 0.15,
             "ETHUSDT": 0.18,
             "BNBUSDT": 0.20,
@@ -81,10 +108,36 @@ class PortfolioOptimizer:
             "DOTUSDT": 0.14,
             "DOGEUSDT": 0.08,
             "AVAXUSDT": 0.22,
-            "MATICUSDT": 0.16
+            "MATICUSDT": 0.16,
+            # Stocks
+            "AAPL": 0.12,
+            "MSFT": 0.14,
+            "GOOGL": 0.16,
+            "TSLA": 0.25,
+            "AMZN": 0.13,
+            "META": 0.18,
+            "NVDA": 0.22,
+            "SPY": 0.10,
+            "QQQ": 0.12,
+            "IWM": 0.11,
+            # Forex
+            "EURUSD": 0.02,
+            "GBPUSD": 0.03,
+            "USDJPY": 0.02,
+            "USDCHF": 0.02,
+            "AUDUSD": 0.04,
+            "USDCAD": 0.03,
+            "NZDUSD": 0.04,
+            # Commodities
+            "GOLD": 0.06,
+            "SILVER": 0.08,
+            "OIL": 0.10,
+            "COPPER": 0.07,
+            "NATURAL_GAS": 0.15
         }
         
         base_prices = {
+            # Crypto
             "BTCUSDT": 45000,
             "ETHUSDT": 3000,
             "BNBUSDT": 300,
@@ -94,7 +147,32 @@ class PortfolioOptimizer:
             "DOTUSDT": 7,
             "DOGEUSDT": 0.08,
             "AVAXUSDT": 25,
-            "MATICUSDT": 0.8
+            "MATICUSDT": 0.8,
+            # Stocks
+            "AAPL": 150,
+            "MSFT": 300,
+            "GOOGL": 2500,
+            "TSLA": 200,
+            "AMZN": 3000,
+            "META": 250,
+            "NVDA": 400,
+            "SPY": 400,
+            "QQQ": 350,
+            "IWM": 200,
+            # Forex
+            "EURUSD": 1.05,
+            "GBPUSD": 1.25,
+            "USDJPY": 150,
+            "USDCHF": 0.90,
+            "AUDUSD": 0.65,
+            "USDCAD": 1.35,
+            "NZDUSD": 0.60,
+            # Commodities
+            "GOLD": 2000,
+            "SILVER": 25,
+            "OIL": 80,
+            "COPPER": 4.5,
+            "NATURAL_GAS": 3.5
         }
         
         for symbol in symbols:
