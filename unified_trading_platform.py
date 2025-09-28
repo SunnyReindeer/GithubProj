@@ -108,6 +108,11 @@ def create_asset_class_selector():
     
     # Add option to use original crypto trading or multi-asset
     use_multi_asset = st.sidebar.checkbox("Use Multi-Asset Platform", value=st.session_state.get('use_multi_asset', True))
+    
+    # Clear selected symbols if mode changed
+    if st.session_state.get('use_multi_asset') != use_multi_asset:
+        st.session_state.selected_symbols = []
+    
     st.session_state.use_multi_asset = use_multi_asset
     
     if use_multi_asset:
@@ -128,6 +133,11 @@ def create_asset_class_selector():
         
         # Update selected asset class
         selected_asset_class = AssetClass(selected_name.lower().replace(' ', '_'))
+        
+        # Clear selected symbols if asset class changed
+        if st.session_state.get('selected_asset_class') != selected_asset_class:
+            st.session_state.selected_symbols = []
+        
         st.session_state.selected_asset_class = selected_asset_class
         
         return selected_asset_class
@@ -150,10 +160,14 @@ def create_symbol_selector(asset_class: AssetClass):
         # Create symbol options
         symbol_options = [f"{asset.symbol} - {asset.name}" for asset in assets[:20]]  # Limit to 20 for performance
         
+        # Get current session state symbols and filter to only include valid options
+        current_selected = st.session_state.get('selected_symbols', [])
+        valid_defaults = [symbol for symbol in current_selected if any(symbol in option for option in symbol_options)]
+        
         selected_symbols = st.sidebar.multiselect(
             "Select Symbols",
             options=symbol_options,
-            default=st.session_state.get('selected_symbols', [])
+            default=valid_defaults
         )
         
         # Extract symbols from selected options
@@ -163,10 +177,14 @@ def create_symbol_selector(asset_class: AssetClass):
         return symbols
     else:
         # Use original crypto symbols
+        # Get current session state symbols and filter to only include valid crypto options
+        current_selected = st.session_state.get('selected_symbols', [])
+        valid_defaults = [symbol for symbol in current_selected if symbol in SUPPORTED_CRYPTOS]
+        
         selected_symbols = st.sidebar.multiselect(
             "Select Cryptocurrencies",
             options=SUPPORTED_CRYPTOS,
-            default=st.session_state.get('selected_symbols', [])
+            default=valid_defaults
         )
         st.session_state.selected_symbols = selected_symbols
         return selected_symbols
