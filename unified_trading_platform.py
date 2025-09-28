@@ -148,11 +148,8 @@ def get_current_prices(symbols: List[str]) -> Dict[str, Any]:
     try:
         # Use multi-asset data provider
         price_data = multi_asset_data_provider.get_current_prices(symbols)
-        # Convert to format expected by crypto trading engine
-        prices = {}
-        for symbol, price_obj in price_data.items():
-            prices[symbol] = price_obj.price
-        return prices
+        # Return the full price objects for portfolio calculations
+        return price_data
     except Exception as e:
         st.error(f"Error fetching prices: {e}")
         return {}
@@ -380,9 +377,13 @@ def display_price_charts(symbols: List[str]):
                     # Map symbol to TradingView format
                     tv_symbol = map_symbol_to_tradingview(symbol)
                     
+                    # Debug: Show what symbol is being passed
                     st.markdown(f"### {symbol} - TradingView Chart")
-                    # Create unique widget ID to force refresh when symbol changes
-                    widget_id = f"tradingview_{symbol}_{hash(tv_symbol)}"
+                    st.info(f"Displaying: {symbol} → {tv_symbol}")
+                    
+                    # Create unique widget ID with timestamp to force refresh
+                    import time
+                    widget_id = f"tradingview_{symbol}_{int(time.time())}"
                     create_tradingview_advanced_chart(tv_symbol, "1h", height=600, container_id=widget_id)
                 
         except Exception as e:
@@ -619,13 +620,19 @@ def display_positions():
         # Get current prices
         symbols = list(multi_asset_portfolio.positions.keys())
         if symbols:
-            current_prices = get_current_prices(symbols)
-            positions_df = multi_asset_portfolio.get_positions_dataframe(current_prices)
-            
-            if not positions_df.empty:
-                st.dataframe(positions_df, use_container_width=True)
-            else:
-                st.info("No open positions")
+            try:
+                current_prices = get_current_prices(symbols)
+                if current_prices:  # Check if we got valid price data
+                    positions_df = multi_asset_portfolio.get_positions_dataframe(current_prices)
+                    
+                    if not positions_df.empty:
+                        st.dataframe(positions_df, use_container_width=True)
+                    else:
+                        st.info("No open positions")
+                else:
+                    st.warning("Unable to fetch current prices for positions")
+            except Exception as e:
+                st.error(f"Error loading positions: {e}")
         else:
             st.info("No open positions")
     else:
@@ -684,17 +691,32 @@ def main():
     st.markdown("## 💰 Portfolio Summary")
     symbols = list(multi_asset_portfolio.positions.keys())
     if symbols:
-        current_prices = get_current_prices(symbols)
-        metrics = multi_asset_portfolio.get_portfolio_metrics(current_prices)
-        
-        st.metric("Total Value", f"${metrics.total_value:,.2f}")
-        st.metric("Total P&L", f"${metrics.total_pnl:,.2f}")
-        pnl_color = "normal" if metrics.total_pnl >= 0 else "inverse"
-        st.metric(
-            "P&L %",
-            f"{metrics.total_pnl_percent:.2f}%",
-            delta_color=pnl_color
-        )
+        try:
+            current_prices = get_current_prices(symbols)
+            if current_prices:  # Check if we got valid price data
+                # Debug: Check the structure of price data
+                st.write(f"Debug: Price data keys: {list(current_prices.keys())}")
+                if symbols:
+                    first_symbol = symbols[0]
+                    if first_symbol in current_prices:
+                        price_obj = current_prices[first_symbol]
+                        st.write(f"Debug: Price object type: {type(price_obj)}")
+                        st.write(f"Debug: Price object attributes: {dir(price_obj)}")
+                
+                metrics = multi_asset_portfolio.get_portfolio_metrics(current_prices)
+                
+                st.metric("Total Value", f"${metrics.total_value:,.2f}")
+                st.metric("Total P&L", f"${metrics.total_pnl:,.2f}")
+                pnl_color = "normal" if metrics.total_pnl >= 0 else "inverse"
+                st.metric(
+                    "P&L %",
+                    f"{metrics.total_pnl_percent:.2f}%",
+                    delta_color=pnl_color
+                )
+            else:
+                st.warning("Unable to fetch current prices")
+        except Exception as e:
+            st.error(f"Error calculating portfolio metrics: {e}")
     else:
         st.info("No positions to display")
     
