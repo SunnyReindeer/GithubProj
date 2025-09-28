@@ -30,7 +30,7 @@ def show_navigation():
     st.sidebar.markdown("## 🧭 Navigation")
     page = st.sidebar.radio(
         "Go to",
-        ["📈 Trading Simulator", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
+        ["📈 Crypto Trading", "🌍 Multi-Asset Trading", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
         index=0
     )
     return page
@@ -529,6 +529,12 @@ def create_price_chart(symbol: str, timeframe: str = "1h") -> go.Figure:
 def main():
     # Navigation
     page = show_navigation()
+    
+    if page == "🌍 Multi-Asset Trading":
+        # Import and run multi-asset trading page
+        from multi_asset_app import main as multi_asset_main
+        multi_asset_main()
+        return
     
     if page == "🤖 Strategy Backtesting":
         # Import and run backtesting page

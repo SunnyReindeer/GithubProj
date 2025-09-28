@@ -1,21 +1,18 @@
-# Crypto Trading Simulator with AI Robo Advisor 📈🤖
+# Multi-Asset Trading Platform with AI Robo Advisor 🌍📈🤖
 
-<<<<<<< HEAD
-A comprehensive cryptocurrency trading simulation application built with Streamlit, featuring live market data, portfolio management, interactive trading interface, and an AI-powered robo advisor for personalized trading strategies.
-=======
-A real-time cryptocurrency trading simulation application built with Streamlit, featuring live market data, portfolio management, and interactive trading interface.
-https://appproj-dxyustmoiqdh3nbnxwyhfb.streamlit.app/
->>>>>>> 8e81f853b6a4daf7b50cd91da2d4dbac5a21feaf
+A comprehensive multi-asset trading simulation application built with Streamlit, featuring live market data, portfolio management, interactive trading interface, and an AI-powered robo advisor for personalized trading strategies across stocks, bonds, commodities, forex, crypto, and other investment assets.
 
 ## Features
 
 ### Core Trading Features
-- **Real-time Market Data**: Live cryptocurrency prices via Binance WebSocket API
-- **Trading Simulation**: Place buy/sell orders with realistic trading fees
-- **Portfolio Management**: Track positions, P&L, and portfolio performance
-- **Interactive Charts**: Candlestick charts with historical price data
-- **Order Management**: Market and limit orders with order history
+- **🌍 Multi-Asset Support**: Trade stocks, bonds, commodities, forex, crypto, REITs, ETFs, and indices
+- **Real-time Market Data**: Live prices via Yahoo Finance, Binance, and other data providers
+- **Trading Simulation**: Place buy/sell orders with realistic trading fees for each asset class
+- **Portfolio Management**: Track positions, P&L, and portfolio performance across all asset classes
+- **Interactive Charts**: Candlestick charts with historical price data for all assets
+- **Order Management**: Market, limit, stop, and stop-limit orders with order history
 - **Performance Analytics**: Real-time portfolio metrics and performance tracking
+- **Multi-Currency Support**: Handle different currencies and exchange rates
 
 ### AI Robo Advisor Features
 - **🎯 Risk Assessment**: Comprehensive questionnaire to evaluate your risk preferences
@@ -25,18 +22,31 @@ https://appproj-dxyustmoiqdh3nbnxwyhfb.streamlit.app/
 - **📊 Risk Analysis**: Detailed risk metrics and portfolio analysis
 - **💾 Export Functionality**: Download your risk profile and trading plan
 
-## Supported Cryptocurrencies
+### Multi-Asset Features
+- **📊 Asset Class Management**: Support for 9 different asset classes
+- **🌎 Global Market Coverage**: Assets from US, Europe, Asia, and emerging markets
+- **🏭 Sector Analysis**: Technology, healthcare, financial, energy, and other sectors
+- **⚖️ Risk-Based Allocation**: Conservative, moderate, aggressive, and very aggressive profiles
+- **🤖 Asset-Specific Strategies**: Tailored trading strategies for each asset class
+- **📈 Market Overview**: Real-time overview of all asset classes and markets
 
-- Bitcoin (BTC/USDT)
-- Ethereum (ETH/USDT)
-- Binance Coin (BNB/USDT)
-- Cardano (ADA/USDT)
-- Solana (SOL/USDT)
-- XRP (XRP/USDT)
-- Polkadot (DOT/USDT)
-- Dogecoin (DOGE/USDT)
-- Avalanche (AVAX/USDT)
-- Polygon (MATIC/USDT)
+## Supported Assets
+
+### 🌍 Multi-Asset Classes
+- **📈 Stocks**: Apple, Microsoft, Google, Amazon, Tesla, and 50+ more
+- **🏦 Bonds**: Treasury bonds, corporate bonds, high-yield bonds
+- **🥇 Commodities**: Gold, silver, oil, natural gas, agriculture
+- **💱 Forex**: EUR/USD, GBP/USD, USD/JPY, and major currency pairs
+- **₿ Cryptocurrencies**: Bitcoin, Ethereum, Binance Coin, and 10+ more
+- **🏢 REITs**: Real estate investment trusts and REIT ETFs
+- **📊 ETFs**: S&P 500, NASDAQ, sector ETFs, and index funds
+- **📈 Indices**: S&P 500, Dow Jones, NASDAQ, VIX
+
+### 🌎 Global Coverage
+- **🇺🇸 US Markets**: NYSE, NASDAQ stocks and ETFs
+- **🇪🇺 European Markets**: European stocks and indices
+- **🇦🇸 Asian Markets**: Asian stocks and emerging markets
+- **🌍 Global Markets**: International ETFs and global indices
 
 ## Installation
 
@@ -63,6 +73,14 @@ streamlit run app.py
 2. The app will open in your browser at `http://localhost:8501`
 3. Wait for the WebSocket connection to establish (you'll see "Connecting to market data...")
 
+### Using the Multi-Asset Trading Platform
+1. Navigate to the "🌍 Multi-Asset Trading" tab in the sidebar
+2. Select an asset class (stocks, bonds, commodities, forex, crypto, etc.)
+3. Choose specific symbols to trade
+4. View real-time market data and charts
+5. Place orders with appropriate order types
+6. Monitor your multi-asset portfolio performance
+
 ### Using the AI Robo Advisor
 1. Navigate to the "🎯 AI Robo Advisor" tab in the sidebar
 2. Complete the risk assessment questionnaire (10 questions)
@@ -70,6 +88,12 @@ streamlit run app.py
 4. Get AI-powered strategy recommendations
 5. Optimize your portfolio allocation
 6. Download your complete trading plan
+
+### Demo the Multi-Asset Platform
+Run the demo script to see the multi-asset platform in action:
+```bash
+python multi_asset_demo.py
+```
 
 ### Demo the Robo Advisor
 Run the demo script to see the robo advisor in action:
@@ -122,6 +146,14 @@ Edit `config.py` to customize:
 - `portfolio_optimizer.py`: Advanced portfolio optimization algorithms
 - `robo_advisor_page.py`: User interface for the robo advisor
 - `robo_advisor_demo.py`: Demo script showcasing all features
+
+### Multi-Asset Components
+- `multi_asset_config.py`: Multi-asset configuration and asset database
+- `multi_asset_data_provider.py`: Data providers for all asset classes
+- `multi_asset_portfolio.py`: Multi-asset portfolio management system
+- `multi_asset_strategies.py`: Asset-specific trading strategies
+- `multi_asset_app.py`: Multi-asset trading interface
+- `multi_asset_demo.py`: Demo script for multi-asset features
 
 ### Data Flow
 1. WebSocket connects to Binance API
