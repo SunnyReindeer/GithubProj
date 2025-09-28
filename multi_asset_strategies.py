@@ -445,6 +445,42 @@ class MultiAssetStrategyManager:
                 "complexity": "Intermediate",
                 "function": CryptoStrategies.fear_greed_strategy
             },
+            "crypto_moving_average": {
+                "name": "Crypto Moving Average Crossover",
+                "description": "Trend following strategy using moving average crossovers for crypto",
+                "asset_classes": [AssetClass.CRYPTO],
+                "category": StrategyCategory.TREND_FOLLOWING,
+                "risk_level": 5,
+                "complexity": "Beginner",
+                "function": None  # Will use backtesting engine
+            },
+            "crypto_rsi": {
+                "name": "Crypto RSI Strategy",
+                "description": "Mean reversion strategy using RSI indicator for crypto",
+                "asset_classes": [AssetClass.CRYPTO],
+                "category": StrategyCategory.MEAN_REVERSION,
+                "risk_level": 4,
+                "complexity": "Beginner",
+                "function": None  # Will use backtesting engine
+            },
+            "crypto_bollinger_bands": {
+                "name": "Crypto Bollinger Bands",
+                "description": "Mean reversion strategy using Bollinger Bands for crypto",
+                "asset_classes": [AssetClass.CRYPTO],
+                "category": StrategyCategory.MEAN_REVERSION,
+                "risk_level": 4,
+                "complexity": "Beginner",
+                "function": None  # Will use backtesting engine
+            },
+            "crypto_macd": {
+                "name": "Crypto MACD Strategy",
+                "description": "Momentum strategy using MACD indicator for crypto",
+                "asset_classes": [AssetClass.CRYPTO],
+                "category": StrategyCategory.MOMENTUM,
+                "risk_level": 5,
+                "complexity": "Intermediate",
+                "function": None  # Will use backtesting engine
+            },
             
             # REIT strategies
             "reit_dividend_capture": {

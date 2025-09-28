@@ -286,8 +286,13 @@ def run_backtest(symbol: str, strategy: Dict[str, Any], parameters: Dict[str, An
                 signal=parameters.get('signal', 9)
             )
         else:
-            # Default to combined strategy
-            result = backtester.run_backtest(df, "Combined")
+            # Default to RSI strategy
+            result = backtester.run_backtest(
+                df, "RSI",
+                period=parameters.get('period', 14),
+                oversold=parameters.get('oversold', 30),
+                overbought=parameters.get('overbought', 70)
+            )
         
         return result
         
