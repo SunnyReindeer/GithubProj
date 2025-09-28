@@ -98,7 +98,7 @@ def create_tradingview_widget(symbol: str, timeframe: str = "1h", height: int = 
     
     return components.html(widget_html, height=height + 50)
 
-def create_tradingview_advanced_chart(symbol: str, timeframe: str = "1h", height: int = 600):
+def create_tradingview_advanced_chart(symbol: str, timeframe: str = "1h", height: int = 600, container_id: str = None):
     """Create an advanced TradingView chart with more features"""
     
     symbol_mapping = {
@@ -129,10 +129,14 @@ def create_tradingview_advanced_chart(symbol: str, timeframe: str = "1h", height
     tv_symbol = symbol_mapping.get(symbol, "BINANCE:BTCUSDT")
     tv_timeframe = timeframe_mapping.get(timeframe, "60")
     
+    # Use provided container_id or generate unique one
+    if container_id is None:
+        container_id = f"tradingview_advanced_chart_{hash(symbol)}"
+    
     # Advanced TradingView chart HTML
     chart_html = f"""
     <div class="tradingview-widget-container" style="width: 100%; height: {height}px;">
-        <div id="tradingview_advanced_chart" style="width: 100%; height: {height}px;"></div>
+        <div id="{container_id}" style="width: 100%; height: {height}px;"></div>
         <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
         <script type="text/javascript">
         new TradingView.widget({{
@@ -150,7 +154,7 @@ def create_tradingview_advanced_chart(symbol: str, timeframe: str = "1h", height
             "hide_side_toolbar": false,
             "allow_symbol_change": true,
             "save_image": false,
-            "container_id": "tradingview_advanced_chart",
+            "container_id": "{container_id}",
             "studies": [
                 "RSI@tv-basicstudies",
                 "MACD@tv-basicstudies",

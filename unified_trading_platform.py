@@ -311,20 +311,22 @@ def display_price_charts(symbols: List[str]):
         )
     
     with col2:
-        if chart_type == "📈 TradingView Widget":
+        if chart_type == "📊 Standard":
             timeframe = st.selectbox(
-                "Timeframe",
-                ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w"],
-                index=4,  # Default to 1h
-                help="Select chart timeframe"
+                "Time Period",
+                ["1mo", "3mo", "6mo", "1y", "2y", "5y"],
+                index=3,  # Default to 1y
+                help="Select data period for standard charts"
             )
         else:
-            timeframe = "1h"  # Default for standard charts
+            timeframe = "1h"  # Default for TradingView widget
     
     # Always use multi-asset data provider (unified platform)
     for symbol in symbols[:4]:  # Limit to 4 charts for performance
         try:
-            historical_data = multi_asset_data_provider.get_historical_data(symbol, period="3mo", interval="1d")
+            # Use selected timeframe for standard charts, default for TradingView
+            period = timeframe if chart_type == "📊 Standard" else "3mo"
+            historical_data = multi_asset_data_provider.get_historical_data(symbol, period=period, interval="1d")
             
             if historical_data and not historical_data.data.empty:
                 df = historical_data.data
@@ -362,7 +364,7 @@ def display_price_charts(symbols: List[str]):
                     
                     # Update layout for standard chart
                     fig.update_layout(
-                        title=f"{symbol} - 3 Month Chart (Standard)",
+                        title=f"{symbol} - {timeframe.upper()} Chart (Standard)",
                         xaxis_title="Date",
                         yaxis_title="Price",
                         height=400,
@@ -379,7 +381,9 @@ def display_price_charts(symbols: List[str]):
                     tv_symbol = map_symbol_to_tradingview(symbol)
                     
                     st.markdown(f"### {symbol} - TradingView Chart")
-                    create_tradingview_advanced_chart(tv_symbol, timeframe, height=600)
+                    # Create unique widget ID to force refresh when symbol changes
+                    widget_id = f"tradingview_{symbol}_{hash(tv_symbol)}"
+                    create_tradingview_advanced_chart(tv_symbol, "1h", height=600, container_id=widget_id)
                 
         except Exception as e:
             st.error(f"Error loading chart for {symbol}: {e}")
