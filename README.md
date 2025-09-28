@@ -1,6 +1,11 @@
 # Crypto Trading Simulator with AI Robo Advisor 📈🤖
 
+<<<<<<< HEAD
 A comprehensive cryptocurrency trading simulation application built with Streamlit, featuring live market data, portfolio management, interactive trading interface, and an AI-powered robo advisor for personalized trading strategies.
+=======
+A real-time cryptocurrency trading simulation application built with Streamlit, featuring live market data, portfolio management, and interactive trading interface.
+https://appproj-dxyustmoiqdh3nbnxwyhfb.streamlit.app/
+>>>>>>> 8e81f853b6a4daf7b50cd91da2d4dbac5a21feaf
 
 ## Features
 
