@@ -70,10 +70,14 @@ if 'portfolio_initialized' not in st.session_state:
     st.session_state.selected_symbols = []
     st.session_state.use_multi_asset = True
 
+# Ensure use_multi_asset is always initialized
+if 'use_multi_asset' not in st.session_state:
+    st.session_state.use_multi_asset = True
+
 def initialize_portfolio():
     """Initialize portfolio if not already done"""
     if not st.session_state.portfolio_initialized:
-        if st.session_state.use_multi_asset:
+        if st.session_state.get('use_multi_asset', True):
             multi_asset_portfolio.__init__(INITIAL_BALANCE)
         else:
             portfolio.__init__(INITIAL_BALANCE)
@@ -82,7 +86,7 @@ def initialize_portfolio():
 def get_current_prices(symbols: List[str]) -> Dict[str, Any]:
     """Get current prices for symbols using appropriate data provider"""
     try:
-        if st.session_state.use_multi_asset:
+        if st.session_state.get('use_multi_asset', True):
             # Use multi-asset data provider
             price_data = multi_asset_data_provider.get_current_prices(symbols)
             # Convert to format expected by crypto trading engine
@@ -103,14 +107,19 @@ def create_asset_class_selector():
     st.sidebar.markdown("## 🌍 Asset Class Selection")
     
     # Add option to use original crypto trading or multi-asset
-    use_multi_asset = st.sidebar.checkbox("Use Multi-Asset Platform", value=True)
+    use_multi_asset = st.sidebar.checkbox("Use Multi-Asset Platform", value=st.session_state.get('use_multi_asset', True))
     st.session_state.use_multi_asset = use_multi_asset
     
     if use_multi_asset:
         asset_classes = multi_asset_config.get_supported_asset_classes()
         asset_class_names = [ac.value.replace('_', ' ').title() for ac in asset_classes]
         
-        selected_index = asset_classes.index(st.session_state.selected_asset_class)
+        # Find the index of the currently selected asset class
+        try:
+            selected_index = asset_classes.index(st.session_state.selected_asset_class)
+        except (ValueError, AttributeError):
+            selected_index = 0  # Default to first option if not found
+        
         selected_name = st.sidebar.selectbox(
             "Select Asset Class",
             options=asset_class_names,
@@ -130,7 +139,7 @@ def create_symbol_selector(asset_class: AssetClass):
     """Create symbol selector for the selected asset class"""
     st.sidebar.markdown("### 📊 Symbol Selection")
     
-    if st.session_state.use_multi_asset and asset_class != AssetClass.CRYPTO:
+    if st.session_state.get('use_multi_asset', True) and asset_class != AssetClass.CRYPTO:
         # Get assets for the selected class
         assets = multi_asset_config.get_assets_by_class(asset_class)
         
@@ -144,7 +153,7 @@ def create_symbol_selector(asset_class: AssetClass):
         selected_symbols = st.sidebar.multiselect(
             "Select Symbols",
             options=symbol_options,
-            default=st.session_state.selected_symbols
+            default=st.session_state.get('selected_symbols', [])
         )
         
         # Extract symbols from selected options
@@ -157,7 +166,7 @@ def create_symbol_selector(asset_class: AssetClass):
         selected_symbols = st.sidebar.multiselect(
             "Select Cryptocurrencies",
             options=SUPPORTED_CRYPTOS,
-            default=st.session_state.selected_symbols
+            default=st.session_state.get('selected_symbols', [])
         )
         st.session_state.selected_symbols = selected_symbols
         return selected_symbols
@@ -166,7 +175,7 @@ def display_market_overview():
     """Display market overview for all asset classes"""
     st.markdown("## 📈 Market Overview")
     
-    if st.session_state.use_multi_asset:
+    if st.session_state.get('use_multi_asset', True):
         with st.spinner("Fetching market data..."):
             market_overview = multi_asset_data_provider.get_market_overview()
         
@@ -231,7 +240,7 @@ def display_price_charts(symbols: List[str]):
     
     st.markdown("## 📊 Price Charts")
     
-    if st.session_state.use_multi_asset:
+    if st.session_state.get('use_multi_asset', True):
         # Use multi-asset data provider for charts
         for symbol in symbols[:4]:  # Limit to 4 charts for performance
             try:
@@ -334,7 +343,7 @@ def create_trading_panel(symbols: List[str]):
         # Place order button
         if st.button("🚀 Place Order", type="primary"):
             if quantity > 0:
-                if st.session_state.use_multi_asset:
+                if st.session_state.get('use_multi_asset', True):
                     # Use multi-asset portfolio
                     side = MAOrderSide.BUY if order_side == "Buy" else MAOrderSide.SELL
                     order_type_enum = MAOrderType.MARKET if order_type == "Market" else MAOrderType.LIMIT
@@ -428,7 +437,7 @@ def display_portfolio_summary():
     """Display portfolio summary"""
     st.markdown("## 💰 Portfolio Summary")
     
-    if st.session_state.use_multi_asset:
+    if st.session_state.get('use_multi_asset', True):
         # Get current prices for all positions
         symbols = list(multi_asset_portfolio.positions.keys())
         if symbols:
@@ -514,7 +523,7 @@ def display_positions():
     """Display current positions"""
     st.markdown("## 💼 Current Positions")
     
-    if st.session_state.use_multi_asset:
+    if st.session_state.get('use_multi_asset', True):
         # Get current prices
         symbols = list(multi_asset_portfolio.positions.keys())
         if symbols:
@@ -543,7 +552,7 @@ def display_trades():
     """Display recent trades"""
     st.markdown("## 📋 Recent Trades")
     
-    if st.session_state.use_multi_asset:
+    if st.session_state.get('use_multi_asset', True):
         trades_df = multi_asset_portfolio.get_trades_dataframe()
         if not trades_df.empty:
             # Show last 10 trades
@@ -581,7 +590,7 @@ def main():
         
         # Portfolio summary
         st.markdown("## 💰 Portfolio Summary")
-        if st.session_state.use_multi_asset:
+        if st.session_state.get('use_multi_asset', True):
             symbols = list(multi_asset_portfolio.positions.keys())
             if symbols:
                 current_prices = get_current_prices(symbols)
