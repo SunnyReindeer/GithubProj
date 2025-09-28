@@ -178,32 +178,31 @@ class RiskAssessmentEngine:
         """Initialize recommended asset allocations for different risk profiles"""
         return {
             RiskTolerance.CONSERVATIVE: {
-                "stable_coins": 0.40,  # USDT, USDC
-                "blue_chip_crypto": 0.30,  # BTC, ETH
-                "defi_tokens": 0.15,  # Established DeFi tokens
-                "alt_coins": 0.10,  # Other established cryptocurrencies
-                "new_tokens": 0.05   # Newer, riskier tokens
+                "bonds": 0.35,  # Government and corporate bonds
+                "etfs": 0.30,   # Broad market ETFs
+                "stocks": 0.20, # Blue chip stocks
+                "commodities": 0.10,  # Gold, silver
+                "crypto": 0.05  # Bitcoin, stablecoins
             },
             RiskTolerance.MODERATE: {
-                "stable_coins": 0.20,
-                "blue_chip_crypto": 0.40,
-                "defi_tokens": 0.20,
-                "alt_coins": 0.15,
-                "new_tokens": 0.05
+                "stocks": 0.35, # Diversified stock portfolio
+                "etfs": 0.25,   # Market ETFs
+                "crypto": 0.20, # Bitcoin, Ethereum
+                "commodities": 0.15,  # Gold, silver, oil
+                "bonds": 0.05   # Some bond exposure
             },
             RiskTolerance.AGGRESSIVE: {
-                "stable_coins": 0.10,
-                "blue_chip_crypto": 0.30,
-                "defi_tokens": 0.25,
-                "alt_coins": 0.25,
-                "new_tokens": 0.10
+                "crypto": 0.35, # Bitcoin, Ethereum, altcoins
+                "stocks": 0.30, # Growth stocks
+                "commodities": 0.20,  # Gold, silver, oil
+                "etfs": 0.10,   # Sector ETFs
+                "forex": 0.05   # Currency trading
             },
             RiskTolerance.VERY_AGGRESSIVE: {
-                "stable_coins": 0.05,
-                "blue_chip_crypto": 0.20,
-                "defi_tokens": 0.25,
-                "alt_coins": 0.30,
-                "new_tokens": 0.20
+                "crypto": 0.45, # High allocation to crypto
+                "stocks": 0.25, # High-growth stocks
+                "commodities": 0.20,  # Volatile commodities
+                "forex": 0.10   # Currency speculation
             }
         }
     
