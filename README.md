@@ -1,15 +1,24 @@
-# Crypto Trading Simulator 📈
+# Crypto Trading Simulator with AI Robo Advisor 📈🤖
 
-A real-time cryptocurrency trading simulation application built with Streamlit, featuring live market data, portfolio management, and interactive trading interface.
+A comprehensive cryptocurrency trading simulation application built with Streamlit, featuring live market data, portfolio management, interactive trading interface, and an AI-powered robo advisor for personalized trading strategies.
 
 ## Features
 
+### Core Trading Features
 - **Real-time Market Data**: Live cryptocurrency prices via Binance WebSocket API
 - **Trading Simulation**: Place buy/sell orders with realistic trading fees
 - **Portfolio Management**: Track positions, P&L, and portfolio performance
 - **Interactive Charts**: Candlestick charts with historical price data
 - **Order Management**: Market and limit orders with order history
 - **Performance Analytics**: Real-time portfolio metrics and performance tracking
+
+### AI Robo Advisor Features
+- **🎯 Risk Assessment**: Comprehensive questionnaire to evaluate your risk preferences
+- **🤖 AI Strategy Recommendations**: Personalized trading strategies based on your risk profile
+- **🎯 Portfolio Optimization**: Advanced portfolio optimization using multiple methods
+- **📋 Trading Plans**: Complete personalized trading plans with implementation guidance
+- **📊 Risk Analysis**: Detailed risk metrics and portfolio analysis
+- **💾 Export Functionality**: Download your risk profile and trading plan
 
 ## Supported Cryptocurrencies
 
@@ -49,6 +58,20 @@ streamlit run app.py
 2. The app will open in your browser at `http://localhost:8501`
 3. Wait for the WebSocket connection to establish (you'll see "Connecting to market data...")
 
+### Using the AI Robo Advisor
+1. Navigate to the "🎯 AI Robo Advisor" tab in the sidebar
+2. Complete the risk assessment questionnaire (10 questions)
+3. Review your personalized risk profile
+4. Get AI-powered strategy recommendations
+5. Optimize your portfolio allocation
+6. Download your complete trading plan
+
+### Demo the Robo Advisor
+Run the demo script to see the robo advisor in action:
+```bash
+python robo_advisor_demo.py
+```
+
 ### Trading
 1. **Select a Cryptocurrency**: Choose from the dropdown in the sidebar
 2. **Place Orders**: 
@@ -87,6 +110,13 @@ Edit `config.py` to customize:
 - `trading_engine.py`: Portfolio and order management system
 - `app.py`: Main Streamlit application
 - `config.py`: Configuration settings
+
+### AI Robo Advisor Components
+- `risk_assessment_engine.py`: Risk profiling and questionnaire system
+- `strategy_recommender.py`: AI strategy matching and recommendations
+- `portfolio_optimizer.py`: Advanced portfolio optimization algorithms
+- `robo_advisor_page.py`: User interface for the robo advisor
+- `robo_advisor_demo.py`: Demo script showcasing all features
 
 ### Data Flow
 1. WebSocket connects to Binance API

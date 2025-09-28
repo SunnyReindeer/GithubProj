@@ -30,7 +30,7 @@ def show_navigation():
     st.sidebar.markdown("## 🧭 Navigation")
     page = st.sidebar.radio(
         "Go to",
-        ["📈 Trading Simulator", "🤖 Strategy Backtesting"],
+        ["📈 Trading Simulator", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
         index=0
     )
     return page
@@ -534,6 +534,12 @@ def main():
         # Import and run backtesting page
         from backtesting_page import main as backtesting_main
         backtesting_main()
+        return
+    
+    if page == "🎯 AI Robo Advisor":
+        # Import and run robo advisor page
+        from robo_advisor_page import main as robo_advisor_main
+        robo_advisor_main()
         return
     
     # Initialize components
