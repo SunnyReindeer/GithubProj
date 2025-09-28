@@ -212,14 +212,25 @@ def get_historical_data(symbol: str, time_period: str, timeframe: str) -> Option
         if historical_data and not historical_data.data.empty:
             df = historical_data.data.copy()
             
-            # Ensure we have the required columns
+            # Debug: Show original columns
+            st.write(f"Debug: Original columns for {symbol}: {list(df.columns)}")
+            
+            # Ensure we have the required columns and convert to lowercase
             required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
             if all(col in df.columns for col in required_columns):
+                # Convert column names to lowercase for backtesting engine compatibility
+                df.columns = df.columns.str.lower()
+                
                 # Add timestamp column
                 df['timestamp'] = df.index
+                
+                # Debug: Show final columns
+                st.write(f"Debug: Final columns for {symbol}: {list(df.columns)}")
+                st.write(f"Debug: Data shape: {df.shape}")
+                
                 return df
             else:
-                st.error(f"Missing required columns in data for {symbol}")
+                st.error(f"Missing required columns in data for {symbol}. Available columns: {list(df.columns)}")
                 return None
         else:
             st.error(f"No historical data available for {symbol}")
