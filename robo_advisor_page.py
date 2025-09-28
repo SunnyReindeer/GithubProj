@@ -259,11 +259,27 @@ def display_strategy_recommendations(strategies: List[StrategyRecommendation]):
             
             # Strategy parameters
             st.markdown("**⚙️ Strategy Parameters:**")
-            params_df = pd.DataFrame([
-                {"Parameter": k.replace('_', ' ').title(), "Value": v}
-                for k, v in strategy.parameters.items()
-            ])
-            st.dataframe(params_df, use_container_width=True)
+            if strategy.parameters:
+                # Convert all values to strings to avoid PyArrow serialization issues
+                params_data = []
+                for k, v in strategy.parameters.items():
+                    # Convert complex objects to strings
+                    if isinstance(v, (list, dict)):
+                        value_str = str(v)
+                    elif isinstance(v, float):
+                        value_str = f"{v:.2f}"
+                    else:
+                        value_str = str(v)
+                    
+                    params_data.append({
+                        "Parameter": k.replace('_', ' ').title(),
+                        "Value": value_str
+                    })
+                
+                params_df = pd.DataFrame(params_data)
+                st.dataframe(params_df, use_container_width=True)
+            else:
+                st.info("No specific parameters for this strategy")
             
             # Recommended symbols
             st.markdown(f"**📊 Recommended Trading Pairs:** {', '.join(strategy.symbols)}")
