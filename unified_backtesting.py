@@ -120,6 +120,9 @@ def create_parameter_inputs(strategy: Dict[str, Any]):
     """Create parameter inputs for the selected strategy"""
     st.sidebar.markdown("### ⚙️ Strategy Parameters")
     
+    # Debug: Show strategy name
+    st.sidebar.write(f"Strategy: {strategy['name']}")
+    
     parameters = {}
     
     # Common parameters for different strategies
@@ -136,6 +139,11 @@ def create_parameter_inputs(strategy: Dict[str, Any]):
         parameters['period'] = st.sidebar.slider("Bollinger Period", 10, 50, 20, 1)
         parameters['std_dev'] = st.sidebar.slider("Standard Deviation", 1.0, 3.0, 2.0, 0.1)
     
+    if "macd" in strategy['name'].lower():
+        parameters['fast'] = st.sidebar.slider("MACD Fast Period", 5, 20, 12, 1)
+        parameters['slow'] = st.sidebar.slider("MACD Slow Period", 20, 50, 26, 1)
+        parameters['signal'] = st.sidebar.slider("MACD Signal Period", 5, 15, 9, 1)
+    
     if "volatility" in strategy['name'].lower():
         parameters['volatility_period'] = st.sidebar.slider("Volatility Period", 10, 50, 20, 1)
     
@@ -145,6 +153,14 @@ def create_parameter_inputs(strategy: Dict[str, Any]):
     if "yield" in strategy['name'].lower():
         parameters['short_term'] = st.sidebar.slider("Short Term Period", 1, 10, 2, 1)
         parameters['long_term'] = st.sidebar.slider("Long Term Period", 5, 30, 10, 1)
+    
+    if "fear" in strategy['name'].lower() and "greed" in strategy['name'].lower():
+        parameters['fear_threshold'] = st.sidebar.slider("Fear Threshold", 10, 40, 20, 1)
+        parameters['greed_threshold'] = st.sidebar.slider("Greed Threshold", 60, 90, 80, 1)
+    
+    # If no parameters were set, show a message
+    if not parameters:
+        st.sidebar.info("No configurable parameters for this strategy")
     
     return parameters
 

@@ -14,6 +14,55 @@ from risk_assessment_engine import risk_engine, RiskProfile, RiskTolerance, Inve
 from strategy_recommender import strategy_recommender, StrategyRecommendation
 from portfolio_optimizer import portfolio_optimizer, OptimizationResult, OptimizationMethod
 
+def get_diversified_symbols(profile: RiskProfile) -> List[str]:
+    """Get diversified symbols based on risk profile"""
+    # Base symbols for different asset classes
+    crypto_symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "ADAUSDT", "SOLUSDT"]
+    stock_symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN", "META", "NVDA"]
+    etf_symbols = ["SPY", "QQQ", "IWM", "VTI", "VEA", "VWO"]
+    forex_symbols = ["EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD"]
+    commodity_symbols = ["GOLD", "SILVER", "OIL", "COPPER", "NATURAL_GAS"]
+    bond_symbols = ["TLT", "IEF", "SHY", "LQD", "HYG"]
+    
+    # Select symbols based on risk tolerance
+    if profile.risk_tolerance == RiskTolerance.CONSERVATIVE:
+        # Conservative: More bonds, ETFs, less crypto
+        symbols = (
+            bond_symbols[:3] +           # 3 bonds
+            etf_symbols[:3] +            # 3 ETFs
+            stock_symbols[:2] +          # 2 stocks
+            commodity_symbols[:1] +      # 1 commodity
+            crypto_symbols[:1]           # 1 crypto
+        )
+    elif profile.risk_tolerance == RiskTolerance.MODERATE:
+        # Moderate: Balanced mix
+        symbols = (
+            etf_symbols[:2] +            # 2 ETFs
+            stock_symbols[:3] +          # 3 stocks
+            crypto_symbols[:2] +         # 2 crypto
+            commodity_symbols[:2] +      # 2 commodities
+            forex_symbols[:1]            # 1 forex
+        )
+    elif profile.risk_tolerance == RiskTolerance.AGGRESSIVE:
+        # Aggressive: More crypto, growth stocks, commodities
+        symbols = (
+            crypto_symbols[:3] +         # 3 crypto
+            stock_symbols[:3] +          # 3 stocks
+            commodity_symbols[:2] +      # 2 commodities
+            forex_symbols[:1] +          # 1 forex
+            etf_symbols[:1]              # 1 ETF
+        )
+    else:  # VERY_AGGRESSIVE
+        # Very aggressive: Maximum crypto, high-risk assets
+        symbols = (
+            crypto_symbols[:4] +         # 4 crypto
+            stock_symbols[:3] +          # 3 stocks
+            commodity_symbols[:2] +      # 2 commodities
+            forex_symbols[:1]            # 1 forex
+        )
+    
+    return symbols[:10]  # Limit to 10 symbols
+
 def create_risk_assessment_form() -> Dict[str, Any]:
     """Create the risk assessment questionnaire form"""
     st.markdown("## 🎯 Risk Assessment Questionnaire")
@@ -223,16 +272,15 @@ def display_portfolio_optimization(profile: RiskProfile, strategies: List[Strate
     """Display portfolio optimization results"""
     st.markdown("## 🎯 Portfolio Optimization")
     
-    # Get symbols from strategies
-    all_symbols = set()
-    for strategy in strategies:
-        all_symbols.update(strategy.symbols)
-    
-    symbols = list(all_symbols)[:10]  # Limit to 10 symbols for optimization
+    # Get diversified symbols based on risk profile
+    symbols = get_diversified_symbols(profile)
     
     if not symbols:
         st.warning("No symbols available for optimization.")
         return
+    
+    # Show selected symbols for optimization
+    st.info(f"**Selected Assets for Optimization:** {', '.join(symbols)}")
     
     # Optimization method selection
     st.markdown("### 🔧 Optimization Settings")
