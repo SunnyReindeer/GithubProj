@@ -77,27 +77,19 @@ if 'use_multi_asset' not in st.session_state:
 def initialize_portfolio():
     """Initialize portfolio if not already done"""
     if not st.session_state.portfolio_initialized:
-        if st.session_state.get('use_multi_asset', True):
-            multi_asset_portfolio.__init__(INITIAL_BALANCE)
-        else:
-            portfolio.__init__(INITIAL_BALANCE)
+        multi_asset_portfolio.__init__(INITIAL_BALANCE)
         st.session_state.portfolio_initialized = True
 
 def get_current_prices(symbols: List[str]) -> Dict[str, Any]:
     """Get current prices for symbols using appropriate data provider"""
     try:
-        if st.session_state.get('use_multi_asset', True):
-            # Use multi-asset data provider
-            price_data = multi_asset_data_provider.get_current_prices(symbols)
-            # Convert to format expected by crypto trading engine
-            prices = {}
-            for symbol, price_obj in price_data.items():
-                prices[symbol] = price_obj.price
-            return prices
-        else:
-            # Use original crypto data provider
-            from app import get_current_prices as crypto_get_prices
-            return crypto_get_prices()
+        # Use multi-asset data provider
+        price_data = multi_asset_data_provider.get_current_prices(symbols)
+        # Convert to format expected by crypto trading engine
+        prices = {}
+        for symbol, price_obj in price_data.items():
+            prices[symbol] = price_obj.price
+        return prices
     except Exception as e:
         st.error(f"Error fetching prices: {e}")
         return {}
@@ -106,50 +98,38 @@ def create_asset_class_selector():
     """Create asset class selector"""
     st.sidebar.markdown("## 🌍 Asset Class Selection")
     
-    # Add option to use original crypto trading or multi-asset
-    use_multi_asset = st.sidebar.checkbox("Use Multi-Asset Platform", value=st.session_state.get('use_multi_asset', True))
+    # Always use unified multi-asset platform
+    asset_classes = multi_asset_config.get_supported_asset_classes()
+    asset_class_names = [ac.value.replace('_', ' ').title() for ac in asset_classes]
     
-    # Clear selected symbols if mode changed
-    if st.session_state.get('use_multi_asset') != use_multi_asset:
+    # Find the index of the currently selected asset class
+    try:
+        selected_index = asset_classes.index(st.session_state.get('selected_asset_class', AssetClass.CRYPTO))
+    except (ValueError, AttributeError):
+        selected_index = 0  # Default to first option if not found
+    
+    selected_name = st.sidebar.selectbox(
+        "Select Asset Class",
+        options=asset_class_names,
+        index=selected_index
+    )
+    
+    # Update selected asset class
+    selected_asset_class = AssetClass(selected_name.lower().replace(' ', '_'))
+    
+    # Clear selected symbols if asset class changed
+    if st.session_state.get('selected_asset_class') != selected_asset_class:
         st.session_state.selected_symbols = []
     
-    st.session_state.use_multi_asset = use_multi_asset
+    st.session_state.selected_asset_class = selected_asset_class
     
-    if use_multi_asset:
-        asset_classes = multi_asset_config.get_supported_asset_classes()
-        asset_class_names = [ac.value.replace('_', ' ').title() for ac in asset_classes]
-        
-        # Find the index of the currently selected asset class
-        try:
-            selected_index = asset_classes.index(st.session_state.selected_asset_class)
-        except (ValueError, AttributeError):
-            selected_index = 0  # Default to first option if not found
-        
-        selected_name = st.sidebar.selectbox(
-            "Select Asset Class",
-            options=asset_class_names,
-            index=selected_index
-        )
-        
-        # Update selected asset class
-        selected_asset_class = AssetClass(selected_name.lower().replace(' ', '_'))
-        
-        # Clear selected symbols if asset class changed
-        if st.session_state.get('selected_asset_class') != selected_asset_class:
-            st.session_state.selected_symbols = []
-        
-        st.session_state.selected_asset_class = selected_asset_class
-        
-        return selected_asset_class
-    else:
-        st.sidebar.info("Using Original Crypto Trading Platform")
-        return AssetClass.CRYPTO
+    return selected_asset_class
 
 def create_symbol_selector(asset_class: AssetClass):
     """Create symbol selector for the selected asset class"""
     st.sidebar.markdown("### 📊 Symbol Selection")
     
-    if st.session_state.get('use_multi_asset', True) and asset_class != AssetClass.CRYPTO:
+    if asset_class != AssetClass.CRYPTO:
         # Get assets for the selected class
         assets = multi_asset_config.get_assets_by_class(asset_class)
         
@@ -162,7 +142,7 @@ def create_symbol_selector(asset_class: AssetClass):
         
         # Get current session state symbols and filter to only include valid options
         current_selected = st.session_state.get('selected_symbols', [])
-        valid_defaults = [symbol for symbol in current_selected if any(symbol in option for option in symbol_options)]
+        valid_defaults = [option for option in symbol_options if any(symbol in option for symbol in current_selected)]
         
         selected_symbols = st.sidebar.multiselect(
             "Select Symbols",
@@ -258,16 +238,25 @@ def display_price_charts(symbols: List[str]):
     
     st.markdown("## 📊 Price Charts")
     
-    if st.session_state.get('use_multi_asset', True):
-        # Use multi-asset data provider for charts
-        for symbol in symbols[:4]:  # Limit to 4 charts for performance
-            try:
-                historical_data = multi_asset_data_provider.get_historical_data(symbol, period="3mo", interval="1d")
+    # Chart display options
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        chart_type = st.radio(
+            "Chart Type",
+            ["📊 Standard", "📈 TradingView Style"],
+            help="Standard: Basic candlestick charts | TradingView Style: Advanced charts with more indicators"
+        )
+    
+    # Always use multi-asset data provider (unified platform)
+    for symbol in symbols[:4]:  # Limit to 4 charts for performance
+        try:
+            historical_data = multi_asset_data_provider.get_historical_data(symbol, period="3mo", interval="1d")
+            
+            if historical_data and not historical_data.data.empty:
+                df = historical_data.data
                 
-                if historical_data and not historical_data.data.empty:
-                    df = historical_data.data
-                    
-                    # Create candlestick chart
+                if chart_type == "📊 Standard":
+                    # Create basic candlestick chart
                     fig = go.Figure(data=go.Candlestick(
                         x=df.index,
                         open=df['Open'],
@@ -296,23 +285,101 @@ def display_price_charts(symbols: List[str]):
                         name='MA50',
                         line=dict(color='blue', width=1)
                     ))
+                else:
+                    # TradingView style chart with more indicators
+                    fig = go.Figure(data=go.Candlestick(
+                        x=df.index,
+                        open=df['Open'],
+                        high=df['High'],
+                        low=df['Low'],
+                        close=df['Close'],
+                        name=symbol
+                    ))
                     
+                    # Add multiple moving averages
+                    df['MA9'] = df['Close'].rolling(window=9).mean()
+                    df['MA21'] = df['Close'].rolling(window=21).mean()
+                    df['MA50'] = df['Close'].rolling(window=50).mean()
+                    df['MA200'] = df['Close'].rolling(window=200).mean()
+                    
+                    # Add Bollinger Bands
+                    df['BB_Middle'] = df['Close'].rolling(window=20).mean()
+                    bb_std = df['Close'].rolling(window=20).std()
+                    df['BB_Upper'] = df['BB_Middle'] + (bb_std * 2)
+                    df['BB_Lower'] = df['BB_Middle'] - (bb_std * 2)
+                    
+                    # Add RSI
+                    delta = df['Close'].diff()
+                    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                    rs = gain / loss
+                    df['RSI'] = 100 - (100 / (1 + rs))
+                    
+                    # Add moving averages
+                    for ma, color in [('MA9', 'yellow'), ('MA21', 'orange'), ('MA50', 'blue'), ('MA200', 'red')]:
+                        fig.add_trace(go.Scatter(
+                            x=df.index,
+                            y=df[ma],
+                            mode='lines',
+                            name=ma,
+                            line=dict(color=color, width=1)
+                        ))
+                    
+                    # Add Bollinger Bands
+                    fig.add_trace(go.Scatter(
+                        x=df.index,
+                        y=df['BB_Upper'],
+                        mode='lines',
+                        name='BB Upper',
+                        line=dict(color='gray', width=1, dash='dash')
+                    ))
+                    
+                    fig.add_trace(go.Scatter(
+                        x=df.index,
+                        y=df['BB_Lower'],
+                        mode='lines',
+                        name='BB Lower',
+                        line=dict(color='gray', width=1, dash='dash')
+                    ))
+                    
+                    # Add RSI subplot
+                    fig.add_trace(go.Scatter(
+                        x=df.index,
+                        y=df['RSI'],
+                        mode='lines',
+                        name='RSI',
+                        line=dict(color='purple', width=1),
+                        yaxis='y2'
+                    ))
+                    
+                # Update layout based on chart type
+                if chart_type == "📊 Standard":
                     fig.update_layout(
-                        title=f"{symbol} - 3 Month Chart",
+                        title=f"{symbol} - 3 Month Chart (Standard)",
                         xaxis_title="Date",
                         yaxis_title="Price",
                         height=400,
                         showlegend=True
                     )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    fig.update_layout(
+                        title=f"{symbol} - 3 Month Chart (TradingView Style)",
+                        xaxis_title="Date",
+                        yaxis_title="Price",
+                        height=600,
+                        showlegend=True,
+                        yaxis2=dict(
+                            title="RSI",
+                            overlaying="y",
+                            side="right",
+                            range=[0, 100]
+                        )
+                    )
                 
-            except Exception as e:
-                st.error(f"Error loading chart for {symbol}: {e}")
-    else:
-        # Use original crypto charting
-        selected_symbol = symbols[0] if symbols else "BTCUSDT"
-        create_tradingview_advanced_chart(selected_symbol, "1h", height=800)
+                st.plotly_chart(fig, use_container_width=True)
+                
+        except Exception as e:
+            st.error(f"Error loading chart for {symbol}: {e}")
 
 def create_trading_panel(symbols: List[str]):
     """Create trading panel for placing orders"""
@@ -606,37 +673,23 @@ def main():
         # Symbol selection
         selected_symbols = create_symbol_selector(selected_asset_class)
         
-        # Portfolio summary
-        st.markdown("## 💰 Portfolio Summary")
-        if st.session_state.get('use_multi_asset', True):
-            symbols = list(multi_asset_portfolio.positions.keys())
-            if symbols:
-                current_prices = get_current_prices(symbols)
-                metrics = multi_asset_portfolio.get_portfolio_metrics(current_prices)
-                
-                st.metric("Total Value", f"${metrics.total_value:,.2f}")
-                st.metric("Total P&L", f"${metrics.total_pnl:,.2f}")
-                pnl_color = "normal" if metrics.total_pnl >= 0 else "inverse"
-                st.metric(
-                    "P&L %",
-                    f"{metrics.total_pnl_percent:.2f}%",
-                    delta_color=pnl_color
-                )
-        else:
-            current_prices = get_current_prices([])
-            if current_prices:
-                summary = portfolio.get_portfolio_summary(current_prices)
-                
-                st.metric("Total Value", f"${summary['total_value']:,.2f}")
-                st.metric("Cash Balance", f"${summary['cash_balance']:,.2f}")
-                
-                pnl_color = "normal" if summary['total_pnl'] > 0 else "inverse"
-                st.metric(
-                    "Total P&L",
-                    f"${summary['total_pnl']:,.2f}",
-                    delta=f"{summary['pnl_percentage']:.2f}%",
-                    delta_color=pnl_color
-                )
+    # Portfolio summary
+    st.markdown("## 💰 Portfolio Summary")
+    symbols = list(multi_asset_portfolio.positions.keys())
+    if symbols:
+        current_prices = get_current_prices(symbols)
+        metrics = multi_asset_portfolio.get_portfolio_metrics(current_prices)
+        
+        st.metric("Total Value", f"${metrics.total_value:,.2f}")
+        st.metric("Total P&L", f"${metrics.total_pnl:,.2f}")
+        pnl_color = "normal" if metrics.total_pnl >= 0 else "inverse"
+        st.metric(
+            "P&L %",
+            f"{metrics.total_pnl_percent:.2f}%",
+            delta_color=pnl_color
+        )
+    else:
+        st.info("No positions to display")
     
     # Main content
     # Create tabs
