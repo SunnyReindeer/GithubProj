@@ -10,6 +10,12 @@ import time
 def create_analytics_dashboard():
     """Create a modern analytics dashboard combining market overview and portfolio"""
     
+    # Import contextual tutorial
+    from contextual_tutorial import show_tutorial_for_tab, add_element_id
+    
+    # Show tutorial for analytics dashboard
+    show_tutorial_for_tab("analytics_dashboard")
+    
     # Custom CSS for modern dashboard design
     st.markdown("""
     <style>
@@ -110,8 +116,8 @@ def create_analytics_dashboard():
     """, unsafe_allow_html=True)
     
     # Dashboard Header
-    st.markdown("""
-    <div class="dashboard-container">
+    st.markdown(f"""
+    <div id="dashboard-header" class="dashboard-container">
         <div class="dashboard-title">📊 Analytics Dashboard</div>
         <div class="dashboard-subtitle">Real-time market insights and portfolio performance</div>
     </div>
@@ -129,6 +135,8 @@ def create_analytics_dashboard():
     # Top Row - Key Metrics
     st.markdown("### 🎯 Key Performance Indicators")
     
+    # Add container for KPI cards
+    st.markdown('<div id="kpi-cards">', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     
     # Calculate portfolio metrics
@@ -184,11 +192,17 @@ def create_analytics_dashboard():
         </div>
         """, unsafe_allow_html=True)
     
+    # Close KPI cards container
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Second Row - Charts
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("### 📈 Portfolio Performance")
+        
+        # Add container for portfolio chart
+        st.markdown('<div id="portfolio-chart">', unsafe_allow_html=True)
         
         # Create portfolio performance chart
         if portfolio_symbols and portfolio_prices:
@@ -224,9 +238,15 @@ def create_analytics_dashboard():
                 st.plotly_chart(fig_pie, use_container_width=True)
         else:
             st.info("No portfolio positions to display")
+        
+        # Close portfolio chart container
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown("### 🌍 Market Overview")
+        
+        # Add container for market chart
+        st.markdown('<div id="market-chart">', unsafe_allow_html=True)
         
         # Create market performance chart
         if market_overview:
@@ -248,6 +268,9 @@ def create_analytics_dashboard():
                 paper_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_bar, use_container_width=True)
+        
+        # Close market chart container
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Third Row - Detailed Analytics
     st.markdown("### 📊 Detailed Analytics")
@@ -256,6 +279,9 @@ def create_analytics_dashboard():
     
     with col1:
         st.markdown("#### 🏆 Top Performers")
+        
+        # Add container for top performers
+        st.markdown('<div id="top-performers">', unsafe_allow_html=True)
         
         # Get top performers from all asset classes
         all_performers = []
@@ -302,9 +328,15 @@ def create_analytics_dashboard():
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+        
+        # Close top performers container
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown("#### 📈 Market Heatmap")
+        
+        # Add container for market heatmap
+        st.markdown('<div id="market-heatmap">', unsafe_allow_html=True)
         
         # Create market heatmap
         if market_overview:
@@ -344,9 +376,15 @@ def create_analytics_dashboard():
                     paper_bgcolor='rgba(0,0,0,0)'
                 )
                 st.plotly_chart(fig_heatmap, use_container_width=True)
+        
+        # Close market heatmap container
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Fourth Row - Insights and Recommendations
     st.markdown("### 💡 AI Insights & Recommendations")
+    
+    # Add container for AI insights
+    st.markdown('<div id="ai-insights">', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -422,11 +460,16 @@ def create_analytics_dashboard():
             <h4 style="margin: 0 0 1rem 0;">🤖 AI Status</h4>
             <p style="margin: 0;">Analysis complete</p>
         </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+    
+    # Close AI insights container
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Auto-refresh button
+    st.markdown('<div id="refresh-button">', unsafe_allow_html=True)
     if st.button("🔄 Refresh Dashboard", type="primary"):
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def main():
     """Main function for analytics dashboard"""

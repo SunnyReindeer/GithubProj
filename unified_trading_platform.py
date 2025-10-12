@@ -446,31 +446,50 @@ def display_market_overview():
 
 def display_price_charts(symbols: List[str]):
     """Display price charts for selected symbols"""
+    # Import contextual tutorial
+    from contextual_tutorial import show_tutorial_for_tab, add_element_id
+    
+    # Show tutorial for price charts
+    show_tutorial_for_tab("price_charts")
+    
     if not symbols:
         st.info("Please select symbols to view charts")
         return
     
     st.markdown("## 📊 Price Charts")
     
+    # Add container for charts header
+    st.markdown('<div id="charts-header">', unsafe_allow_html=True)
+    
     # Chart display options
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
+        st.markdown('<div id="chart-type-selector">', unsafe_allow_html=True)
         chart_type = st.radio(
             "Chart Type",
             ["📊 Standard", "📈 TradingView Widget"],
             help="Standard: Basic candlestick charts | TradingView Widget: Real TradingView embedded widget"
         )
+        st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         if chart_type == "📊 Standard":
+            st.markdown('<div id="timeframe-selector">', unsafe_allow_html=True)
             timeframe = st.selectbox(
                 "Time Period",
                 ["1mo", "3mo", "6mo", "1y", "2y", "5y"],
                 index=3,  # Default to 1y
                 help="Select data period for standard charts"
             )
+            st.markdown('</div>', unsafe_allow_html=True)
         else:
             timeframe = "1h"  # Default for TradingView widget
+    
+    # Close charts header container
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Add container for chart display
+    st.markdown('<div id="chart-display">', unsafe_allow_html=True)
     
     # Always use multi-asset data provider (unified platform)
     for symbol in symbols[:4]:  # Limit to 4 charts for performance
@@ -542,13 +561,26 @@ def display_price_charts(symbols: List[str]):
                 
         except Exception as e:
             st.error(f"Error loading chart for {symbol}: {e}")
+    
+    # Close chart display container
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def create_trading_panel(symbols: List[str]):
     """Create trading panel for placing orders"""
+    # Import contextual tutorial
+    from contextual_tutorial import show_tutorial_for_tab, add_element_id
+    
+    # Show tutorial for trading
+    show_tutorial_for_tab("trading")
+    
     st.markdown("## 💼 Trading Panel")
+    
+    # Add container for trading header
+    st.markdown('<div id="trading-header">', unsafe_allow_html=True)
     
     if not symbols:
         st.warning("Please select symbols to trade")
+        st.markdown('</div>', unsafe_allow_html=True)
         return
     
     col1, col2 = st.columns([1, 2])
@@ -557,13 +589,21 @@ def create_trading_panel(symbols: List[str]):
         st.markdown("### 📝 Place Order")
         
         # Symbol selection
+        st.markdown('<div id="symbol-selector">', unsafe_allow_html=True)
         selected_symbol = st.selectbox("Select Symbol", options=symbols)
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # Order details
+        st.markdown('<div id="order-side">', unsafe_allow_html=True)
         order_side = st.radio("Order Side", ["Buy", "Sell"])
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('<div id="order-type">', unsafe_allow_html=True)
         order_type = st.selectbox("Order Type", ["Market", "Limit"])
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # Quantity input
+        st.markdown('<div id="quantity-input">', unsafe_allow_html=True)
         quantity = st.number_input(
             "Quantity",
             min_value=0.001,
@@ -572,6 +612,7 @@ def create_trading_panel(symbols: List[str]):
             step=0.001,
             format="%.3f"
         )
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # Price input for limit orders
         if order_type == "Limit":
@@ -830,6 +871,10 @@ def main():
     """Main unified trading platform"""
     # Initialize components
     initialize_portfolio()
+    
+    # Import and show contextual tutorial controls
+    from contextual_tutorial import show_tutorial_controls
+    show_tutorial_controls()
     
     # Header
     st.markdown('<h1 class="main-header">🌍 Unified Trading Platform</h1>', unsafe_allow_html=True)
