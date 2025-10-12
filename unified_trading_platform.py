@@ -230,65 +230,219 @@ def create_symbol_selector(asset_class: AssetClass):
         return selected_symbols
 
 def display_market_overview():
-    """Display market overview for all asset classes"""
-    st.markdown("## 📈 Market Overview")
+    """Display comprehensive market overview dashboard"""
+    st.markdown("## 📊 Market Dashboard")
     
-    if st.session_state.get('use_multi_asset', True):
-        with st.spinner("Fetching market data..."):
-            market_overview = multi_asset_data_provider.get_market_overview()
-        
-        # Create columns for each asset class
-        cols = st.columns(len(market_overview))
-        
-        for i, (asset_class, data) in enumerate(market_overview.items()):
-            with cols[i]:
-                st.markdown(f"### {asset_class.title()}")
-                
-                # Average change
-                avg_change = data['average_change']
-                change_color = "normal" if avg_change >= 0 else "inverse"
-                st.metric(
-                    "Avg Change",
-                    f"{avg_change:.2f}%",
-                    delta_color=change_color
-                )
-                
-                # Top gainer
-                if data['top_gainers']:
-                    top_gainer = data['top_gainers'][0]
-                    st.metric(
-                        "Top Gainer",
-                        f"{top_gainer.symbol}",
-                        f"{top_gainer.change_percent:.2f}%"
-                    )
-                
-                # Top loser
-                if data['top_losers']:
-                    top_loser = data['top_losers'][0]
-                    st.metric(
-                        "Top Loser",
-                        f"{top_loser.symbol}",
-                        f"{top_loser.change_percent:.2f}%"
-                    )
-    else:
-        # Original crypto market overview
-        current_prices = get_current_prices([])
-        if current_prices:
-            market_data = []
-            for symbol in SUPPORTED_CRYPTOS:
-                price = current_prices.get(symbol, 0)
-                if price > 0:
-                    market_data.append({
-                        'Symbol': symbol,
-                        'Price (USDT)': f"${price:,.2f}",
-                        'Last Update': st.session_state.last_update.strftime("%H:%M:%S") if st.session_state.last_update else "N/A"
-                    })
+    with st.spinner("Loading market data..."):
+        market_overview = multi_asset_data_provider.get_market_overview()
+    
+    # Market Summary Cards
+    st.markdown("### 📈 Market Summary")
+    
+    # Calculate overall market metrics
+    total_assets = 0
+    total_positive = 0
+    total_negative = 0
+    overall_change = 0
+    
+    for asset_class, data in market_overview.items():
+        total_assets += len(data.get('top_gainers', [])) + len(data.get('top_losers', []))
+        if data.get('top_gainers'):
+            total_positive += len([g for g in data['top_gainers'] if g.change_percent > 0])
+        if data.get('top_losers'):
+            total_negative += len([l for l in data['top_losers'] if l.change_percent < 0])
+        overall_change += data.get('average_change', 0)
+    
+    overall_change = overall_change / len(market_overview) if market_overview else 0
+    
+    # Market summary metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric(
+            "Total Assets",
+            f"{total_assets}",
+            help="Total number of tracked assets"
+        )
+    
+    with col2:
+        st.metric(
+            "Market Sentiment",
+            "🟢 Bullish" if overall_change > 0 else "🔴 Bearish",
+            f"{overall_change:.2f}%",
+            delta_color="normal" if overall_change > 0 else "inverse"
+        )
+    
+    with col3:
+        st.metric(
+            "Advancing",
+            f"{total_positive}",
+            help="Assets with positive changes"
+        )
+    
+    with col4:
+        st.metric(
+            "Declining",
+            f"{total_negative}",
+            help="Assets with negative changes"
+        )
+    
+    st.markdown("---")
+    
+    # Asset Class Performance
+    st.markdown("### 🎯 Asset Class Performance")
+    
+    # Create performance chart
+    asset_classes = list(market_overview.keys())
+    avg_changes = [market_overview[ac].get('average_change', 0) for ac in asset_classes]
+    
+    # Performance chart
+    fig = px.bar(
+        x=asset_classes,
+        y=avg_changes,
+        title="Average Performance by Asset Class",
+        color=avg_changes,
+        color_continuous_scale=['red', 'yellow', 'green'],
+        labels={'x': 'Asset Class', 'y': 'Average Change (%)'}
+    )
+    fig.update_layout(height=400, showlegend=False)
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Detailed asset class breakdown
+    st.markdown("### 📊 Asset Class Breakdown")
+    
+    for asset_class, data in market_overview.items():
+        with st.expander(f"🔍 {asset_class.title()} - {data.get('average_change', 0):.2f}%", expanded=False):
             
-            if market_data:
-                df_market = pd.DataFrame(market_data)
-                st.dataframe(df_market, use_container_width=True)
-            else:
-                st.info("No market data available")
+            # Asset class metrics
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.metric(
+                    "Average Change",
+                    f"{data.get('average_change', 0):.2f}%",
+                    delta_color="normal" if data.get('average_change', 0) >= 0 else "inverse"
+                )
+            
+            with col2:
+                st.metric(
+                    "Top Gainers",
+                    f"{len(data.get('top_gainers', []))}",
+                    help="Number of assets with positive performance"
+                )
+            
+            with col3:
+                st.metric(
+                    "Top Losers",
+                    f"{len(data.get('top_losers', []))}",
+                    help="Number of assets with negative performance"
+                )
+            
+            # Top performers table
+            if data.get('top_gainers') or data.get('top_losers'):
+                st.markdown("#### 🏆 Top Performers")
+                
+                # Combine gainers and losers
+                all_performers = []
+                if data.get('top_gainers'):
+                    for gainer in data['top_gainers'][:5]:  # Top 5
+                        all_performers.append({
+                            'Symbol': gainer.symbol,
+                            'Change': f"{gainer.change_percent:.2f}%",
+                            'Status': '🟢 Gainer',
+                            'Price': f"${gainer.price:.2f}" if hasattr(gainer, 'price') else "N/A"
+                        })
+                
+                if data.get('top_losers'):
+                    for loser in data['top_losers'][:5]:  # Top 5
+                        all_performers.append({
+                            'Symbol': loser.symbol,
+                            'Change': f"{loser.change_percent:.2f}%",
+                            'Status': '🔴 Loser',
+                            'Price': f"${loser.price:.2f}" if hasattr(loser, 'price') else "N/A"
+                        })
+                
+                if all_performers:
+                    df_performers = pd.DataFrame(all_performers)
+                    st.dataframe(df_performers, use_container_width=True)
+    
+    # Market Heatmap
+    st.markdown("### 🔥 Market Heatmap")
+    
+    # Create a simple heatmap of asset performance
+    heatmap_data = []
+    for asset_class, data in market_overview.items():
+        if data.get('top_gainers'):
+            for gainer in data['top_gainers'][:3]:  # Top 3 from each class
+                heatmap_data.append({
+                    'Asset Class': asset_class.title(),
+                    'Symbol': gainer.symbol,
+                    'Change': gainer.change_percent,
+                    'Price': gainer.price if hasattr(gainer, 'price') else 0
+                })
+        if data.get('top_losers'):
+            for loser in data['top_losers'][:3]:  # Top 3 from each class
+                heatmap_data.append({
+                    'Asset Class': asset_class.title(),
+                    'Symbol': loser.symbol,
+                    'Change': loser.change_percent,
+                    'Price': loser.price if hasattr(loser, 'price') else 0
+                })
+    
+    if heatmap_data:
+        df_heatmap = pd.DataFrame(heatmap_data)
+        
+        # Create heatmap
+        fig_heatmap = px.treemap(
+            df_heatmap,
+            path=['Asset Class', 'Symbol'],
+            values='Price',
+            color='Change',
+            color_continuous_scale=['red', 'yellow', 'green'],
+            title="Market Performance Heatmap",
+            hover_data=['Change', 'Price']
+        )
+        fig_heatmap.update_layout(height=500)
+        st.plotly_chart(fig_heatmap, use_container_width=True)
+    
+    # Market News/Insights Section
+    st.markdown("### 📰 Market Insights")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### 🎯 Key Insights")
+        insights = []
+        
+        if overall_change > 0:
+            insights.append("🟢 **Bullish Market**: Overall positive sentiment across asset classes")
+        else:
+            insights.append("🔴 **Bearish Market**: Negative sentiment prevailing")
+        
+        if total_positive > total_negative:
+            insights.append("📈 **Advancing Market**: More assets gaining than losing")
+        else:
+            insights.append("📉 **Declining Market**: More assets losing than gaining")
+        
+        # Find best performing asset class
+        best_class = max(market_overview.keys(), key=lambda x: market_overview[x].get('average_change', 0))
+        insights.append(f"🏆 **Best Performer**: {best_class.title()} leading the market")
+        
+        for insight in insights:
+            st.markdown(insight)
+    
+    with col2:
+        st.markdown("#### 💡 Trading Tips")
+        tips = [
+            "📊 **Diversify**: Spread risk across different asset classes",
+            "🎯 **Focus**: Pay attention to top performers in each category",
+            "⏰ **Timing**: Monitor market sentiment for entry/exit points",
+            "📈 **Trends**: Follow asset class performance trends",
+            "🛡️ **Risk**: Consider volatility when making decisions"
+        ]
+        
+        for tip in tips:
+            st.markdown(tip)
 
 def display_price_charts(symbols: List[str]):
     """Display price charts for selected symbols"""
@@ -697,15 +851,6 @@ def main():
         try:
             current_prices = get_current_prices(symbols)
             if current_prices:  # Check if we got valid price data
-                # Debug: Check the structure of price data
-                st.write(f"Debug: Price data keys: {list(current_prices.keys())}")
-                if symbols:
-                    first_symbol = symbols[0]
-                    if first_symbol in current_prices:
-                        price_obj = current_prices[first_symbol]
-                        st.write(f"Debug: Price object type: {type(price_obj)}")
-                        st.write(f"Debug: Price object attributes: {dir(price_obj)}")
-                
                 metrics = multi_asset_portfolio.get_portfolio_metrics(current_prices)
                 
                 st.metric("Total Value", f"${metrics.total_value:,.2f}")
