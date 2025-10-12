@@ -870,24 +870,22 @@ def main():
     
     # Main content
     # Create tabs
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📈 Market Overview", 
-        "📊 Charts", 
-        "💼 Trading", 
-        "💰 Portfolio"
+    tab1, tab2, tab3 = st.tabs([
+        "📊 Analytics Dashboard", 
+        "📈 Price Charts", 
+        "💼 Trading"
     ])
     
     with tab1:
-        display_market_overview()
+        # Import and display analytics dashboard
+        from analytics_dashboard import create_analytics_dashboard
+        create_analytics_dashboard()
     
     with tab2:
         display_price_charts(selected_symbols)
     
     with tab3:
         create_trading_panel(selected_symbols)
-    
-    with tab4:
-        display_portfolio_summary()
         
         col1, col2 = st.columns(2)
         
