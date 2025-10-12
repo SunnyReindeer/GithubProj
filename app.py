@@ -19,8 +19,8 @@ from tradingview_widget import create_tradingview_widget, create_tradingview_adv
 
 # Page configuration
 st.set_page_config(
-    page_title="Crypto Trading Simulator",
-    page_icon="📈",
+    page_title="AI Trading Platform - Multi-Asset Investment Platform",
+    page_icon="🚀",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -28,11 +28,29 @@ st.set_page_config(
 # Navigation
 def show_navigation():
     st.sidebar.markdown("## 🧭 Navigation")
-    page = st.sidebar.radio(
-        "Go to",
-        ["🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
-        index=0
-    )
+    
+    # Check if user is first-time visitor
+    if 'seen_introduction' not in st.session_state:
+        st.session_state.seen_introduction = False
+    
+    # Show welcome message for first-time users
+    if not st.session_state.seen_introduction:
+        st.sidebar.success("👋 Welcome! Start with the Introduction to learn about the platform.")
+    
+    # Show introduction option for first-time users
+    if not st.session_state.seen_introduction:
+        page = st.sidebar.radio(
+            "Go to",
+            ["📚 Introduction", "🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
+            index=0
+        )
+    else:
+        page = st.sidebar.radio(
+            "Go to",
+            ["🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
+            index=0
+        )
+    
     return page
 
 # Custom CSS
@@ -529,6 +547,12 @@ def create_price_chart(symbol: str, timeframe: str = "1h") -> go.Figure:
 def main():
     # Navigation
     page = show_navigation()
+    
+    if page == "📚 Introduction":
+        # Import and run introduction portal
+        from introduction_portal import main as introduction_main
+        introduction_main()
+        return
     
     if page == "🤖 Strategy Backtesting":
         # Import and run backtesting page
