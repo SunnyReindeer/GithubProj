@@ -483,6 +483,17 @@ def display_trading_plan(profile: RiskProfile, strategies: List[StrategyRecommen
         mime="application/json"
     )
 
+def show_tutorial_hints():
+    """Show tutorial hints if user is in tutorial mode"""
+    if 'tutorial' in st.session_state and not st.session_state.get('tutorial_completed', False):
+        tutorial = st.session_state.tutorial
+        current_step = tutorial.get_current_step()
+        
+        if current_step and current_step.step_id == "questionnaire":
+            st.info("💡 **Tutorial Hint:** Click the 'Start Risk Assessment' button below to begin the questionnaire!")
+        elif current_step and current_step.step_id == "view_recommendations":
+            st.info("💡 **Tutorial Hint:** Scroll down to see your personalized recommendations!")
+
 def main():
     """Main robo advisor page"""
     st.set_page_config(
@@ -493,6 +504,9 @@ def main():
     
     st.markdown("# 🤖 AI Robo Advisor")
     st.markdown("Get personalized trading strategies based on your risk profile and investment goals.")
+    
+    # Show tutorial hints
+    show_tutorial_hints()
     
     # Initialize session state
     if 'risk_profile' not in st.session_state:

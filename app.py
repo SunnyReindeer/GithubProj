@@ -33,15 +33,18 @@ def show_navigation():
     if 'seen_introduction' not in st.session_state:
         st.session_state.seen_introduction = False
     
-    # Show welcome message for first-time users
-    if not st.session_state.seen_introduction:
-        st.sidebar.success("👋 Welcome! Start with the Introduction to learn about the platform.")
+    if 'tutorial_completed' not in st.session_state:
+        st.session_state.tutorial_completed = False
     
-    # Show introduction option for first-time users
-    if not st.session_state.seen_introduction:
+    # Show welcome message for first-time users
+    if not st.session_state.seen_introduction and not st.session_state.tutorial_completed:
+        st.sidebar.success("👋 Welcome! Start with the Interactive Tutorial!")
+    
+    # Show tutorial option for first-time users
+    if not st.session_state.tutorial_completed:
         page = st.sidebar.radio(
             "Go to",
-            ["📚 Introduction", "🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
+            ["🎓 Interactive Tutorial", "🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
             index=0
         )
     else:
@@ -548,10 +551,10 @@ def main():
     # Navigation
     page = show_navigation()
     
-    if page == "📚 Introduction":
-        # Import and run introduction portal
-        from introduction_portal import main as introduction_main
-        introduction_main()
+    if page == "🎓 Interactive Tutorial":
+        # Import and run interactive tutorial
+        from interactive_tutorial import main as tutorial_main
+        tutorial_main()
         return
     
     if page == "🤖 Strategy Backtesting":
