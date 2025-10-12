@@ -454,7 +454,8 @@ def create_trading_panel(symbols: List[str]):
                         current_prices = get_current_prices([selected_symbol])
                         current_price = current_prices.get(selected_symbol)
                         if current_price:
-                            success = multi_asset_portfolio.execute_order(order, current_price)
+                            price_value = current_price.price if hasattr(current_price, 'price') else current_price
+                            success = multi_asset_portfolio.execute_order(order, price_value)
                             if success:
                                 st.success("✅ Order executed successfully!")
                             else:
@@ -478,10 +479,11 @@ def create_trading_panel(symbols: List[str]):
                     
                     # Execute market orders immediately
                     if order_type == "Market":
-                        current_prices = get_current_prices([])
+                        current_prices = get_current_prices([selected_symbol])
                         current_price = current_prices.get(selected_symbol)
                         if current_price:
-                            success = portfolio.execute_order(order, current_price)
+                            price_value = current_price.price if hasattr(current_price, 'price') else current_price
+                            success = portfolio.execute_order(order, price_value)
                             if success:
                                 st.success("✅ Order executed successfully!")
                             else:
@@ -501,28 +503,29 @@ def create_trading_panel(symbols: List[str]):
             current_price = current_prices.get(selected_symbol)
             
             if current_price:
+                price_value = current_price.price if hasattr(current_price, 'price') else current_price
                 st.metric(
                     f"{selected_symbol} Current Price",
-                    f"${current_price:.2f}",
+                    f"${price_value:.2f}",
                     delta="Live"
                 )
                 
                 # Calculate order details
                 if quantity > 0:
                     if order_side == "Buy":
-                        total_cost = quantity * (current_price if order_type == "Market" else limit_price)
+                        total_cost = quantity * (price_value if order_type == "Market" else limit_price)
                         st.info(f"""
                         **Buy Order Summary:**
                         - Quantity: {quantity:.3f} shares
-                        - Price: ${current_price if order_type == "Market" else limit_price:.2f}
+                        - Price: ${price_value if order_type == "Market" else limit_price:.2f}
                         - Total Cost: ${total_cost:.2f}
                         """)
                     else:
-                        total_proceeds = quantity * (current_price if order_type == "Market" else limit_price)
+                        total_proceeds = quantity * (price_value if order_type == "Market" else limit_price)
                         st.info(f"""
                         **Sell Order Summary:**
                         - Quantity: {quantity:.3f} shares
-                        - Price: ${current_price if order_type == "Market" else limit_price:.2f}
+                        - Price: ${price_value if order_type == "Market" else limit_price:.2f}
                         - Total Proceeds: ${total_proceeds:.2f}
                         """)
 
