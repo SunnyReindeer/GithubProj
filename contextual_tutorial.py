@@ -286,7 +286,7 @@ def show_tutorial_controls():
     st.sidebar.markdown("## 🎓 Interactive Tutorial")
     
     # Tutorial status
-    if tutorial.current_tab:
+    if tutorial.current_tab and tutorial.current_tab in tutorial.tutorial_steps:
         current_step = tutorial.get_current_step(tutorial.current_tab)
         if current_step:
             st.sidebar.markdown(f"**Current:** {current_step['title']}")
@@ -320,6 +320,8 @@ def show_tutorial_controls():
                 if st.button("✅ Mark Complete", type="primary"):
                     tutorial.next_step()
                     st.rerun()
+    else:
+        st.sidebar.info("🎓 Select a tab below to start the tutorial!")
     
     # Tutorial controls
     st.sidebar.markdown("### 🎮 Tutorial Controls")
@@ -335,10 +337,16 @@ def show_tutorial_controls():
     # Tab selection for tutorial
     st.sidebar.markdown("### 📚 Learn About:")
     tutorial_tabs = ["analytics_dashboard", "price_charts", "trading"]
+    
+    # Get current index safely
+    current_index = 0
+    if tutorial.current_tab and tutorial.current_tab in tutorial_tabs:
+        current_index = tutorial_tabs.index(tutorial.current_tab)
+    
     selected_tutorial_tab = st.sidebar.selectbox(
         "Select Tab to Learn",
         [tab.replace('_', ' ').title() for tab in tutorial_tabs],
-        index=tutorial_tabs.index(tutorial.current_tab) if tutorial.current_tab in tutorial_tabs else 0
+        index=current_index
     )
     
     if selected_tutorial_tab:
@@ -353,6 +361,11 @@ def show_tutorial_for_tab(tab_name: str):
         st.session_state.tutorial = ContextualTutorial()
     
     tutorial = st.session_state.tutorial
+    
+    # Check if tab_name is valid
+    if tab_name not in tutorial.tutorial_steps:
+        return False
+    
     tutorial.set_tab(tab_name)
     
     current_step = tutorial.get_current_step(tab_name)
