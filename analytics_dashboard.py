@@ -135,7 +135,11 @@ def create_analytics_dashboard():
     # Top Row - Key Metrics
     st.markdown("### 🎯 Key Performance Indicators")
     
-    # Add container for KPI cards
+    # Add container for KPI cards with tutorial highlighting
+    if st.session_state.get('tutorial') and st.session_state.tutorial.get_current_step("analytics_dashboard") and st.session_state.tutorial.get_current_step("analytics_dashboard").get('highlight') == 'kpi-cards':
+        st.markdown("### 👆 **Tutorial Focus: Key Performance Indicators**")
+        st.markdown("These 4 cards show your most important metrics!")
+    
     st.markdown('<div id="kpi-cards">', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     
@@ -201,6 +205,11 @@ def create_analytics_dashboard():
     with col1:
         st.markdown("### 📈 Portfolio Performance")
         
+        # Add tutorial focus for portfolio chart
+        if st.session_state.get('tutorial') and st.session_state.tutorial.get_current_step("analytics_dashboard") and st.session_state.tutorial.get_current_step("analytics_dashboard").get('highlight') == 'portfolio-chart':
+            st.markdown("### 👆 **Tutorial Focus: Portfolio Chart**")
+            st.markdown("This pie chart shows your portfolio allocation!")
+        
         # Add container for portfolio chart
         st.markdown('<div id="portfolio-chart">', unsafe_allow_html=True)
         
@@ -244,6 +253,11 @@ def create_analytics_dashboard():
     
     with col2:
         st.markdown("### 🌍 Market Overview")
+        
+        # Add tutorial focus for market chart
+        if st.session_state.get('tutorial') and st.session_state.tutorial.get_current_step("analytics_dashboard") and st.session_state.tutorial.get_current_step("analytics_dashboard").get('highlight') == 'market-chart':
+            st.markdown("### 👆 **Tutorial Focus: Market Chart**")
+            st.markdown("This bar chart shows asset class performance!")
         
         # Add container for market chart
         st.markdown('<div id="market-chart">', unsafe_allow_html=True)

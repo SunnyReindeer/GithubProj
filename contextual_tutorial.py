@@ -258,36 +258,19 @@ def show_tutorial_overlay(step_info: Dict, tab_name: str):
     """, unsafe_allow_html=True)
 
 def highlight_element(element_id: str):
-    """Add highlighting effect to specific element"""
+    """Add highlighting effect to specific element using Streamlit-compatible approach"""
+    # Use Streamlit's native success box for highlighting
+    st.success(f"🎯 **Tutorial Focus**: Look for the element with ID '{element_id}' below!")
+    
+    # Add simple CSS highlighting that works better in Streamlit
     st.markdown(f"""
     <style>
     #{element_id} {{
-        position: relative;
-        animation: pulse 2s infinite;
-        box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
-        border: 3px solid #667eea;
-        border-radius: 10px;
-    }}
-    
-    @keyframes pulse {{
-        0% {{ box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }}
-        50% {{ box-shadow: 0 0 30px rgba(102, 126, 234, 1); }}
-        100% {{ box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }}
-    }}
-    
-    #{element_id}::before {{
-        content: "👆";
-        position: absolute;
-        top: -30px;
-        right: -10px;
-        font-size: 24px;
-        animation: bounce 1s infinite;
-    }}
-    
-    @keyframes bounce {{
-        0%, 20%, 50%, 80%, 100% {{ transform: translateY(0); }}
-        40% {{ transform: translateY(-10px); }}
-        60% {{ transform: translateY(-5px); }}
+        border: 3px solid #ff6b6b !important;
+        border-radius: 10px !important;
+        background-color: rgba(255, 107, 107, 0.1) !important;
+        padding: 10px !important;
+        margin: 5px !important;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -374,8 +357,8 @@ def show_tutorial_for_tab(tab_name: str):
     current_step = tutorial.get_current_step(tab_name)
     
     if current_step:
-        # Show tutorial overlay
-        show_tutorial_overlay(current_step, tab_name)
+        # Show tutorial info box at the top
+        show_tutorial_info_box(current_step, tab_name)
         
         # Highlight the specific element
         if current_step.get('highlight'):
@@ -384,6 +367,45 @@ def show_tutorial_for_tab(tab_name: str):
         return True
     
     return False
+
+def show_tutorial_info_box(step_info: Dict, tab_name: str):
+    """Show tutorial info box using Streamlit's native components"""
+    if not step_info:
+        return
+    
+    # Create a prominent info box
+    st.info(f"""
+    **🎓 Tutorial Step {st.session_state.tutorial.current_step + 1} of {len(st.session_state.tutorial.tutorial_steps[tab_name])}**
+    
+    **{step_info['title']}**
+    
+    {step_info['description']}
+    
+    💡 **Look for the highlighted element below!**
+    """)
+    
+    # Add navigation buttons
+    col1, col2, col3 = st.columns([1, 1, 1])
+    
+    with col1:
+        if st.button("← Previous", disabled=st.session_state.tutorial.current_step == 0):
+            st.session_state.tutorial.previous_step()
+            st.rerun()
+    
+    with col2:
+        if st.button("Next →"):
+            if st.session_state.tutorial.next_step():
+                st.rerun()
+            else:
+                st.success("🎉 Tutorial completed for this tab!")
+    
+    with col3:
+        if step_info['action'] == "click":
+            if st.button("✅ Mark Complete", type="primary"):
+                st.session_state.tutorial.next_step()
+                st.rerun()
+    
+    st.markdown("---")
 
 def add_element_id(element_id: str, content: str):
     """Add element ID to content for tutorial highlighting"""
@@ -397,12 +419,31 @@ def main():
     # Show tutorial controls
     show_tutorial_controls()
     
+    # Test tutorial functionality
+    st.markdown("## 🧪 Test Tutorial Functionality")
+    
+    if st.button("🎯 Test Highlighting"):
+        st.markdown('<div id="test-element">This is a test element that should be highlighted!</div>', unsafe_allow_html=True)
+        highlight_element("test-element")
+    
     # Demo of how to use
     st.markdown("## How to Use:")
     st.markdown("1. Select a tab to learn about in the sidebar")
     st.markdown("2. Follow the step-by-step instructions")
     st.markdown("3. Use Previous/Next buttons to navigate")
     st.markdown("4. Click 'Mark Complete' for action steps")
+    
+    # Show current tutorial state
+    if 'tutorial' in st.session_state:
+        tutorial = st.session_state.tutorial
+        st.markdown("### Current Tutorial State:")
+        st.write(f"Current Tab: {tutorial.current_tab}")
+        st.write(f"Current Step: {tutorial.current_step}")
+        
+        if tutorial.current_tab:
+            current_step = tutorial.get_current_step(tutorial.current_tab)
+            if current_step:
+                st.write(f"Current Step Info: {current_step}")
 
 if __name__ == "__main__":
     main()
