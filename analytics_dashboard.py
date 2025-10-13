@@ -23,30 +23,7 @@ def create_analytics_dashboard():
     if tutorial_active and 'tutorial' in st.session_state:
         current_step = st.session_state.tutorial.get_current_step("analytics_dashboard")
         if current_step:
-            st.markdown(f"""
-            <div style="
-                background: linear-gradient(90deg, #ff6b6b, #ffa500, #ff6b6b);
-                background-size: 200% 200%;
-                animation: gradient 2s ease infinite;
-                padding: 1rem;
-                border-radius: 10px;
-                margin: 1rem 0;
-                text-align: center;
-                color: white;
-                font-weight: bold;
-                font-size: 1.2rem;
-                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-            ">
-                🎓 TUTORIAL ACTIVE: {current_step['title']}
-            </div>
-            <style>
-            @keyframes gradient {{
-                0% {{ background-position: 0% 50%; }}
-                50% {{ background-position: 100% 50%; }}
-                100% {{ background-position: 0% 50%; }}
-            }}
-            </style>
-            """, unsafe_allow_html=True)
+            st.warning(f"🎓 **TUTORIAL ACTIVE**: {current_step['title']}")
     
     # Custom CSS for modern dashboard design
     st.markdown("""

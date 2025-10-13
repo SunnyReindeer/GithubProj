@@ -209,31 +209,19 @@ def show_tutorial_info_box(step_info: Dict, tab_name: str):
     if not step_info:
         return
     
-    # Create a prominent info box with gradient background
-    st.markdown(f"""
-    <div style="
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin: 1rem 0;
-        color: white;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    ">
-        <h3 style="margin: 0 0 1rem 0; color: white; text-align: center;">{step_info['title']}</h3>
-        <p style="margin: 0 0 1rem 0; font-size: 1.1rem; line-height: 1.5; text-align: center;">{step_info['description']}</p>
-        
-        <div style="text-align: center; margin-bottom: 1rem;">
-            <div style="background-color: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 10px; display: inline-block;">
-                <strong>Step {st.session_state.tutorial.current_step + 1} of {len(st.session_state.tutorial.tutorial_steps[tab_name])}</strong>
-            </div>
-        </div>
-        
-        <div style="text-align: center;">
-            <span style="font-size: 2rem; animation: pulse 2s infinite;">👆</span>
-            <p style="margin: 0.5rem 0 0 0; font-weight: bold;">Look for the highlighted element below!</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Use Streamlit's native info box with custom styling
+    st.info(f"""
+    **🎓 Tutorial Step {st.session_state.tutorial.current_step + 1} of {len(st.session_state.tutorial.tutorial_steps[tab_name])}**
+    
+    **{step_info['title']}**
+    
+    {step_info['description']}
+    
+    👆 **Look for the highlighted element below!**
+    """)
+    
+    # Test HTML rendering
+    st.markdown("<div style='background-color: #f0f2f6; padding: 1rem; border-radius: 5px; margin: 1rem 0;'>This is a test HTML div</div>", unsafe_allow_html=True)
     
     # Add navigation buttons
     col1, col2, col3 = st.columns([1, 1, 1])
