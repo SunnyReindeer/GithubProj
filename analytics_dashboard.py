@@ -14,7 +14,36 @@ def create_analytics_dashboard():
     from contextual_tutorial import show_tutorial_for_tab, add_element_id
     
     # Show tutorial for analytics dashboard
-    show_tutorial_for_tab("analytics_dashboard")
+    tutorial_active = show_tutorial_for_tab("analytics_dashboard")
+    
+    # Add a prominent tutorial banner if tutorial is active
+    if tutorial_active and 'tutorial' in st.session_state:
+        current_step = st.session_state.tutorial.get_current_step("analytics_dashboard")
+        if current_step:
+            st.markdown(f"""
+            <div style="
+                background: linear-gradient(90deg, #ff6b6b, #ffa500, #ff6b6b);
+                background-size: 200% 200%;
+                animation: gradient 2s ease infinite;
+                padding: 1rem;
+                border-radius: 10px;
+                margin: 1rem 0;
+                text-align: center;
+                color: white;
+                font-weight: bold;
+                font-size: 1.2rem;
+                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            ">
+                🎓 TUTORIAL ACTIVE: {current_step['title']}
+            </div>
+            <style>
+            @keyframes gradient {{
+                0% {{ background-position: 0% 50%; }}
+                50% {{ background-position: 100% 50%; }}
+                100% {{ background-position: 0% 50%; }}
+            }}
+            </style>
+            """, unsafe_allow_html=True)
     
     # Custom CSS for modern dashboard design
     st.markdown("""
@@ -135,11 +164,14 @@ def create_analytics_dashboard():
     # Top Row - Key Metrics
     st.markdown("### 🎯 Key Performance Indicators")
     
-    # Add container for KPI cards with tutorial highlighting
-    if st.session_state.get('tutorial') and st.session_state.tutorial.get_current_step("analytics_dashboard") and st.session_state.tutorial.get_current_step("analytics_dashboard").get('highlight') == 'kpi-cards':
-        st.markdown("### 👆 **Tutorial Focus: Key Performance Indicators**")
-        st.markdown("These 4 cards show your most important metrics!")
+    # Add tutorial focus indicator for KPI cards
+    if tutorial_active and 'tutorial' in st.session_state:
+        current_step = st.session_state.tutorial.get_current_step("analytics_dashboard")
+        if current_step and current_step.get('highlight') == 'kpi-cards':
+            st.markdown("### 👆 **Tutorial Focus: Key Performance Indicators**")
+            st.markdown("These 4 cards show your most important metrics!")
     
+    # Add container for KPI cards
     st.markdown('<div id="kpi-cards">', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
     
@@ -206,9 +238,11 @@ def create_analytics_dashboard():
         st.markdown("### 📈 Portfolio Performance")
         
         # Add tutorial focus for portfolio chart
-        if st.session_state.get('tutorial') and st.session_state.tutorial.get_current_step("analytics_dashboard") and st.session_state.tutorial.get_current_step("analytics_dashboard").get('highlight') == 'portfolio-chart':
-            st.markdown("### 👆 **Tutorial Focus: Portfolio Chart**")
-            st.markdown("This pie chart shows your portfolio allocation!")
+        if tutorial_active and 'tutorial' in st.session_state:
+            current_step = st.session_state.tutorial.get_current_step("analytics_dashboard")
+            if current_step and current_step.get('highlight') == 'portfolio-chart':
+                st.markdown("### 👆 **Tutorial Focus: Portfolio Chart**")
+                st.markdown("This pie chart shows your portfolio allocation!")
         
         # Add container for portfolio chart
         st.markdown('<div id="portfolio-chart">', unsafe_allow_html=True)
@@ -255,9 +289,11 @@ def create_analytics_dashboard():
         st.markdown("### 🌍 Market Overview")
         
         # Add tutorial focus for market chart
-        if st.session_state.get('tutorial') and st.session_state.tutorial.get_current_step("analytics_dashboard") and st.session_state.tutorial.get_current_step("analytics_dashboard").get('highlight') == 'market-chart':
-            st.markdown("### 👆 **Tutorial Focus: Market Chart**")
-            st.markdown("This bar chart shows asset class performance!")
+        if tutorial_active and 'tutorial' in st.session_state:
+            current_step = st.session_state.tutorial.get_current_step("analytics_dashboard")
+            if current_step and current_step.get('highlight') == 'market-chart':
+                st.markdown("### 👆 **Tutorial Focus: Market Chart**")
+                st.markdown("This bar chart shows asset class performance!")
         
         # Add container for market chart
         st.markdown('<div id="market-chart">', unsafe_allow_html=True)

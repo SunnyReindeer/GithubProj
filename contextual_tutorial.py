@@ -204,58 +204,59 @@ class ContextualTutorial:
         """Mark tutorial as completed"""
         st.session_state.tutorial_completed = True
 
-def show_tutorial_overlay(step_info: Dict, tab_name: str):
-    """Show tutorial overlay with step information"""
+def show_tutorial_info_box(step_info: Dict, tab_name: str):
+    """Show tutorial info box using Streamlit's native components"""
     if not step_info:
         return
     
-    # Create tutorial overlay
+    # Create a prominent info box with gradient background
     st.markdown(f"""
-    <div id="tutorial-overlay" style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        pointer-events: none;
+    <div style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        color: white;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     ">
-        <div style="
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 2rem;
-            border-radius: 20px;
-            max-width: 500px;
-            margin: 1rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            pointer-events: auto;
-            color: white;
-        ">
-            <h3 style="margin: 0 0 1rem 0; color: white;">{step_info['title']}</h3>
-            <p style="margin: 0 0 1.5rem 0; font-size: 1.1rem; line-height: 1.5;">{step_info['description']}</p>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="background-color: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 10px;">
-                    <strong>Step {st.session_state.tutorial.current_step + 1} of {len(st.session_state.tutorial.tutorial_steps[tab_name])}</strong>
-                </div>
+        <h3 style="margin: 0 0 1rem 0; color: white; text-align: center;">{step_info['title']}</h3>
+        <p style="margin: 0 0 1rem 0; font-size: 1.1rem; line-height: 1.5; text-align: center;">{step_info['description']}</p>
+        
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <div style="background-color: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 10px; display: inline-block;">
+                <strong>Step {st.session_state.tutorial.current_step + 1} of {len(st.session_state.tutorial.tutorial_steps[tab_name])}</strong>
             </div>
-            
-            <div style="display: flex; gap: 1rem; justify-content: space-between;">
-                <button onclick="window.parent.postMessage('tutorial_previous', '*')" 
-                        style="padding: 0.8rem 1.5rem; background-color: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 10px; cursor: pointer; font-weight: bold;">
-                    ← Previous
-                </button>
-                <button onclick="window.parent.postMessage('tutorial_next', '*')" 
-                        style="padding: 0.8rem 1.5rem; background-color: rgba(255, 255, 255, 0.9); color: #667eea; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">
-                    Next →
-                </button>
-            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <span style="font-size: 2rem; animation: pulse 2s infinite;">👆</span>
+            <p style="margin: 0.5rem 0 0 0; font-weight: bold;">Look for the highlighted element below!</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Add navigation buttons
+    col1, col2, col3 = st.columns([1, 1, 1])
+    
+    with col1:
+        if st.button("← Previous", disabled=st.session_state.tutorial.current_step == 0, key=f"prev_{tab_name}_{st.session_state.tutorial.current_step}"):
+            st.session_state.tutorial.previous_step()
+            st.rerun()
+    
+    with col2:
+        if st.button("Next →", key=f"next_{tab_name}_{st.session_state.tutorial.current_step}"):
+            if st.session_state.tutorial.next_step():
+                st.rerun()
+            else:
+                st.success("🎉 Tutorial completed for this tab!")
+    
+    with col3:
+        if step_info['action'] == "click":
+            if st.button("✅ Mark Complete", type="primary", key=f"complete_{tab_name}_{st.session_state.tutorial.current_step}"):
+                st.session_state.tutorial.next_step()
+                st.rerun()
+    
+    st.markdown("---")
 
 def highlight_element(element_id: str):
     """Add highlighting effect to specific element using Streamlit-compatible approach"""
@@ -368,45 +369,6 @@ def show_tutorial_for_tab(tab_name: str):
     
     return False
 
-def show_tutorial_info_box(step_info: Dict, tab_name: str):
-    """Show tutorial info box using Streamlit's native components"""
-    if not step_info:
-        return
-    
-    # Create a prominent info box
-    st.info(f"""
-    **🎓 Tutorial Step {st.session_state.tutorial.current_step + 1} of {len(st.session_state.tutorial.tutorial_steps[tab_name])}**
-    
-    **{step_info['title']}**
-    
-    {step_info['description']}
-    
-    💡 **Look for the highlighted element below!**
-    """)
-    
-    # Add navigation buttons
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
-    with col1:
-        if st.button("← Previous", disabled=st.session_state.tutorial.current_step == 0):
-            st.session_state.tutorial.previous_step()
-            st.rerun()
-    
-    with col2:
-        if st.button("Next →"):
-            if st.session_state.tutorial.next_step():
-                st.rerun()
-            else:
-                st.success("🎉 Tutorial completed for this tab!")
-    
-    with col3:
-        if step_info['action'] == "click":
-            if st.button("✅ Mark Complete", type="primary"):
-                st.session_state.tutorial.next_step()
-                st.rerun()
-    
-    st.markdown("---")
-
 def add_element_id(element_id: str, content: str):
     """Add element ID to content for tutorial highlighting"""
     return f'<div id="{element_id}">{content}</div>'
@@ -419,31 +381,12 @@ def main():
     # Show tutorial controls
     show_tutorial_controls()
     
-    # Test tutorial functionality
-    st.markdown("## 🧪 Test Tutorial Functionality")
-    
-    if st.button("🎯 Test Highlighting"):
-        st.markdown('<div id="test-element">This is a test element that should be highlighted!</div>', unsafe_allow_html=True)
-        highlight_element("test-element")
-    
     # Demo of how to use
     st.markdown("## How to Use:")
     st.markdown("1. Select a tab to learn about in the sidebar")
     st.markdown("2. Follow the step-by-step instructions")
     st.markdown("3. Use Previous/Next buttons to navigate")
     st.markdown("4. Click 'Mark Complete' for action steps")
-    
-    # Show current tutorial state
-    if 'tutorial' in st.session_state:
-        tutorial = st.session_state.tutorial
-        st.markdown("### Current Tutorial State:")
-        st.write(f"Current Tab: {tutorial.current_tab}")
-        st.write(f"Current Step: {tutorial.current_step}")
-        
-        if tutorial.current_tab:
-            current_step = tutorial.get_current_step(tutorial.current_tab)
-            if current_step:
-                st.write(f"Current Step Info: {current_step}")
 
 if __name__ == "__main__":
     main()

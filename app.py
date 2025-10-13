@@ -39,11 +39,6 @@ def show_navigation():
     # Show welcome message for first-time users
     if not st.session_state.seen_introduction and not st.session_state.tutorial_completed:
         st.sidebar.success("👋 Welcome! Start with the Interactive Tutorial!")
-        
-        # Add tutorial start button
-        if st.sidebar.button("🎓 Start Tutorial", type="primary"):
-            st.session_state.tutorial_started = True
-            st.rerun()
     
     # Show tutorial option for first-time users
     if not st.session_state.tutorial_completed:
