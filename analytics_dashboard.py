@@ -11,7 +11,10 @@ def create_analytics_dashboard():
     """Create a modern analytics dashboard combining market overview and portfolio"""
     
     # Import contextual tutorial
-    from contextual_tutorial import show_tutorial_for_tab, add_element_id
+    from contextual_tutorial import show_tutorial_for_tab, add_element_id, initialize_tutorial_state
+    
+    # Initialize tutorial state first
+    initialize_tutorial_state()
     
     # Show tutorial for analytics dashboard
     tutorial_active = show_tutorial_for_tab("analytics_dashboard")

@@ -278,7 +278,8 @@ def highlight_element(element_id: str):
 
 def show_tutorial_controls():
     """Show tutorial controls in sidebar"""
-    if 'tutorial' not in st.session_state:
+    # Always ensure we have the correct tutorial class
+    if 'tutorial' not in st.session_state or not isinstance(st.session_state.tutorial, ContextualTutorial):
         st.session_state.tutorial = ContextualTutorial()
     
     tutorial = st.session_state.tutorial
@@ -327,6 +328,9 @@ def show_tutorial_controls():
     st.sidebar.markdown("### 🎮 Tutorial Controls")
     
     if st.sidebar.button("🔄 Restart Tutorial"):
+        # Clear any old tutorial state and create new one
+        if 'tutorial' in st.session_state:
+            del st.session_state.tutorial
         st.session_state.tutorial = ContextualTutorial()
         st.rerun()
     
@@ -357,7 +361,8 @@ def show_tutorial_controls():
 
 def show_tutorial_for_tab(tab_name: str):
     """Show tutorial for specific tab"""
-    if 'tutorial' not in st.session_state:
+    # Always ensure we have the correct tutorial class
+    if 'tutorial' not in st.session_state or not isinstance(st.session_state.tutorial, ContextualTutorial):
         st.session_state.tutorial = ContextualTutorial()
     
     tutorial = st.session_state.tutorial
@@ -385,6 +390,18 @@ def show_tutorial_for_tab(tab_name: str):
 def add_element_id(element_id: str, content: str):
     """Add element ID to content for tutorial highlighting"""
     return f'<div id="{element_id}">{content}</div>'
+
+def initialize_tutorial_state():
+    """Initialize tutorial state and ensure correct class is used"""
+    # Clear any old tutorial state
+    if 'tutorial' in st.session_state:
+        # Check if it's the wrong type
+        if not isinstance(st.session_state.tutorial, ContextualTutorial):
+            del st.session_state.tutorial
+    
+    # Create new tutorial if needed
+    if 'tutorial' not in st.session_state:
+        st.session_state.tutorial = ContextualTutorial()
 
 def main():
     """Main function for contextual tutorial"""

@@ -873,7 +873,12 @@ def main():
     initialize_portfolio()
     
     # Import and show contextual tutorial controls
-    from contextual_tutorial import show_tutorial_controls
+    from contextual_tutorial import show_tutorial_controls, initialize_tutorial_state
+    
+    # Initialize tutorial state first
+    initialize_tutorial_state()
+    
+    # Show tutorial controls
     show_tutorial_controls()
     
     # Header
