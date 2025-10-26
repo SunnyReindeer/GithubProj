@@ -33,26 +33,18 @@ def show_navigation():
     if 'seen_introduction' not in st.session_state:
         st.session_state.seen_introduction = False
     
-    if 'tutorial_completed' not in st.session_state:
-        st.session_state.tutorial_completed = False
+    # Tutorial system removed - will be rewritten later
     
     # Show welcome message for first-time users
-    if not st.session_state.seen_introduction and not st.session_state.tutorial_completed:
-        st.sidebar.success("👋 Welcome! Start with the Interactive Tutorial!")
+    if not st.session_state.seen_introduction:
+        st.sidebar.success("👋 Welcome to the AI Trading Platform!")
     
-    # Show tutorial option for first-time users
-    if not st.session_state.tutorial_completed:
-        page = st.sidebar.radio(
-            "Go to",
-            ["🎓 Interactive Tutorial", "🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
-            index=0
-        )
-    else:
-        page = st.sidebar.radio(
-            "Go to",
-            ["🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
-            index=0
-        )
+    # Navigation
+    page = st.sidebar.radio(
+        "Go to",
+        ["🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
+        index=0
+    )
     
     return page
 

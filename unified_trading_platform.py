@@ -447,10 +447,10 @@ def display_market_overview():
 def display_price_charts(symbols: List[str]):
     """Display price charts for selected symbols"""
     # Import contextual tutorial
-    from contextual_tutorial import show_tutorial_for_tab, add_element_id
+    # Tutorial system removed - will be rewritten later
     
     # Show tutorial for price charts
-    show_tutorial_for_tab("price_charts")
+    # Tutorial system removed - will be rewritten later
     
     if not symbols:
         st.info("Please select symbols to view charts")
@@ -459,37 +459,36 @@ def display_price_charts(symbols: List[str]):
     st.markdown("## 📊 Price Charts")
     
     # Add container for charts header
-    st.markdown('<div id="charts-header">', unsafe_allow_html=True)
+    # Tutorial containers removed
     
     # Chart display options
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
-        st.markdown('<div id="chart-type-selector">', unsafe_allow_html=True)
+        # Tutorial containers removed
         chart_type = st.radio(
             "Chart Type",
             ["📊 Standard", "📈 TradingView Widget"],
             help="Standard: Basic candlestick charts | TradingView Widget: Real TradingView embedded widget"
         )
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Tutorial containers removed
     
     with col2:
         if chart_type == "📊 Standard":
-            st.markdown('<div id="timeframe-selector">', unsafe_allow_html=True)
+            # Tutorial containers removed
             timeframe = st.selectbox(
                 "Time Period",
                 ["1mo", "3mo", "6mo", "1y", "2y", "5y"],
                 index=3,  # Default to 1y
                 help="Select data period for standard charts"
             )
-            st.markdown('</div>', unsafe_allow_html=True)
+            # Tutorial containers removed
         else:
             timeframe = "1h"  # Default for TradingView widget
     
-    # Close charts header container
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Tutorial containers removed
     
     # Add container for chart display
-    st.markdown('<div id="chart-display">', unsafe_allow_html=True)
+    # Tutorial containers removed
     
     # Always use multi-asset data provider (unified platform)
     for symbol in symbols[:4]:  # Limit to 4 charts for performance
@@ -568,19 +567,19 @@ def display_price_charts(symbols: List[str]):
 def create_trading_panel(symbols: List[str]):
     """Create trading panel for placing orders"""
     # Import contextual tutorial
-    from contextual_tutorial import show_tutorial_for_tab, add_element_id
+    # Tutorial system removed - will be rewritten later
     
     # Show tutorial for trading
-    show_tutorial_for_tab("trading")
+    # Tutorial system removed - will be rewritten later
     
     st.markdown("## 💼 Trading Panel")
     
     # Add container for trading header
-    st.markdown('<div id="trading-header">', unsafe_allow_html=True)
+    # Tutorial containers removed
     
     if not symbols:
         st.warning("Please select symbols to trade")
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Tutorial containers removed
         return
     
     col1, col2 = st.columns([1, 2])
@@ -589,21 +588,21 @@ def create_trading_panel(symbols: List[str]):
         st.markdown("### 📝 Place Order")
         
         # Symbol selection
-        st.markdown('<div id="symbol-selector">', unsafe_allow_html=True)
+        # Tutorial containers removed
         selected_symbol = st.selectbox("Select Symbol", options=symbols)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Tutorial containers removed
         
         # Order details
-        st.markdown('<div id="order-side">', unsafe_allow_html=True)
+        # Tutorial containers removed
         order_side = st.radio("Order Side", ["Buy", "Sell"])
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Tutorial containers removed
         
-        st.markdown('<div id="order-type">', unsafe_allow_html=True)
+        # Tutorial containers removed
         order_type = st.selectbox("Order Type", ["Market", "Limit"])
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Tutorial containers removed
         
         # Quantity input
-        st.markdown('<div id="quantity-input">', unsafe_allow_html=True)
+        # Tutorial containers removed
         quantity = st.number_input(
             "Quantity",
             min_value=0.001,
@@ -612,7 +611,7 @@ def create_trading_panel(symbols: List[str]):
             step=0.001,
             format="%.3f"
         )
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Tutorial containers removed
         
         # Price input for limit orders
         if order_type == "Limit":
@@ -872,14 +871,7 @@ def main():
     # Initialize components
     initialize_portfolio()
     
-    # Import and show contextual tutorial controls
-    from contextual_tutorial import show_tutorial_controls, initialize_tutorial_state
-    
-    # Initialize tutorial state first
-    initialize_tutorial_state()
-    
-    # Show tutorial controls
-    show_tutorial_controls()
+    # Tutorial system removed - will be rewritten later
     
     # Header
     st.markdown('<h1 class="main-header">🌍 Unified Trading Platform</h1>', unsafe_allow_html=True)
@@ -921,15 +913,43 @@ def main():
     # Main content
     # Create tabs
     tab1, tab2, tab3 = st.tabs([
-        "📊 Analytics Dashboard", 
+        "📊 Market Overview",
         "📈 Price Charts", 
         "💼 Trading"
     ])
     
     with tab1:
-        # Import and display analytics dashboard
-        from analytics_dashboard import create_analytics_dashboard
-        create_analytics_dashboard()
+        # Market Overview
+        st.markdown("## 📊 Market Overview")
+        
+        # Get market data
+        with st.spinner("🔄 Loading market data..."):
+            market_overview = multi_asset_data_provider.get_market_overview()
+        
+        if market_overview:
+            # Display market overview by asset class
+            for asset_class, data in market_overview.items():
+                st.markdown(f"### {asset_class.title()}")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if data.get('top_gainers'):
+                        st.markdown("**🟢 Top Gainers**")
+                        for gainer in data['top_gainers'][:3]:
+                            price = gainer.price if hasattr(gainer, 'price') else 0
+                            st.write(f"• {gainer.symbol}: {gainer.change_percent:.2f}% (${price:.2f})")
+                
+                with col2:
+                    if data.get('top_losers'):
+                        st.markdown("**🔴 Top Losers**")
+                        for loser in data['top_losers'][:3]:
+                            price = loser.price if hasattr(loser, 'price') else 0
+                            st.write(f"• {loser.symbol}: {loser.change_percent:.2f}% (${price:.2f})")
+                
+                st.markdown("---")
+        else:
+            st.info("No market data available")
     
     with tab2:
         display_price_charts(selected_symbols)
