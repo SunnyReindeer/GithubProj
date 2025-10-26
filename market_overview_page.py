@@ -177,20 +177,7 @@ def create_market_overview_page():
     </style>
     """, unsafe_allow_html=True)
     
-    # Hero section with floating elements
-    st.markdown("""
-    <div class="hero-section">
-        <div class="floating-elements">
-            <div class="floating-circle"></div>
-            <div class="floating-circle"></div>
-            <div class="floating-circle"></div>
-        </div>
-        <div class="hero-content">
-            <h1 class="hero-title">📊 Market Overview</h1>
-            <p class="hero-subtitle">Real-time global markets, economic events & financial insights</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Clean start without ugly headers
     
     # Create tabs for different sections
     tab1, tab2, tab3, tab4 = st.tabs([
@@ -226,26 +213,66 @@ def display_markets_section():
         st.error("Unable to load market data. Please try again later.")
         return
     
-    # Enhanced market indices with China and Hong Kong
+    # World Map Visualization for Global Market Indices
     st.markdown("### 🌍 Global Market Indices")
     
-    # Create comprehensive indices data including China and Hong Kong
+    # Create comprehensive indices data with coordinates for world map
     indices_data = [
-        {"Index": "🇺🇸 S&P 500", "Change": 0.85, "Value": 4785.32, "Status": "Up", "Region": "Americas"},
-        {"Index": "🇺🇸 NASDAQ", "Change": 1.24, "Value": 15011.35, "Status": "Up", "Region": "Americas"},
-        {"Index": "🇺🇸 Dow Jones", "Change": 0.45, "Value": 37592.98, "Status": "Up", "Region": "Americas"},
-        {"Index": "🇨🇳 Shanghai Composite", "Change": -0.32, "Value": 2886.96, "Status": "Down", "Region": "Asia"},
-        {"Index": "🇭🇰 Hang Seng", "Change": 0.78, "Value": 16388.79, "Status": "Up", "Region": "Asia"},
-        {"Index": "🇨🇳 Shenzhen Component", "Change": -0.15, "Value": 8961.46, "Status": "Down", "Region": "Asia"},
-        {"Index": "🇯🇵 Nikkei 225", "Change": 1.12, "Value": 33763.18, "Status": "Up", "Region": "Asia"},
-        {"Index": "🇰🇷 KOSPI", "Change": 0.67, "Value": 2498.81, "Status": "Up", "Region": "Asia"},
-        {"Index": "🇬🇧 FTSE 100", "Change": 0.23, "Value": 7694.19, "Status": "Up", "Region": "Europe"},
-        {"Index": "🇩🇪 DAX", "Change": 0.89, "Value": 16751.44, "Status": "Up", "Region": "Europe"},
-        {"Index": "🇫🇷 CAC 40", "Change": 0.56, "Value": 7428.52, "Status": "Up", "Region": "Europe"},
-        {"Index": "🇦🇺 ASX 200", "Change": 0.34, "Value": 7512.67, "Status": "Up", "Region": "Oceania"}
+        {"Index": "S&P 500", "Country": "United States", "Change": 0.85, "Value": 4785.32, "Status": "Up", "Region": "Americas", "lat": 39.8283, "lon": -98.5795, "color": "#27ae60"},
+        {"Index": "NASDAQ", "Country": "United States", "Change": 1.24, "Value": 15011.35, "Status": "Up", "Region": "Americas", "lat": 37.7749, "lon": -122.4194, "color": "#27ae60"},
+        {"Index": "Dow Jones", "Country": "United States", "Change": 0.45, "Value": 37592.98, "Status": "Up", "Region": "Americas", "lat": 40.7128, "lon": -74.0060, "color": "#27ae60"},
+        {"Index": "Shanghai Composite", "Country": "China", "Change": -0.32, "Value": 2886.96, "Status": "Down", "Region": "Asia", "lat": 31.2304, "lon": 121.4737, "color": "#e74c3c"},
+        {"Index": "Hang Seng", "Country": "Hong Kong", "Change": 0.78, "Value": 16388.79, "Status": "Up", "Region": "Asia", "lat": 22.3193, "lon": 114.1694, "color": "#27ae60"},
+        {"Index": "Shenzhen Component", "Country": "China", "Change": -0.15, "Value": 8961.46, "Status": "Down", "Region": "Asia", "lat": 22.5431, "lon": 114.0579, "color": "#e74c3c"},
+        {"Index": "Nikkei 225", "Country": "Japan", "Change": 1.12, "Value": 33763.18, "Status": "Up", "Region": "Asia", "lat": 35.6762, "lon": 139.6503, "color": "#27ae60"},
+        {"Index": "KOSPI", "Country": "South Korea", "Change": 0.67, "Value": 2498.81, "Status": "Up", "Region": "Asia", "lat": 37.5665, "lon": 126.9780, "color": "#27ae60"},
+        {"Index": "FTSE 100", "Country": "United Kingdom", "Change": 0.23, "Value": 7694.19, "Status": "Up", "Region": "Europe", "lat": 51.5074, "lon": -0.1278, "color": "#27ae60"},
+        {"Index": "DAX", "Country": "Germany", "Change": 0.89, "Value": 16751.44, "Status": "Up", "Region": "Europe", "lat": 52.5200, "lon": 13.4050, "color": "#27ae60"},
+        {"Index": "CAC 40", "Country": "France", "Change": 0.56, "Value": 7428.52, "Status": "Up", "Region": "Europe", "lat": 48.8566, "lon": 2.3522, "color": "#27ae60"},
+        {"Index": "ASX 200", "Country": "Australia", "Change": 0.34, "Value": 7512.67, "Status": "Up", "Region": "Oceania", "lat": -33.8688, "lon": 151.2093, "color": "#27ae60"}
     ]
     
-    # Group by region
+    # Create world map with market indices
+    df_map = pd.DataFrame(indices_data)
+    
+    # Create scatter plot on world map
+    fig = px.scatter_mapbox(
+        df_map,
+        lat="lat",
+        lon="lon",
+        color="Change",
+        size="Value",
+        hover_name="Index",
+        hover_data={"Country": True, "Change": ":.2f", "Value": ":,.0f", "lat": False, "lon": False},
+        color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
+        size_max=50,
+        zoom=1,
+        height=500,
+        title="Global Market Performance Map"
+    )
+    
+    fig.update_layout(
+        mapbox_style="open-street-map",
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        title_font_size=18,
+        title_x=0.5,
+        margin=dict(l=0, r=0, t=40, b=0)
+    )
+    
+    fig.update_traces(
+        marker=dict(
+            line=dict(width=2, color='white'),
+            opacity=0.8
+        )
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Compact market indices cards below the map
+    st.markdown("#### 📊 Market Details")
+    
+    # Group by region for compact display
     regions = {}
     for index in indices_data:
         region = index['Region']
@@ -253,11 +280,11 @@ def display_markets_section():
             regions[region] = []
         regions[region].append(index)
     
-    # Display indices by region with enhanced visuals
+    # Display indices in a more compact format
     for region, indices in regions.items():
-        st.markdown(f"#### {region}")
+        st.markdown(f"**{region}**")
         
-        # Create columns for this region
+        # Create columns for this region (more compact)
         cols = st.columns(len(indices))
         for i, (col, index) in enumerate(zip(cols, indices)):
             with col:
@@ -266,53 +293,45 @@ def display_markets_section():
                 
                 st.markdown(f"""
                 <div class="market-card" style="
-                    border-left: 4px solid {color};
-                    position: relative;
-                    overflow: hidden;
+                    border-left: 3px solid {color};
+                    padding: 1rem;
+                    margin-bottom: 0.5rem;
                 ">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <h4 style="margin: 0; color: #2c3e50; font-size: 1.1rem;">{index['Index']}</h4>
-                        <span style="font-size: 1.2rem;">{icon}</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h5 style="margin: 0; color: #2c3e50; font-size: 0.9rem;">{index['Index']}</h5>
+                            <p style="margin: 0; color: #7f8c8d; font-size: 0.8rem;">{index['Country']}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: {color};">
+                                {index['Change']:+.2f}%
+                            </p>
+                            <p style="margin: 0; font-size: 0.8rem; color: #7f8c8d;">
+                                {index['Value']:,.0f}
+                            </p>
+                        </div>
                     </div>
-                    <div style="text-align: center;">
-                        <p style="margin: 0; font-size: 2rem; font-weight: bold; color: {color};">
-                            {index['Change']:+.2f}%
-                        </p>
-                        <p style="margin: 0.3rem 0 0 0; font-size: 0.9rem; color: #7f8c8d;">
-                            {index['Value']:,.2f}
-                        </p>
-                    </div>
-                    <div style="
-                        position: absolute;
-                        top: 0;
-                        right: 0;
-                        width: 60px;
-                        height: 60px;
-                        background: linear-gradient(45deg, {color}20, {color}10);
-                        border-radius: 0 20px 0 20px;
-                        opacity: 0.3;
-                    "></div>
                 </div>
                 """, unsafe_allow_html=True)
     
-    # Enhanced top performers and losers with better visuals
+    # Compact Top Performers & Losers
     st.markdown("### 🏆 Top Performers & Losers")
     
     # Mock data for better demonstration
     top_gainers = [
-        {"Symbol": "TSLA", "Name": "Tesla Inc", "Change": 8.45, "Price": 248.32, "Volume": "45.2M"},
-        {"Symbol": "NVDA", "Name": "NVIDIA Corp", "Change": 6.78, "Price": 485.67, "Volume": "32.1M"},
-        {"Symbol": "AAPL", "Name": "Apple Inc", "Change": 4.23, "Price": 192.45, "Volume": "28.7M"},
-        {"Symbol": "MSFT", "Name": "Microsoft Corp", "Change": 3.89, "Price": 378.91, "Volume": "22.3M"},
-        {"Symbol": "AMZN", "Name": "Amazon.com Inc", "Change": 3.45, "Price": 156.78, "Volume": "18.9M"}
+        {"Symbol": "TSLA", "Name": "Tesla Inc", "Change": 8.45, "Price": 248.32},
+        {"Symbol": "NVDA", "Name": "NVIDIA Corp", "Change": 6.78, "Price": 485.67},
+        {"Symbol": "AAPL", "Name": "Apple Inc", "Change": 4.23, "Price": 192.45},
+        {"Symbol": "MSFT", "Name": "Microsoft Corp", "Change": 3.89, "Price": 378.91},
+        {"Symbol": "AMZN", "Name": "Amazon.com Inc", "Change": 3.45, "Price": 156.78}
     ]
     
     top_losers = [
-        {"Symbol": "META", "Name": "Meta Platforms", "Change": -5.67, "Price": 345.21, "Volume": "25.4M"},
-        {"Symbol": "GOOGL", "Name": "Alphabet Inc", "Change": -4.23, "Price": 142.56, "Volume": "19.8M"},
-        {"Symbol": "NFLX", "Name": "Netflix Inc", "Change": -3.89, "Price": 478.32, "Volume": "12.6M"},
-        {"Symbol": "ADBE", "Name": "Adobe Inc", "Change": -3.45, "Price": 567.89, "Volume": "8.7M"},
-        {"Symbol": "CRM", "Name": "Salesforce Inc", "Change": -2.98, "Price": 234.56, "Volume": "15.2M"}
+        {"Symbol": "META", "Name": "Meta Platforms", "Change": -5.67, "Price": 345.21},
+        {"Symbol": "GOOGL", "Name": "Alphabet Inc", "Change": -4.23, "Price": 142.56},
+        {"Symbol": "NFLX", "Name": "Netflix Inc", "Change": -3.89, "Price": 478.32},
+        {"Symbol": "ADBE", "Name": "Adobe Inc", "Change": -3.45, "Price": 567.89},
+        {"Symbol": "CRM", "Name": "Salesforce Inc", "Change": -2.98, "Price": 234.56}
     ]
     
     col1, col2 = st.columns(2)
@@ -323,34 +342,24 @@ def display_markets_section():
             st.markdown(f"""
             <div class="market-card" style="
                 background: linear-gradient(135deg, #d5f4e6 0%, #a8e6cf 100%);
-                border-left: 4px solid #27ae60;
-                position: relative;
-                overflow: hidden;
+                border-left: 3px solid #27ae60;
+                padding: 0.8rem;
+                margin-bottom: 0.5rem;
             ">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 0.3rem 0; color: #2c3e50; font-size: 1.1rem;">{gainer['Symbol']}</h4>
-                        <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">{gainer['Name']}</p>
-                        <p style="margin: 0.3rem 0 0 0; color: #7f8c8d; font-size: 0.8rem;">Vol: {gainer['Volume']}</p>
+                    <div>
+                        <h5 style="margin: 0; color: #2c3e50; font-size: 0.9rem;">{gainer['Symbol']}</h5>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 0.8rem;">{gainer['Name']}</p>
                     </div>
                     <div style="text-align: right;">
-                        <p style="margin: 0; font-size: 1.8rem; font-weight: bold; color: #27ae60;">
+                        <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: #27ae60;">
                             +{gainer['Change']:.2f}%
                         </p>
-                        <p style="margin: 0.3rem 0 0 0; color: #2c3e50; font-weight: 600;">
+                        <p style="margin: 0; font-size: 0.8rem; color: #2c3e50;">
                             ${gainer['Price']:.2f}
                         </p>
                     </div>
                 </div>
-                <div style="
-                    position: absolute;
-                    top: -10px;
-                    right: -10px;
-                    width: 40px;
-                    height: 40px;
-                    background: rgba(39, 174, 96, 0.1);
-                    border-radius: 50%;
-                "></div>
             </div>
             """, unsafe_allow_html=True)
     
@@ -360,38 +369,28 @@ def display_markets_section():
             st.markdown(f"""
             <div class="market-card" style="
                 background: linear-gradient(135deg, #fadbd8 0%, #f1948a 100%);
-                border-left: 4px solid #e74c3c;
-                position: relative;
-                overflow: hidden;
+                border-left: 3px solid #e74c3c;
+                padding: 0.8rem;
+                margin-bottom: 0.5rem;
             ">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 0.3rem 0; color: #2c3e50; font-size: 1.1rem;">{loser['Symbol']}</h4>
-                        <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">{loser['Name']}</p>
-                        <p style="margin: 0.3rem 0 0 0; color: #7f8c8d; font-size: 0.8rem;">Vol: {loser['Volume']}</p>
+                    <div>
+                        <h5 style="margin: 0; color: #2c3e50; font-size: 0.9rem;">{loser['Symbol']}</h5>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 0.8rem;">{loser['Name']}</p>
                     </div>
                     <div style="text-align: right;">
-                        <p style="margin: 0; font-size: 1.8rem; font-weight: bold; color: #e74c3c;">
+                        <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: #e74c3c;">
                             {loser['Change']:.2f}%
                         </p>
-                        <p style="margin: 0.3rem 0 0 0; color: #2c3e50; font-weight: 600;">
+                        <p style="margin: 0; font-size: 0.8rem; color: #2c3e50;">
                             ${loser['Price']:.2f}
                         </p>
                     </div>
                 </div>
-                <div style="
-                    position: absolute;
-                    top: -10px;
-                    right: -10px;
-                    width: 40px;
-                    height: 40px;
-                    background: rgba(231, 76, 60, 0.1);
-                    border-radius: 50%;
-                "></div>
             </div>
             """, unsafe_allow_html=True)
     
-    # Enhanced market heatmap with better visuals
+    # Compact Global Market Heatmap
     st.markdown("### 🔥 Global Market Heatmap")
     
     # Create enhanced heatmap data
@@ -407,7 +406,7 @@ def display_markets_section():
     
     df_heatmap = pd.DataFrame(heatmap_data)
     
-    # Create enhanced treemap
+    # Create compact treemap
     fig = px.treemap(
         df_heatmap,
         path=['Region', 'Index'],
@@ -419,12 +418,13 @@ def display_markets_section():
     )
     
     fig.update_layout(
-        height=500,
+        height=350,  # Reduced height
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(size=12),
-        title_font_size=18,
-        title_x=0.5
+        font=dict(size=10),
+        title_font_size=16,
+        title_x=0.5,
+        margin=dict(l=0, r=0, t=30, b=0)
     )
     
     fig.update_traces(
@@ -481,26 +481,6 @@ def display_markets_section():
 
 def display_economic_events_section():
     """Display economic events and calendar with enhanced visuals"""
-    
-    # Hero section for economic events
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 20px;
-        margin-bottom: 2rem;
-        text-align: center;
-        color: white;
-        position: relative;
-        overflow: hidden;
-    ">
-        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"calendar\" width=\"20\" height=\"20\" patternUnits=\"userSpaceOnUse\"><rect width=\"20\" height=\"20\" fill=\"none\" stroke=\"white\" stroke-width=\"0.5\" opacity=\"0.3\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23calendar)\"/></svg>'); opacity: 0.3;"></div>
-        <div style="position: relative; z-index: 1;">
-            <h2 style="margin: 0; font-size: 2.5rem; font-weight: 700;">📅 Economic Events</h2>
-            <p style="margin: 0.5rem 0 0 0; font-size: 1.2rem; opacity: 0.9;">Stay informed with upcoming economic announcements</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
     
     # Mock economic events data (in real app, this would come from an API)
     economic_events = [
@@ -635,26 +615,6 @@ def display_economic_events_section():
 def display_news_section():
     """Display financial news and market updates with enhanced visuals"""
     
-    # Hero section for news
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 20px;
-        margin-bottom: 2rem;
-        text-align: center;
-        color: white;
-        position: relative;
-        overflow: hidden;
-    ">
-        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"news\" width=\"30\" height=\"30\" patternUnits=\"userSpaceOnUse\"><circle cx=\"15\" cy=\"15\" r=\"2\" fill=\"white\" opacity=\"0.3\"/><circle cx=\"15\" cy=\"15\" r=\"1\" fill=\"white\" opacity=\"0.6\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23news)\"/></svg>'); opacity: 0.3;"></div>
-        <div style="position: relative; z-index: 1;">
-            <h2 style="margin: 0; font-size: 2.5rem; font-weight: 700;">📰 Financial News</h2>
-            <p style="margin: 0.5rem 0 0 0; font-size: 1.2rem; opacity: 0.9;">Latest market news and financial insights</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
     # Mock news data (in real app, this would come from a news API)
     news_articles = [
         {
@@ -774,26 +734,6 @@ def display_news_section():
 
 def display_market_analysis_section():
     """Display market analysis and insights with enhanced visuals"""
-    
-    # Hero section for market analysis
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 20px;
-        margin-bottom: 2rem;
-        text-align: center;
-        color: white;
-        position: relative;
-        overflow: hidden;
-    ">
-        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"analysis\" width=\"25\" height=\"25\" patternUnits=\"userSpaceOnUse\"><path d=\"M0,0 L25,25 M25,0 L0,25\" stroke=\"white\" stroke-width=\"0.5\" opacity=\"0.3\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23analysis)\"/></svg>'); opacity: 0.3;"></div>
-        <div style="position: relative; z-index: 1;">
-            <h2 style="margin: 0; font-size: 2.5rem; font-weight: 700;">📊 Market Analysis</h2>
-            <p style="margin: 0.5rem 0 0 0; font-size: 1.2rem; opacity: 0.9;">Advanced market insights and technical analysis</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
     
     # Market sentiment indicator
     st.markdown("### 🎯 Market Sentiment")
