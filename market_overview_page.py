@@ -426,77 +426,119 @@ def display_markets_section():
     # 🌍 WORLD MAP VISUALIZATION
     st.markdown("#### 🌍 Global Market Indices - Interactive World Map")
     
-    # Create comprehensive indices data for world map
+    # Create comprehensive indices data for world map (like CNN Markets)
     indices_data = [
+        # United States - Multiple indices
         {"Index": "S&P 500", "Country": "United States", "Change": 0.85, "Value": 4785.32, "Status": "Up", "Region": "Americas", "lat": 39.8283, "lon": -98.5795, "color": "#27ae60", "emoji": "🇺🇸", "description": "Broad market index"},
-        {"Index": "NASDAQ", "Country": "United States", "Change": 1.24, "Value": 15011.35, "Status": "Up", "Region": "Americas", "lat": 37.7749, "lon": -122.4194, "color": "#27ae60", "emoji": "🇺🇸", "description": "Tech-heavy index"},
-        {"Index": "Dow Jones", "Country": "United States", "Change": 0.45, "Value": 37592.98, "Status": "Up", "Region": "Americas", "lat": 40.7128, "lon": -74.0060, "color": "#27ae60", "emoji": "🇺🇸", "description": "Blue chip stocks"},
+        {"Index": "NASDAQ", "Country": "United States", "Change": 1.24, "Value": 15011.35, "Status": "Up", "Region": "Americas", "lat": 39.8283, "lon": -98.5795, "color": "#27ae60", "emoji": "🇺🇸", "description": "Tech-heavy index"},
+        {"Index": "Dow Jones", "Country": "United States", "Change": 0.45, "Value": 37592.98, "Status": "Up", "Region": "Americas", "lat": 39.8283, "lon": -98.5795, "color": "#27ae60", "emoji": "🇺🇸", "description": "Blue chip stocks"},
+        
+        # Brazil
         {"Index": "Bovespa", "Country": "Brazil", "Change": 0.67, "Value": 125678.45, "Status": "Up", "Region": "Americas", "lat": -23.5505, "lon": -46.6333, "color": "#27ae60", "emoji": "🇧🇷", "description": "São Paulo stock market"},
+        
+        # Argentina
         {"Index": "MERVAL", "Country": "Argentina", "Change": -0.23, "Value": 456789.12, "Status": "Down", "Region": "Americas", "lat": -34.6037, "lon": -58.3816, "color": "#e74c3c", "emoji": "🇦🇷", "description": "Buenos Aires stock market"},
+        
+        # Chile
         {"Index": "IPSA", "Country": "Chile", "Change": 0.89, "Value": 5678.90, "Status": "Up", "Region": "Americas", "lat": -33.4489, "lon": -70.6693, "color": "#27ae60", "emoji": "🇨🇱", "description": "Santiago stock market"},
+        
+        # China - Multiple indices
         {"Index": "Shanghai Composite", "Country": "China", "Change": -0.32, "Value": 2886.96, "Status": "Down", "Region": "Asia", "lat": 31.2304, "lon": 121.4737, "color": "#e74c3c", "emoji": "🇨🇳", "description": "Mainland China stocks"},
+        {"Index": "Shenzhen Component", "Country": "China", "Change": -0.15, "Value": 8961.46, "Status": "Down", "Region": "Asia", "lat": 31.2304, "lon": 121.4737, "color": "#e74c3c", "emoji": "🇨🇳", "description": "Shenzhen market"},
+        
+        # Hong Kong - Fixed coordinates
         {"Index": "Hang Seng", "Country": "Hong Kong", "Change": 0.78, "Value": 16388.79, "Status": "Up", "Region": "Asia", "lat": 22.3193, "lon": 114.1694, "color": "#27ae60", "emoji": "🇭🇰", "description": "Hong Kong blue chips"},
-        {"Index": "Shenzhen Component", "Country": "China", "Change": -0.15, "Value": 8961.46, "Status": "Down", "Region": "Asia", "lat": 22.5431, "lon": 114.0579, "color": "#e74c3c", "emoji": "🇨🇳", "description": "Shenzhen market"},
+        
+        # Taiwan
         {"Index": "Taiwan Weighted", "Country": "Taiwan", "Change": 0.56, "Value": 17890.12, "Status": "Up", "Region": "Asia", "lat": 25.0330, "lon": 121.5654, "color": "#27ae60", "emoji": "🇹🇼", "description": "Taipei stock market"},
+        
+        # Japan
         {"Index": "Nikkei 225", "Country": "Japan", "Change": 1.12, "Value": 33763.18, "Status": "Up", "Region": "Asia", "lat": 35.6762, "lon": 139.6503, "color": "#27ae60", "emoji": "🇯🇵", "description": "Tokyo stock market"},
+        
+        # South Korea
         {"Index": "KOSPI", "Country": "South Korea", "Change": 0.67, "Value": 2498.81, "Status": "Up", "Region": "Asia", "lat": 37.5665, "lon": 126.9780, "color": "#27ae60", "emoji": "🇰🇷", "description": "Seoul stock market"},
+        
+        # United Kingdom
         {"Index": "FTSE 100", "Country": "United Kingdom", "Change": 0.23, "Value": 7694.19, "Status": "Up", "Region": "Europe", "lat": 51.5074, "lon": -0.1278, "color": "#27ae60", "emoji": "🇬🇧", "description": "London blue chips"},
+        
+        # Germany
         {"Index": "DAX", "Country": "Germany", "Change": 0.89, "Value": 16751.44, "Status": "Up", "Region": "Europe", "lat": 52.5200, "lon": 13.4050, "color": "#27ae60", "emoji": "🇩🇪", "description": "Frankfurt stock market"},
+        
+        # France
         {"Index": "CAC 40", "Country": "France", "Change": 0.56, "Value": 7428.52, "Status": "Up", "Region": "Europe", "lat": 48.8566, "lon": 2.3522, "color": "#27ae60", "emoji": "🇫🇷", "description": "Paris stock market"},
-        {"Index": "ASX 200", "Country": "Australia", "Change": 0.34, "Value": 7512.67, "Status": "Up", "Region": "Oceania", "lat": -33.8688, "lon": 151.2093, "color": "#27ae60", "emoji": "🇦🇺", "description": "Sydney stock market"}
+        
+        # Australia
+        {"Index": "ASX 200", "Country": "Australia", "Change": 0.34, "Value": 7512.67, "Status": "Up", "Region": "Asia-Pacific", "lat": -33.8688, "lon": 151.2093, "color": "#27ae60", "emoji": "🇦🇺", "description": "Sydney stock market"}
     ]
     
-    # Region filters (like in your image)
-    col1, col2, col3 = st.columns([1, 1, 1])
+    # Region filters (like CNN Markets)
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
     
     with col1:
-        americas_selected = st.button("Americas", key="americas_btn", type="primary")
+        all_selected = st.button("All", key="all_btn", type="primary")
     with col2:
-        europe_selected = st.button("Europe", key="europe_btn")
+        americas_selected = st.button("Americas", key="americas_btn")
     with col3:
+        europe_selected = st.button("Europe", key="europe_btn")
+    with col4:
         asia_selected = st.button("Asia-Pacific", key="asia_btn")
     
-    # Determine selected region
-    selected_region = "Americas"  # Default
-    if europe_selected:
-        selected_region = "Europe"
+    # Initialize session state for region selection
+    if 'selected_region' not in st.session_state:
+        st.session_state.selected_region = "All"
+    
+    # Update selected region based on button clicks
+    if all_selected:
+        st.session_state.selected_region = "All"
+    elif americas_selected:
+        st.session_state.selected_region = "Americas"
+    elif europe_selected:
+        st.session_state.selected_region = "Europe"
     elif asia_selected:
-        selected_region = "Asia-Pacific"
+        st.session_state.selected_region = "Asia-Pacific"
     
     # Filter data based on selected region
-    if selected_region == "Americas":
-        filtered_data = [idx for idx in indices_data if idx["Region"] in ["Americas"]]
-    elif selected_region == "Europe":
-        filtered_data = [idx for idx in indices_data if idx["Region"] in ["Europe"]]
-    elif selected_region == "Asia-Pacific":
-        filtered_data = [idx for idx in indices_data if idx["Region"] in ["Asia", "Oceania"]]
+    if st.session_state.selected_region == "All":
+        filtered_data = indices_data
+    elif st.session_state.selected_region == "Americas":
+        filtered_data = [idx for idx in indices_data if idx["Region"] == "Americas"]
+    elif st.session_state.selected_region == "Europe":
+        filtered_data = [idx for idx in indices_data if idx["Region"] == "Europe"]
+    elif st.session_state.selected_region == "Asia-Pacific":
+        filtered_data = [idx for idx in indices_data if idx["Region"] in ["Asia", "Asia-Pacific"]]
     else:
         filtered_data = indices_data
     
     if filtered_data:
         df_map = pd.DataFrame(filtered_data)
         
-        # Create world map with country highlighting (like your image)
-        # Use choropleth map to highlight entire countries
-        fig = px.choropleth(
+        # Create world map with scatter points (like CNN Markets)
+        fig = px.scatter_mapbox(
             df_map,
-            locations="Country",
-            locationmode="country names",
+            lat="lat",
+            lon="lon",
             color="Change",
+            size="Value",
             hover_name="Index",
-            hover_data=["Country", "Change", "Value", "Region"],
+            hover_data=["Country", "Change", "Value", "Region", "description"],
             color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
+            size_max=50,
+            zoom=1,
+            height=500,
             title="World markets"
         )
         
         # Update layout for better appearance
         fig.update_layout(
-            geo=dict(
-                showframe=False,
-                showcoastlines=True,
-                projection_type='equirectangular'
+            mapbox_style="carto-positron",
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            title_font_color="#2c3e50",
+            coloraxis_colorbar=dict(
+                title="Market Change (%)",
+                titlefont=dict(color="#2c3e50"),
+                tickfont=dict(color="#2c3e50")
             ),
-            height=500,
             margin=dict(l=0, r=0, t=40, b=0)
         )
         
@@ -523,6 +565,50 @@ def display_markets_section():
         )
         
         st.plotly_chart(fig, use_container_width=True)
+        
+        # Show detailed indices list (like CNN Markets)
+        st.markdown(f"##### {st.session_state.selected_region} Markets")
+        
+        # Group indices by country for better display
+        countries = {}
+        for idx in filtered_data:
+            country = idx["Country"]
+            if country not in countries:
+                countries[country] = []
+            countries[country].append(idx)
+        
+        # Display indices by country
+        for country, indices in countries.items():
+            st.markdown(f"**{country}**")
+            
+            # Create columns for indices
+            cols = st.columns(min(len(indices), 3))
+            for i, (col, index) in enumerate(zip(cols, indices)):
+                with col:
+                    color = "#27ae60" if index["Change"] >= 0 else "#e74c3c"
+                    st.markdown(f"""
+                    <div style="
+                        background: white;
+                        padding: 0.8rem;
+                        border-radius: 6px;
+                        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+                        margin-bottom: 0.5rem;
+                        border-left: 3px solid {color};
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                            <span style="font-weight: bold; color: #2c3e50; font-size: 0.9rem;">{index['Index']}</span>
+                            <span style="font-size: 1.2rem;">{index['emoji']}</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1rem; font-weight: bold; color: #2c3e50;">
+                                {index['Value']:,.0f}
+                            </div>
+                            <div style="font-size: 0.9rem; font-weight: bold; color: {color};">
+                                {index['Change']:+.2f}%
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
     
     # Overview of Assets Section with Asset Type Selector
     st.markdown("#### 📊 Overview of Assets")
