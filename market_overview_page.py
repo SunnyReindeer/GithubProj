@@ -260,12 +260,7 @@ def display_markets_section():
         margin=dict(l=0, r=0, t=40, b=0)
     )
     
-    fig.update_traces(
-        marker=dict(
-            line=dict(width=2, color='white'),
-            opacity=0.8
-        )
-    )
+    # Marker properties are set in the scatter_mapbox call above
     
     st.plotly_chart(fig, use_container_width=True)
     
