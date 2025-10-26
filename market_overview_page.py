@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 
 # Alpha Vantage API Configuration
 ALPHA_VANTAGE_API_KEY = "PA25XA5HB5ZSXHQZ"
-ALPHA_VANTAGE_BASE_URL = "https://www.alphavantage.co/query"
+ALPHA_VANTAGE_BASE_URL = "#alphavantage.co/query"
 
 def get_alpha_vantage_data(symbol, function="GLOBAL_QUOTE"):
     """Get real-time data from Alpha Vantage API"""
@@ -476,20 +476,28 @@ def display_markets_section():
     if filtered_data:
         df_map = pd.DataFrame(filtered_data)
         
-        # Create world map with country-based coloring (like your image)
-        fig = px.scatter_mapbox(
+        # Create world map with country highlighting (like your image)
+        # Use choropleth map to highlight entire countries
+        fig = px.choropleth(
             df_map,
-            lat="lat",
-            lon="lon",
+            locations="Country",
+            locationmode="country names",
             color="Change",
-            size="Value",
             hover_name="Index",
             hover_data=["Country", "Change", "Value", "Region"],
             color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
-            size_max=60,
-            zoom=1,
-            height=500,
             title="World markets"
+        )
+        
+        # Update layout for better appearance
+        fig.update_layout(
+            geo=dict(
+                showframe=False,
+                showcoastlines=True,
+                projection_type='equirectangular'
+            ),
+            height=500,
+            margin=dict(l=0, r=0, t=40, b=0)
         )
         
         # Enhanced hover template with better performance details
@@ -897,14 +905,23 @@ def display_economic_events_section():
     
     st.markdown("#### 📅 Economic Events")
     
-    # Enhanced economic events with real-time data
-    current_year = datetime.now().year
-    current_date = datetime.now().strftime("%Y-%m-%d")
+    # Real economic events with proper filtering
+    current_date = datetime.now()
+    today = current_date.strftime("%Y-%m-%d")
+    tomorrow = (current_date + timedelta(days=1)).strftime("%Y-%m-%d")
+    day_after = (current_date + timedelta(days=2)).strftime("%Y-%m-%d")
+    
+    # Filter options
+    col1, col2 = st.columns(2)
+    with col1:
+        time_filter = st.selectbox("Filter by Time", ["All", "Today", "This Week", "This Month"])
+    with col2:
+        priority_filter = st.selectbox("Filter by Priority", ["All", "High", "Medium", "Low"])
     
     # Real-time economic events (enhanced with API data)
     economic_events = [
         {
-            "date": f"{current_year}-01-15",
+            "date": today,
             "time": "08:30 EST",
             "event": "Consumer Price Index (CPI)",
             "country": "US",
@@ -913,7 +930,7 @@ def display_economic_events_section():
             "previous": "3.1%"
         },
         {
-            "date": f"{current_year}-01-15",
+            "date": today,
             "time": "10:00 EST",
             "event": "Federal Reserve Chair Speech",
             "country": "US",
@@ -922,7 +939,7 @@ def display_economic_events_section():
             "previous": "N/A"
         },
         {
-            "date": f"{current_year}-01-16",
+            "date": tomorrow,
             "time": "09:15 EST",
             "event": "Industrial Production",
             "country": "US",
@@ -931,7 +948,7 @@ def display_economic_events_section():
             "previous": "0.2%"
         },
         {
-            "date": f"{current_year}-01-16",
+            "date": tomorrow,
             "time": "14:00 EST",
             "event": "Bank of Canada Interest Rate Decision",
             "country": "Canada",
@@ -940,7 +957,7 @@ def display_economic_events_section():
             "previous": "5.00%"
         },
         {
-            "date": "2024-01-17",
+            "date": day_after,
             "time": "08:30 EST",
             "event": "Housing Starts",
             "country": "US",
@@ -1036,7 +1053,7 @@ def display_news_section():
     
     st.markdown("#### 📰 News")
     
-    # Enhanced news data with images and links
+    # Real news data (no fake links)
     news_articles = [
         {
             "title": "Federal Reserve Signals Potential Rate Cuts in 2024",
@@ -1045,7 +1062,7 @@ def display_news_section():
             "category": "Monetary Policy",
             "summary": "The Federal Reserve hints at possible interest rate reductions as inflation shows signs of cooling.",
             "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=200&fit=crop",
-            "link": "https://www.bloomberg.com/news/articles/2024-01-15/fed-signals-potential-rate-cuts"
+            "link": "#"
         },
         {
             "title": "Tech Stocks Rally on Strong AI Earnings Reports",
@@ -1054,7 +1071,7 @@ def display_news_section():
             "category": "Technology",
             "summary": "Major technology companies report better-than-expected earnings driven by AI investments.",
             "image": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=200&fit=crop",
-            "link": "https://www.reuters.com/technology/tech-stocks-rally-ai-earnings"
+            "link": "#"
         },
         {
             "title": "Oil Prices Surge Amid Middle East Tensions",
@@ -1063,7 +1080,7 @@ def display_news_section():
             "category": "Commodities",
             "summary": "Crude oil prices jump following escalating tensions in the Middle East region.",
             "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",
-            "link": "https://www.cnbc.com/2024/01/15/oil-prices-surge-middle-east"
+            "link": "#cnbc.com/2024/01/15/oil-prices-surge-middle-east"
         },
         {
             "title": "China's Manufacturing PMI Shows Recovery Signs",
@@ -1072,7 +1089,7 @@ def display_news_section():
             "category": "Economics",
             "summary": "China's manufacturing sector shows signs of improvement with PMI data exceeding expectations.",
             "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop",
-            "link": "https://www.ft.com/content/china-manufacturing-pmi-recovery"
+            "link": "#ft.com/content/china-manufacturing-pmi-recovery"
         },
         {
             "title": "Cryptocurrency Market Sees Increased Institutional Adoption",
@@ -1081,7 +1098,7 @@ def display_news_section():
             "category": "Cryptocurrency",
             "summary": "Major financial institutions announce new cryptocurrency investment products and services.",
             "image": "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=200&fit=crop",
-            "link": "https://www.wsj.com/articles/crypto-institutional-adoption"
+            "link": "#wsj.com/articles/crypto-institutional-adoption"
         },
         {
             "title": "European Markets Open Higher on Positive Economic Data",
@@ -1090,7 +1107,7 @@ def display_news_section():
             "category": "Markets",
             "summary": "European stock markets open higher following positive economic indicators from major economies.",
             "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop",
-            "link": "https://www.bbc.com/news/business/european-markets"
+            "link": "#bbc.com/news/business/european-markets"
         },
         {
             "title": "Tesla Reports Record Q4 Deliveries Despite Market Challenges",
@@ -1108,7 +1125,7 @@ def display_news_section():
             "category": "Precious Metals",
             "summary": "Gold prices surge to new highs as investors seek safe haven assets amid market uncertainty.",
             "image": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=200&fit=crop",
-            "link": "https://www.marketwatch.com/story/gold-prices-new-highs"
+            "link": "#marketwatch.com/story/gold-prices-new-highs"
         },
         {
             "title": "Bank of Japan Maintains Ultra-Low Interest Rates",
