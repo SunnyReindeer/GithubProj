@@ -1002,7 +1002,7 @@ def display_economic_events_section():
     with col1:
         time_filter = st.selectbox("Filter by Time", ["All", "Today", "This Week", "This Month"])
     with col2:
-        priority_filter = st.selectbox("Filter by Priority", ["All", "High", "Medium", "Low"])
+        importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"])
     
     # Real-time economic events (enhanced with API data)
     economic_events = [
