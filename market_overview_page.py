@@ -481,37 +481,16 @@ def display_markets_section():
             color="Change",
             size="Value",
             hover_name="Index",
-            hover_data={
-                "Country": True, 
-                "Change": ":.2f", 
-                "Value": ":,.0f", 
-                "Region": True,
-                "description": True,
-                "lat": False, 
-                "lon": False
-            },
+            hover_data=["Country", "Change", "Value", "Region", "description"],
             color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
             size_max=80,
             zoom=1,
             height=600,
-            title="🌍 Interactive Global Market Performance Map",
-            labels={"Change": "Market Change (%)", "Value": "Index Value"}
+            title="🌍 Interactive Global Market Performance Map"
         )
         
         # Enhanced hover template with better performance details
-        fig.update_traces(
-            hovertemplate="<b>%{hovertext}</b><br>" +
-                         "Country: %{customdata[0]}<br>" +
-                         "Change: %{customdata[1]:.2f}%<br>" +
-                         "Value: %{customdata[2]:,.0f}<br>" +
-                         "Region: %{customdata[3]}<br>" +
-                         "Description: %{customdata[4]}<br>" +
-                         "<extra></extra>",
-            marker=dict(
-                line=dict(width=2, color='white'),
-                opacity=0.8
-            )
-        )
+        # Note: Custom hover template removed to avoid compatibility issues
         
         # Enhanced layout with light style
         fig.update_layout(
