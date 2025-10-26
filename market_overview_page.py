@@ -1063,28 +1063,18 @@ def display_economic_events_section():
             index=0
         )
     
-    with col2:
-        country_filter = st.selectbox(
-            "Filter by Country",
-            ["All", "US", "Canada", "EU", "UK", "Japan"],
-            index=0
-        )
     
-    with col3:
-        days_ahead = st.selectbox(
-            "Show Events",
-            ["Today", "Next 3 Days", "Next Week", "Next Month"],
-            index=1
-        )
-    
-    # Filter events
+    # Apply filters
     filtered_events = economic_events.copy()
+    
+    if time_filter == "Today":
+        filtered_events = [e for e in filtered_events if e["date"] == today]
+    elif time_filter == "This Week":
+        week_end = (current_date + timedelta(days=7)).strftime("%Y-%m-%d")
+        filtered_events = [e for e in filtered_events if e["date"] <= week_end]
     
     if importance_filter != "All":
         filtered_events = [e for e in filtered_events if e["importance"] == importance_filter]
-    
-    if country_filter != "All":
-        filtered_events = [e for e in filtered_events if e["country"] == country_filter]
     
     # Display events
     st.markdown("### 📋 Upcoming Events")
