@@ -42,7 +42,7 @@ def show_navigation():
     # Navigation
     page = st.sidebar.radio(
         "Go to",
-        ["🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
+        ["📊 Market Overview", "🌍 Trading Platform", "🤖 Strategy Backtesting", "🎯 AI Robo Advisor"],
         index=0
     )
     
@@ -543,10 +543,10 @@ def main():
     # Navigation
     page = show_navigation()
     
-    if page == "🎓 Interactive Tutorial":
-        # Import and run interactive tutorial
-        from interactive_tutorial import main as tutorial_main
-        tutorial_main()
+    if page == "📊 Market Overview":
+        # Import and run market overview page
+        from market_overview_page import main as market_overview_main
+        market_overview_main()
         return
     
     if page == "🤖 Strategy Backtesting":

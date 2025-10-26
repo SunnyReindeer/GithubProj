@@ -913,43 +913,72 @@ def main():
     # Main content
     # Create tabs
     tab1, tab2, tab3 = st.tabs([
-        "📊 Market Overview",
+        "💼 Portfolio",
         "📈 Price Charts", 
-        "💼 Trading"
+        "🔄 Trading"
     ])
     
     with tab1:
-        # Market Overview
-        st.markdown("## 📊 Market Overview")
+        # Portfolio Summary
+        st.markdown("## 💼 Portfolio Summary")
         
-        # Get market data
-        with st.spinner("🔄 Loading market data..."):
-            market_overview = multi_asset_data_provider.get_market_overview()
+        # Get portfolio data
+        portfolio_symbols = list(multi_asset_portfolio.positions.keys())
         
-        if market_overview:
-            # Display market overview by asset class
-            for asset_class, data in market_overview.items():
-                st.markdown(f"### {asset_class.title()}")
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    if data.get('top_gainers'):
-                        st.markdown("**🟢 Top Gainers**")
-                        for gainer in data['top_gainers'][:3]:
-                            price = gainer.price if hasattr(gainer, 'price') else 0
-                            st.write(f"• {gainer.symbol}: {gainer.change_percent:.2f}% (${price:.2f})")
-                
-                with col2:
-                    if data.get('top_losers'):
-                        st.markdown("**🔴 Top Losers**")
-                        for loser in data['top_losers'][:3]:
-                            price = loser.price if hasattr(loser, 'price') else 0
-                            st.write(f"• {loser.symbol}: {loser.change_percent:.2f}% (${price:.2f})")
-                
-                st.markdown("---")
+        if portfolio_symbols:
+            # Get current prices
+            from unified_trading_platform import get_current_prices
+            portfolio_prices = get_current_prices(portfolio_symbols)
+            
+            if portfolio_prices:
+                try:
+                    portfolio_metrics = multi_asset_portfolio.get_portfolio_metrics(portfolio_prices)
+                    
+                    # Display key metrics
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        st.metric("Total Value", f"${portfolio_metrics.total_value:,.2f}")
+                    
+                    with col2:
+                        st.metric("Total P&L", f"${portfolio_metrics.total_pnl:,.2f}")
+                    
+                    with col3:
+                        st.metric("P&L %", f"{portfolio_metrics.total_pnl_percent:.2f}%")
+                    
+                    with col4:
+                        st.metric("Positions", len(portfolio_symbols))
+                    
+                    # Portfolio breakdown
+                    st.markdown("### 📊 Portfolio Breakdown")
+                    
+                    portfolio_data = []
+                    for symbol in portfolio_symbols:
+                        if symbol in portfolio_prices:
+                            price_obj = portfolio_prices[symbol]
+                            price = price_obj.price if hasattr(price_obj, 'price') else price_obj
+                            change = price_obj.change_percent if hasattr(price_obj, 'change_percent') else 0
+                            
+                            position = multi_asset_portfolio.positions[symbol]
+                            value = position.quantity * price
+                            
+                            portfolio_data.append({
+                                'Symbol': symbol,
+                                'Quantity': position.quantity,
+                                'Price': price,
+                                'Value': value,
+                                'Change': change
+                            })
+                    
+                    if portfolio_data:
+                        df_portfolio = pd.DataFrame(portfolio_data)
+                        st.dataframe(df_portfolio, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error calculating portfolio metrics: {str(e)}")
+            else:
+                st.info("Unable to load current prices for portfolio calculation")
         else:
-            st.info("No market data available")
+            st.info("No positions in portfolio. Start trading to build your portfolio!")
     
     with tab2:
         display_price_charts(selected_symbols)
