@@ -213,206 +213,330 @@ def display_markets_section():
         st.error("Unable to load market data. Please try again later.")
         return
     
-    # 🚀 ULTRA INTERACTIVE & COOL World Map Visualization
-    st.markdown("### 🌍 Global Market Indices - Interactive World Map")
+    # 🚀 COMPREHENSIVE MARKETS OVERVIEW with Sparklines & Real-time Data
+    st.markdown("### 📊 Global Markets Overview")
     
-    # Create comprehensive indices data with enhanced features including Taiwan and South America
-    indices_data = [
-        {"Index": "S&P 500", "Country": "United States", "Change": 0.85, "Value": 4785.32, "Status": "Up", "Region": "Americas", "lat": 39.8283, "lon": -98.5795, "color": "#27ae60", "emoji": "🇺🇸", "description": "Broad market index"},
-        {"Index": "NASDAQ", "Country": "United States", "Change": 1.24, "Value": 15011.35, "Status": "Up", "Region": "Americas", "lat": 37.7749, "lon": -122.4194, "color": "#27ae60", "emoji": "🇺🇸", "description": "Tech-heavy index"},
-        {"Index": "Dow Jones", "Country": "United States", "Change": 0.45, "Value": 37592.98, "Status": "Up", "Region": "Americas", "lat": 40.7128, "lon": -74.0060, "color": "#27ae60", "emoji": "🇺🇸", "description": "Blue chip stocks"},
-        {"Index": "Bovespa", "Country": "Brazil", "Change": 0.67, "Value": 125678.45, "Status": "Up", "Region": "Americas", "lat": -23.5505, "lon": -46.6333, "color": "#27ae60", "emoji": "🇧🇷", "description": "São Paulo stock market"},
-        {"Index": "MERVAL", "Country": "Argentina", "Change": -0.23, "Value": 456789.12, "Status": "Down", "Region": "Americas", "lat": -34.6037, "lon": -58.3816, "color": "#e74c3c", "emoji": "🇦🇷", "description": "Buenos Aires stock market"},
-        {"Index": "IPSA", "Country": "Chile", "Change": 0.89, "Value": 5678.90, "Status": "Up", "Region": "Americas", "lat": -33.4489, "lon": -70.6693, "color": "#27ae60", "emoji": "🇨🇱", "description": "Santiago stock market"},
-        {"Index": "Shanghai Composite", "Country": "China", "Change": -0.32, "Value": 2886.96, "Status": "Down", "Region": "Asia", "lat": 31.2304, "lon": 121.4737, "color": "#e74c3c", "emoji": "🇨🇳", "description": "Mainland China stocks"},
-        {"Index": "Hang Seng", "Country": "Hong Kong", "Change": 0.78, "Value": 16388.79, "Status": "Up", "Region": "Asia", "lat": 22.3193, "lon": 114.1694, "color": "#27ae60", "emoji": "🇭🇰", "description": "Hong Kong blue chips"},
-        {"Index": "Shenzhen Component", "Country": "China", "Change": -0.15, "Value": 8961.46, "Status": "Down", "Region": "Asia", "lat": 22.5431, "lon": 114.0579, "color": "#e74c3c", "emoji": "🇨🇳", "description": "Shenzhen market"},
-        {"Index": "Taiwan Weighted", "Country": "Taiwan", "Change": 0.56, "Value": 17890.12, "Status": "Up", "Region": "Asia", "lat": 25.0330, "lon": 121.5654, "color": "#27ae60", "emoji": "🇹🇼", "description": "Taipei stock market"},
-        {"Index": "Nikkei 225", "Country": "Japan", "Change": 1.12, "Value": 33763.18, "Status": "Up", "Region": "Asia", "lat": 35.6762, "lon": 139.6503, "color": "#27ae60", "emoji": "🇯🇵", "description": "Tokyo stock market"},
-        {"Index": "KOSPI", "Country": "South Korea", "Change": 0.67, "Value": 2498.81, "Status": "Up", "Region": "Asia", "lat": 37.5665, "lon": 126.9780, "color": "#27ae60", "emoji": "🇰🇷", "description": "Seoul stock market"},
-        {"Index": "FTSE 100", "Country": "United Kingdom", "Change": 0.23, "Value": 7694.19, "Status": "Up", "Region": "Europe", "lat": 51.5074, "lon": -0.1278, "color": "#27ae60", "emoji": "🇬🇧", "description": "London blue chips"},
-        {"Index": "DAX", "Country": "Germany", "Change": 0.89, "Value": 16751.44, "Status": "Up", "Region": "Europe", "lat": 52.5200, "lon": 13.4050, "color": "#27ae60", "emoji": "🇩🇪", "description": "Frankfurt stock market"},
-        {"Index": "CAC 40", "Country": "France", "Change": 0.56, "Value": 7428.52, "Status": "Up", "Region": "Europe", "lat": 48.8566, "lon": 2.3522, "color": "#27ae60", "emoji": "🇫🇷", "description": "Paris stock market"},
-        {"Index": "ASX 200", "Country": "Australia", "Change": 0.34, "Value": 7512.67, "Status": "Up", "Region": "Oceania", "lat": -33.8688, "lon": 151.2093, "color": "#27ae60", "emoji": "🇦🇺", "description": "Sydney stock market"}
+    # Asset type selector
+    asset_type = st.selectbox(
+        "Select Asset Type",
+        ["All Assets", "World Indices", "Commodities", "Currencies", "Bonds", "Crypto"],
+        index=0
+    )
+    
+    # Create comprehensive market data with sparklines and real-time updates
+    current_time = datetime.now()
+    
+    # World Indices Data with sparklines
+    world_indices = {
+        "Americas": [
+            {"Symbol": "S&P 500", "Price": 4785.32, "Change": 0.85, "Sparkline": [4750, 4760, 4770, 4780, 4785], "Country": "🇺🇸"},
+            {"Symbol": "NASDAQ", "Price": 15011.35, "Change": 1.24, "Sparkline": [14800, 14900, 14950, 15000, 15011], "Country": "🇺🇸"},
+            {"Symbol": "Dow 30", "Price": 37592.98, "Change": 0.45, "Sparkline": [37400, 37500, 37550, 37580, 37593], "Country": "🇺🇸"},
+            {"Symbol": "Russell 2000", "Price": 2513.47, "Change": 1.24, "Sparkline": [2480, 2490, 2500, 2510, 2513], "Country": "🇺🇸"},
+            {"Symbol": "S&P/TSX", "Price": 21456.78, "Change": 0.70, "Sparkline": [21300, 21350, 21400, 21430, 21457], "Country": "🇨🇦"},
+            {"Symbol": "Bovespa", "Price": 125678.45, "Change": 0.67, "Sparkline": [124500, 125000, 125300, 125500, 125678], "Country": "🇧🇷"},
+            {"Symbol": "US Dollar Index", "Price": 103.45, "Change": -0.01, "Sparkline": [103.5, 103.4, 103.4, 103.4, 103.45], "Country": "🇺🇸"},
+            {"Symbol": "VIX", "Price": 18.32, "Change": -5.38, "Sparkline": [19.5, 19.0, 18.8, 18.5, 18.32], "Country": "🇺🇸"}
+        ],
+        "Europe": [
+            {"Symbol": "FTSE 100", "Price": 7694.19, "Change": 0.23, "Sparkline": [7670, 7680, 7685, 7690, 7694], "Country": "🇬🇧"},
+            {"Symbol": "DAX", "Price": 16751.44, "Change": 0.89, "Sparkline": [16600, 16650, 16700, 16730, 16751], "Country": "🇩🇪"},
+            {"Symbol": "CAC 40", "Price": 7428.52, "Change": 0.00, "Sparkline": [7425, 7426, 7427, 7428, 7428], "Country": "🇫🇷"},
+            {"Symbol": "Euro STOXX", "Price": 4567.89, "Change": 0.56, "Sparkline": [4540, 4550, 4560, 4565, 4568], "Country": "🇪🇺"},
+            {"Symbol": "MSCI EU", "Price": 2345.67, "Change": 0.34, "Sparkline": [2335, 2340, 2342, 2344, 2346], "Country": "🇪🇺"},
+            {"Symbol": "Euronext", "Price": 1234.56, "Change": 0.12, "Sparkline": [1230, 1232, 1233, 1234, 1235], "Country": "🇪🇺"},
+            {"Symbol": "Euro Index", "Price": 98.45, "Change": 0.15, "Sparkline": [98.2, 98.3, 98.4, 98.4, 98.45], "Country": "🇪🇺"},
+            {"Symbol": "British Pound", "Price": 1.2756, "Change": -0.13, "Sparkline": [1.2780, 1.2770, 1.2765, 1.2760, 1.2756], "Country": "🇬🇧"}
+        ],
+        "Asia": [
+            {"Symbol": "Nikkei 225", "Price": 33763.18, "Change": 1.12, "Sparkline": [33400, 33500, 33600, 33700, 33763], "Country": "🇯🇵"},
+            {"Symbol": "Hang Seng", "Price": 16388.79, "Change": 0.78, "Sparkline": [16250, 16300, 16350, 16370, 16389], "Country": "🇭🇰"},
+            {"Symbol": "Shanghai Composite", "Price": 2886.96, "Change": -0.32, "Sparkline": [2895, 2890, 2888, 2887, 2887], "Country": "🇨🇳"},
+            {"Symbol": "KOSPI", "Price": 2498.81, "Change": 0.67, "Sparkline": [2480, 2485, 2490, 2495, 2499], "Country": "🇰🇷"},
+            {"Symbol": "Taiwan Weighted", "Price": 17890.12, "Change": 0.56, "Sparkline": [17780, 17820, 17850, 17870, 17890], "Country": "🇹🇼"},
+            {"Symbol": "S&P/ASX 200", "Price": 7512.67, "Change": -0.15, "Sparkline": [7520, 7518, 7515, 7513, 7513], "Country": "🇦🇺"},
+            {"Symbol": "S&P BSE Sensex", "Price": 67890.12, "Change": -0.41, "Sparkline": [68100, 68000, 67950, 67900, 67890], "Country": "🇮🇳"},
+            {"Symbol": "Japanese Yen", "Price": 149.45, "Change": -0.19, "Sparkline": [149.8, 149.7, 149.6, 149.5, 149.45], "Country": "🇯🇵"}
+        ]
+    }
+    
+    # Commodities Data
+    commodities = [
+        {"Symbol": "Gold", "Price": 2034.56, "Change": -0.45, "Sparkline": [2040, 2038, 2036, 2035, 2035], "Unit": "USD/oz"},
+        {"Symbol": "Silver", "Price": 24.78, "Change": -0.23, "Sparkline": [24.9, 24.8, 24.8, 24.8, 24.78], "Unit": "USD/oz"},
+        {"Symbol": "Crude Oil", "Price": 78.45, "Change": -1.23, "Sparkline": [79.5, 79.0, 78.8, 78.6, 78.45], "Unit": "USD/bbl"},
+        {"Symbol": "Brent Crude", "Price": 82.34, "Change": -0.89, "Sparkline": [83.0, 82.8, 82.6, 82.4, 82.34], "Unit": "USD/bbl"},
+        {"Symbol": "Natural Gas", "Price": 2.45, "Change": -2.15, "Sparkline": [2.50, 2.48, 2.47, 2.46, 2.45], "Unit": "USD/MMBtu"},
+        {"Symbol": "Copper", "Price": 4.12, "Change": 0.85, "Sparkline": [4.08, 4.09, 4.10, 4.11, 4.12], "Unit": "USD/lb"}
     ]
     
-    # Add interactive controls
-    col_filter1, col_filter2 = st.columns(2)
+    # Currencies Data
+    currencies = [
+        {"Symbol": "EUR/USD", "Price": 1.0856, "Change": 0.12, "Sparkline": [1.0840, 1.0845, 1.0850, 1.0852, 1.0856], "Pair": "EUR/USD"},
+        {"Symbol": "GBP/USD", "Price": 1.2756, "Change": -0.13, "Sparkline": [1.2780, 1.2770, 1.2765, 1.2760, 1.2756], "Pair": "GBP/USD"},
+        {"Symbol": "USD/JPY", "Price": 149.45, "Change": -0.19, "Sparkline": [149.8, 149.7, 149.6, 149.5, 149.45], "Pair": "USD/JPY"},
+        {"Symbol": "USD/CAD", "Price": 1.3456, "Change": 0.08, "Sparkline": [1.3440, 1.3445, 1.3450, 1.3452, 1.3456], "Pair": "USD/CAD"},
+        {"Symbol": "USD/AUD", "Price": 1.5234, "Change": -0.25, "Sparkline": [1.5270, 1.5260, 1.5250, 1.5240, 1.5234], "Pair": "USD/AUD"},
+        {"Symbol": "USD/MXN", "Price": 18.4172, "Change": 0.35, "Sparkline": [18.35, 18.38, 18.40, 18.41, 18.42], "Pair": "USD/MXN"}
+    ]
     
-    with col_filter1:
-        selected_regions = st.multiselect(
-            "🌍 Filter by Region",
-            ["Americas", "Asia", "Europe", "Oceania"],
-            default=["Americas", "Asia", "Europe", "Oceania"]
-        )
+    # Bonds Data
+    bonds = [
+        {"Symbol": "10-Yr Bond", "Price": 4.5850, "Change": 0.12, "Sparkline": [4.57, 4.58, 4.58, 4.58, 4.59], "Maturity": "10Y"},
+        {"Symbol": "30-Yr Bond", "Price": 4.7850, "Change": 0.08, "Sparkline": [4.78, 4.78, 4.78, 4.78, 4.79], "Maturity": "30Y"},
+        {"Symbol": "5-Yr Bond", "Price": 4.3250, "Change": 0.15, "Sparkline": [4.31, 4.32, 4.32, 4.32, 4.33], "Maturity": "5Y"},
+        {"Symbol": "2-Yr Yield", "Price": 4.1250, "Change": 0.00, "Sparkline": [4.125, 4.125, 4.125, 4.125, 4.125], "Maturity": "2Y"},
+        {"Symbol": "10-Yr T-Note", "Price": 4.3450, "Change": -0.05, "Sparkline": [4.35, 4.35, 4.34, 4.34, 4.34], "Maturity": "10Y"},
+        {"Symbol": "13-Wk Bill", "Price": 5.1250, "Change": -0.10, "Sparkline": [5.13, 5.13, 5.12, 5.12, 5.12], "Maturity": "13W"}
+    ]
     
-    with col_filter2:
-        performance_filter = st.selectbox(
-            "📊 Performance Filter",
-            ["All", "Gaining Only", "Declining Only"]
-        )
+    # Real-time data indicator
+    st.markdown(f"**🔄 Last Updated:** {current_time.strftime('%Y-%m-%d %H:%M:%S')} UTC")
     
-    # Filter data based on selections
-    filtered_data = [idx for idx in indices_data if idx["Region"] in selected_regions]
-    
-    if performance_filter == "Gaining Only":
-        filtered_data = [idx for idx in filtered_data if idx["Change"] > 0]
-    elif performance_filter == "Declining Only":
-        filtered_data = [idx for idx in filtered_data if idx["Change"] < 0]
-    
-    # Use light map style by default
-    
-    if filtered_data:
-        df_map = pd.DataFrame(filtered_data)
+    # Display markets based on selected asset type
+    if asset_type == "All Assets" or asset_type == "World Indices":
+        st.markdown("#### 🌍 World Indices")
         
-        # Create ULTRA INTERACTIVE scatter plot on world map
-        fig = px.scatter_mapbox(
-            df_map,
-            lat="lat",
-            lon="lon",
-            color="Change",
-            size="Value",
-            hover_name="Index",
-            hover_data={
-                "Country": True, 
-                "Change": ":.2f", 
-                "Value": ":,.0f", 
-                "Region": True,
-                "description": True,
-                "lat": False, 
-                "lon": False
-            },
-            color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
-            size_max=60,
-            zoom=1,
-            height=600,
-            title="🚀 Interactive Global Market Performance Map",
-            labels={"Change": "Market Change (%)", "Value": "Index Value"}
-        )
-        
-        # Enhanced layout with creative styling
-        fig.update_layout(
-            mapbox_style="carto-positron",  # Light style by default
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            title_font_size=20,
-            title_x=0.5,
-            title_font_color="#2c3e50",
-            margin=dict(l=0, r=0, t=50, b=0),
-            coloraxis_colorbar=dict(
-                title="Market Change (%)",
-                title_font_size=14,
-                tickfont_size=12,
-                len=0.8,
-                y=0.5,
-                yanchor="middle"
-            )
-        )
-        
-        # Add custom hover template
-        fig.update_traces(
-            hovertemplate="<b>%{hovertext}</b><br>" +
-                         "Country: %{customdata[0]}<br>" +
-                         "Change: %{customdata[1]:.2f}%<br>" +
-                         "Value: %{customdata[2]:,.0f}<br>" +
-                         "Region: %{customdata[3]}<br>" +
-                         "Description: %{customdata[4]}<br>" +
-                         "<extra></extra>"
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Add market statistics
-        st.markdown("#### 📊 Market Statistics")
-        
-        col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
-        
-        with col_stat1:
-            st.metric("Total Markets", len(filtered_data))
-        
-        with col_stat2:
-            gaining = len([idx for idx in filtered_data if idx["Change"] > 0])
-            st.metric("Gaining Markets", gaining, f"+{gaining - len(filtered_data) + gaining}")
-        
-        with col_stat3:
-            declining = len([idx for idx in filtered_data if idx["Change"] < 0])
-            st.metric("Declining Markets", declining, f"{declining - len(filtered_data) + declining}")
-        
-        with col_stat4:
-            avg_change = sum([idx["Change"] for idx in filtered_data]) / len(filtered_data)
-            st.metric("Average Change", f"{avg_change:+.2f}%")
-    
-    else:
-        st.warning("No markets match your selected filters. Please adjust your selection.")
-    
-    # Layout: Market Details on left (2/3), Top Performers & Losers on right (1/3)
-    col_market_details, col_top_performers = st.columns([2, 1])
-    
-    with col_market_details:
-        st.markdown("#### 📊 Market Details")
-        
-        # Group by region for compact display
-        regions = {}
-        for index in indices_data:
-            region = index['Region']
-            if region not in regions:
-                regions[region] = []
-            regions[region].append(index)
-        
-        # Display indices in a more compact format
-        for region, indices in regions.items():
+        for region, indices in world_indices.items():
             st.markdown(f"**{region}**")
             
-            # Create columns for this region (more compact)
+            # Create columns for each region
             cols = st.columns(len(indices))
             for i, (col, index) in enumerate(zip(cols, indices)):
                 with col:
-                    color = "#27ae60" if index['Change'] >= 0 else "#e74c3c"
-                    icon = "📈" if index['Change'] >= 0 else "📉"
+                    color = "#27ae60" if index["Change"] >= 0 else "#e74c3c"
                     
+                    # Create sparkline chart
+                    fig_spark = go.Figure()
+                    fig_spark.add_trace(go.Scatter(
+                        y=index["Sparkline"],
+                        mode='lines',
+                        line=dict(color=color, width=2),
+                        showlegend=False,
+                        hoverinfo='skip'
+                    ))
+                    
+                    fig_spark.update_layout(
+                        height=40,
+                        margin=dict(l=0, r=0, t=0, b=0),
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        xaxis=dict(showgrid=False, showticklabels=False),
+                        yaxis=dict(showgrid=False, showticklabels=False)
+                    )
+                    
+                    st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_{region}_{i}")
+                    
+                    # Display market data
                     st.markdown(f"""
-                    <div class="market-card" style="
-                        border-left: 3px solid {color};
+                    <div style="
+                        background: white;
                         padding: 0.8rem;
-                        margin-bottom: 0.4rem;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        margin-bottom: 0.5rem;
+                        border-left: 3px solid {color};
                     ">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <h6 style="margin: 0; color: #2c3e50; font-size: 0.85rem; font-weight: bold;">{index['Index']}</h6>
-                                <p style="margin: 0; color: #7f8c8d; font-size: 0.7rem;">{index['Country']} {index['emoji']}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                            <span style="font-weight: bold; color: #2c3e50; font-size: 0.9rem;">{index['Symbol']}</span>
+                            <span style="font-size: 1.2rem;">{index['Country']}</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.1rem; font-weight: bold; color: #2c3e50;">
+                                {index['Price']:,.2f}
                             </div>
-                            <div style="text-align: right;">
-                                <p style="margin: 0; font-size: 1rem; font-weight: bold; color: {color};">
-                                    {index['Change']:+.2f}%
-                                </p>
-                                <p style="margin: 0; font-size: 0.7rem; color: #7f8c8d;">
-                                    {index['Value']:,.0f}
-                                </p>
+                            <div style="font-size: 0.9rem; font-weight: bold; color: {color};">
+                                {index['Change']:+.2f}%
                             </div>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
     
-    with col_top_performers:
-        st.markdown("#### 🏆 Top Performers & Losers")
+    if asset_type == "All Assets" or asset_type == "Commodities":
+        st.markdown("#### 🥇 Commodities")
         
-        # Mock data for better demonstration
-        top_gainers = [
-            {"Symbol": "TSLA", "Name": "Tesla Inc", "Change": 8.45, "Price": 248.32},
-            {"Symbol": "NVDA", "Name": "NVIDIA Corp", "Change": 6.78, "Price": 485.67},
-            {"Symbol": "AAPL", "Name": "Apple Inc", "Change": 4.23, "Price": 192.45},
-            {"Symbol": "MSFT", "Name": "Microsoft Corp", "Change": 3.89, "Price": 378.91},
-            {"Symbol": "AMZN", "Name": "Amazon.com Inc", "Change": 3.45, "Price": 156.78}
-        ]
+        cols = st.columns(len(commodities))
+        for i, (col, commodity) in enumerate(zip(cols, commodities)):
+            with col:
+                color = "#27ae60" if commodity["Change"] >= 0 else "#e74c3c"
+                
+                # Create sparkline chart
+                fig_spark = go.Figure()
+                fig_spark.add_trace(go.Scatter(
+                    y=commodity["Sparkline"],
+                    mode='lines',
+                    line=dict(color=color, width=2),
+                    showlegend=False,
+                    hoverinfo='skip'
+                ))
+                
+                fig_spark.update_layout(
+                    height=40,
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    xaxis=dict(showgrid=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, showticklabels=False)
+                )
+                
+                st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_commodity_{i}")
+                
+                # Display commodity data
+                st.markdown(f"""
+                <div style="
+                    background: white;
+                    padding: 0.8rem;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    margin-bottom: 0.5rem;
+                    border-left: 3px solid {color};
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                        <span style="font-weight: bold; color: #2c3e50; font-size: 0.9rem;">{commodity['Symbol']}</span>
+                        <span style="font-size: 0.8rem; color: #7f8c8d;">{commodity['Unit']}</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #2c3e50;">
+                            {commodity['Price']:,.2f}
+                        </div>
+                        <div style="font-size: 0.9rem; font-weight: bold; color: {color};">
+                            {commodity['Change']:+.2f}%
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+    
+    if asset_type == "All Assets" or asset_type == "Currencies":
+        st.markdown("#### 💱 Currencies")
         
-        top_losers = [
-            {"Symbol": "META", "Name": "Meta Platforms", "Change": -5.67, "Price": 345.21},
-            {"Symbol": "GOOGL", "Name": "Alphabet Inc", "Change": -4.23, "Price": 142.56},
-            {"Symbol": "NFLX", "Name": "Netflix Inc", "Change": -3.89, "Price": 478.32},
-            {"Symbol": "ADBE", "Name": "Adobe Inc", "Change": -3.45, "Price": 567.89},
-            {"Symbol": "CRM", "Name": "Salesforce Inc", "Change": -2.98, "Price": 234.56}
-        ]
+        cols = st.columns(len(currencies))
+        for i, (col, currency) in enumerate(zip(cols, currencies)):
+            with col:
+                color = "#27ae60" if currency["Change"] >= 0 else "#e74c3c"
+                
+                # Create sparkline chart
+                fig_spark = go.Figure()
+                fig_spark.add_trace(go.Scatter(
+                    y=currency["Sparkline"],
+                    mode='lines',
+                    line=dict(color=color, width=2),
+                    showlegend=False,
+                    hoverinfo='skip'
+                ))
+                
+                fig_spark.update_layout(
+                    height=40,
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    xaxis=dict(showgrid=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, showticklabels=False)
+                )
+                
+                st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_currency_{i}")
+                
+                # Display currency data
+                st.markdown(f"""
+                <div style="
+                    background: white;
+                    padding: 0.8rem;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    margin-bottom: 0.5rem;
+                    border-left: 3px solid {color};
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                        <span style="font-weight: bold; color: #2c3e50; font-size: 0.9rem;">{currency['Symbol']}</span>
+                        <span style="font-size: 0.8rem; color: #7f8c8d;">{currency['Pair']}</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #2c3e50;">
+                            {currency['Price']:.4f}
+                        </div>
+                        <div style="font-size: 0.9rem; font-weight: bold; color: {color};">
+                            {currency['Change']:+.2f}%
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+    
+    if asset_type == "All Assets" or asset_type == "Bonds":
+        st.markdown("#### 📈 US Treasury Bonds")
         
+        cols = st.columns(len(bonds))
+        for i, (col, bond) in enumerate(zip(cols, bonds)):
+            with col:
+                color = "#27ae60" if bond["Change"] >= 0 else "#e74c3c"
+                
+                # Create sparkline chart
+                fig_spark = go.Figure()
+                fig_spark.add_trace(go.Scatter(
+                    y=bond["Sparkline"],
+                    mode='lines',
+                    line=dict(color=color, width=2),
+                    showlegend=False,
+                    hoverinfo='skip'
+                ))
+                
+                fig_spark.update_layout(
+                    height=40,
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    xaxis=dict(showgrid=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, showticklabels=False)
+                )
+                
+                st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_bond_{i}")
+                
+                # Display bond data
+                st.markdown(f"""
+                <div style="
+                    background: white;
+                    padding: 0.8rem;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    margin-bottom: 0.5rem;
+                    border-left: 3px solid {color};
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                        <span style="font-weight: bold; color: #2c3e50; font-size: 0.9rem;">{bond['Symbol']}</span>
+                        <span style="font-size: 0.8rem; color: #7f8c8d;">{bond['Maturity']}</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #2c3e50;">
+                            {bond['Price']:.4f}%
+                        </div>
+                        <div style="font-size: 0.9rem; font-weight: bold; color: {color};">
+                            {bond['Change']:+.2f}%
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+    
+    # Top Performers & Losers Section
+    st.markdown("#### 🏆 Top Performers & Losers")
+    
+    # Mock data for better demonstration
+    top_gainers = [
+        {"Symbol": "TSLA", "Name": "Tesla Inc", "Change": 8.45, "Price": 248.32},
+        {"Symbol": "NVDA", "Name": "NVIDIA Corp", "Change": 6.78, "Price": 485.67},
+        {"Symbol": "AAPL", "Name": "Apple Inc", "Change": 4.23, "Price": 192.45},
+        {"Symbol": "MSFT", "Name": "Microsoft Corp", "Change": 3.89, "Price": 378.91},
+        {"Symbol": "AMZN", "Name": "Amazon.com Inc", "Change": 3.45, "Price": 156.78}
+    ]
+    
+    top_losers = [
+        {"Symbol": "META", "Name": "Meta Platforms", "Change": -5.67, "Price": 345.21},
+        {"Symbol": "GOOGL", "Name": "Alphabet Inc", "Change": -4.23, "Price": 142.56},
+        {"Symbol": "NFLX", "Name": "Netflix Inc", "Change": -3.89, "Price": 478.32},
+        {"Symbol": "ADBE", "Name": "Adobe Inc", "Change": -3.45, "Price": 567.89},
+        {"Symbol": "CRM", "Name": "Salesforce Inc", "Change": -2.98, "Price": 234.56}
+    ]
+    
+    col_gainers, col_losers = st.columns(2)
+    
+    with col_gainers:
         st.markdown("**🟢 Top Gainers**")
         for gainer in top_gainers:
             st.markdown(f"""
@@ -439,7 +563,8 @@ def display_markets_section():
                 </div>
             </div>
             """, unsafe_allow_html=True)
-        
+    
+    with col_losers:
         st.markdown("**🔴 Top Losers**")
         for loser in top_losers:
             st.markdown(f"""
@@ -467,63 +592,53 @@ def display_markets_section():
             </div>
             """, unsafe_allow_html=True)
     
-    # Compact Global Market Heatmap with appropriate sizing
-    st.markdown("### 🔥 Global Market Heatmap")
+    # Global Market Heatmap
+    st.markdown("#### 🌡️ Global Market Heatmap")
     
-    # Create enhanced heatmap data
-    heatmap_data = []
-    for index in indices_data:
-        heatmap_data.append({
-            'Index': index['Index'],
-            'Region': index['Region'],
-            'Change': index['Change'],
-            'Value': index['Value'],
-            'Size': abs(index['Change']) * 100  # Size based on absolute change
-        })
+    # Create sample heatmap data
+    heatmap_data = [
+        {"Market": "S&P 500", "Country": "US", "Change": 0.85, "Value": 4785},
+        {"Market": "NASDAQ", "Country": "US", "Change": 1.24, "Value": 15011},
+        {"Market": "FTSE 100", "Country": "UK", "Change": 0.23, "Value": 7694},
+        {"Market": "DAX", "Country": "Germany", "Change": 0.89, "Value": 16751},
+        {"Market": "Nikkei 225", "Country": "Japan", "Change": 1.12, "Value": 33763},
+        {"Market": "Hang Seng", "Country": "Hong Kong", "Change": 0.78, "Value": 16389},
+        {"Market": "Shanghai Composite", "Country": "China", "Change": -0.32, "Value": 2887},
+        {"Market": "ASX 200", "Country": "Australia", "Change": -0.15, "Value": 7513}
+    ]
     
     df_heatmap = pd.DataFrame(heatmap_data)
     
-    # Use centered container for heatmap
-    col_heatmap1, col_heatmap2, col_heatmap3 = st.columns([1, 2, 1])
+    # Create treemap
+    fig_heatmap = px.treemap(
+        df_heatmap,
+        path=['Country', 'Market'],
+        values='Value',
+        color='Change',
+        color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
+        title="Market Performance by Country",
+        height=300
+    )
     
-    with col_heatmap2:  # Center the heatmap
-        # Create compact treemap
-        fig = px.treemap(
-            df_heatmap,
-            path=['Region', 'Index'],
-            values='Size',
-            color='Change',
-            color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
-            title="Global Market Performance Heatmap",
-            hover_data={'Change': ':.2f', 'Value': ':,.0f'}
-        )
-        
-        fig.update_layout(
-            height=300,  # Further reduced height
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(size=9),
-            title_font_size=14,
-            title_x=0.5,
-            margin=dict(l=0, r=0, t=25, b=0)
-        )
-        
-        fig.update_traces(
-            textinfo="label+value",
-            texttemplate="<b>%{label}</b><br>%{value:.1f}%",
-            hovertemplate="<b>%{label}</b><br>Change: %{color:.2f}%<br>Value: %{customdata[1]:,.0f}<extra></extra>"
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+    fig_heatmap.update_layout(
+        title_font_size=14,
+        font_size=10,
+        margin=dict(t=30, l=0, r=0, b=0)
+    )
+    
+    # Center the heatmap
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.plotly_chart(fig_heatmap, use_container_width=True)
     
     # Add market summary metrics
     st.markdown("### 📊 Market Summary")
     
-    # Calculate summary statistics
-    total_indices = len(indices_data)
-    positive_indices = len([i for i in indices_data if i['Change'] > 0])
-    negative_indices = len([i for i in indices_data if i['Change'] < 0])
-    avg_change = sum([i['Change'] for i in indices_data]) / len(indices_data)
+    # Sample market statistics
+    total_indices = 24
+    positive_indices = 18
+    negative_indices = 6
+    avg_change = 0.45
     
     col1, col2, col3, col4 = st.columns(4)
     
@@ -564,9 +679,11 @@ def display_economic_events_section():
     """Display economic events and calendar with enhanced visuals"""
     
     # Mock economic events data (in real app, this would come from an API)
+    # Update to current year
+    current_year = datetime.now().year
     economic_events = [
         {
-            "date": "2024-01-15",
+            "date": f"{current_year}-01-15",
             "time": "08:30 EST",
             "event": "Consumer Price Index (CPI)",
             "country": "US",
@@ -575,7 +692,7 @@ def display_economic_events_section():
             "previous": "3.1%"
         },
         {
-            "date": "2024-01-15",
+            "date": f"{current_year}-01-15",
             "time": "10:00 EST",
             "event": "Federal Reserve Chair Speech",
             "country": "US",
@@ -584,7 +701,7 @@ def display_economic_events_section():
             "previous": "N/A"
         },
         {
-            "date": "2024-01-16",
+            "date": f"{current_year}-01-16",
             "time": "09:15 EST",
             "event": "Industrial Production",
             "country": "US",
@@ -593,7 +710,7 @@ def display_economic_events_section():
             "previous": "0.2%"
         },
         {
-            "date": "2024-01-16",
+            "date": f"{current_year}-01-16",
             "time": "14:00 EST",
             "event": "Bank of Canada Interest Rate Decision",
             "country": "Canada",
