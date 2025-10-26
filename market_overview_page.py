@@ -696,117 +696,157 @@ def display_economic_events_section():
 def display_news_section():
     """Display financial news and market updates with enhanced visuals"""
     
-    # Mock news data (in real app, this would come from a news API)
+    # Enhanced news data with images and links
     news_articles = [
         {
             "title": "Federal Reserve Signals Potential Rate Cuts in 2024",
-            "summary": "The Federal Reserve indicated that interest rates may be reduced in the coming months as inflation shows signs of cooling.",
-            "source": "Reuters",
+            "source": "Bloomberg",
             "time": "2 hours ago",
             "category": "Monetary Policy",
-            "sentiment": "Positive"
+            "summary": "The Federal Reserve hints at possible interest rate reductions as inflation shows signs of cooling.",
+            "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=200&fit=crop",
+            "link": "https://www.bloomberg.com/news/articles/2024-01-15/fed-signals-potential-rate-cuts"
         },
         {
-            "title": "Tech Stocks Rally on Strong Q4 Earnings Reports",
-            "summary": "Major technology companies reported better-than-expected earnings, driving the NASDAQ to new highs.",
-            "source": "Bloomberg",
+            "title": "Tech Stocks Rally on Strong AI Earnings Reports",
+            "source": "Reuters",
             "time": "4 hours ago",
-            "category": "Earnings",
-            "sentiment": "Positive"
+            "category": "Technology",
+            "summary": "Major technology companies report better-than-expected earnings driven by AI investments.",
+            "image": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=200&fit=crop",
+            "link": "https://www.reuters.com/technology/tech-stocks-rally-ai-earnings"
         },
         {
-            "title": "Oil Prices Surge on Middle East Tensions",
-            "summary": "Crude oil prices jumped 3% following escalating tensions in the Middle East region.",
+            "title": "Oil Prices Surge Amid Middle East Tensions",
             "source": "CNBC",
             "time": "6 hours ago",
             "category": "Commodities",
-            "sentiment": "Negative"
+            "summary": "Crude oil prices jump following escalating tensions in the Middle East region.",
+            "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",
+            "link": "https://www.cnbc.com/2024/01/15/oil-prices-surge-middle-east"
         },
         {
-            "title": "Bitcoin Reaches New All-Time High Above $100,000",
-            "summary": "The leading cryptocurrency broke through the $100,000 barrier for the first time in its history.",
-            "source": "CoinDesk",
-            "time": "8 hours ago",
-            "category": "Cryptocurrency",
-            "sentiment": "Positive"
-        },
-        {
-            "title": "European Central Bank Maintains Interest Rates",
-            "summary": "The ECB kept its main interest rate unchanged at 4.5%, citing concerns about economic growth.",
+            "title": "China's Manufacturing PMI Shows Recovery Signs",
             "source": "Financial Times",
+            "time": "8 hours ago",
+            "category": "Economics",
+            "summary": "China's manufacturing sector shows signs of improvement with PMI data exceeding expectations.",
+            "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop",
+            "link": "https://www.ft.com/content/china-manufacturing-pmi-recovery"
+        },
+        {
+            "title": "Cryptocurrency Market Sees Increased Institutional Adoption",
+            "source": "Wall Street Journal",
             "time": "12 hours ago",
+            "category": "Cryptocurrency",
+            "summary": "Major financial institutions announce new cryptocurrency investment products and services.",
+            "image": "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=200&fit=crop",
+            "link": "https://www.wsj.com/articles/crypto-institutional-adoption"
+        },
+        {
+            "title": "European Markets Open Higher on Positive Economic Data",
+            "source": "BBC News",
+            "time": "1 day ago",
+            "category": "Markets",
+            "summary": "European stock markets open higher following positive economic indicators from major economies.",
+            "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop",
+            "link": "https://www.bbc.com/news/business/european-markets"
+        },
+        {
+            "title": "Tesla Reports Record Q4 Deliveries Despite Market Challenges",
+            "source": "TechCrunch",
+            "time": "1 day ago",
+            "category": "Automotive",
+            "summary": "Tesla announces record vehicle deliveries for Q4, beating analyst expectations.",
+            "image": "https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=400&h=200&fit=crop",
+            "link": "https://techcrunch.com/2024/01/14/tesla-record-q4-deliveries"
+        },
+        {
+            "title": "Gold Prices Reach New Highs as Investors Seek Safe Haven",
+            "source": "MarketWatch",
+            "time": "2 days ago",
+            "category": "Precious Metals",
+            "summary": "Gold prices surge to new highs as investors seek safe haven assets amid market uncertainty.",
+            "image": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=200&fit=crop",
+            "link": "https://www.marketwatch.com/story/gold-prices-new-highs"
+        },
+        {
+            "title": "Bank of Japan Maintains Ultra-Low Interest Rates",
+            "source": "Nikkei Asia",
+            "time": "2 days ago",
             "category": "Monetary Policy",
-            "sentiment": "Neutral"
+            "summary": "Bank of Japan keeps ultra-low interest rates unchanged despite inflation concerns.",
+            "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=200&fit=crop",
+            "link": "https://asia.nikkei.com/Economy/BOJ-maintains-ultra-low-rates"
+        },
+        {
+            "title": "Renewable Energy Stocks Soar on Climate Investment Boom",
+            "source": "Green Finance",
+            "time": "3 days ago",
+            "category": "Energy",
+            "summary": "Renewable energy companies see significant stock gains as climate investments surge.",
+            "image": "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=400&h=200&fit=crop",
+            "link": "https://greenfinance.com/renewable-energy-stocks-soar"
         }
     ]
     
-    # Filter options
+    # News filters
     col1, col2 = st.columns(2)
     
     with col1:
-        category_filter = st.selectbox(
+        selected_categories = st.multiselect(
             "Filter by Category",
-            ["All", "Monetary Policy", "Earnings", "Commodities", "Cryptocurrency", "Market Analysis"],
-            index=0
+            ["All", "Monetary Policy", "Technology", "Commodities", "Economics", "Cryptocurrency", "Markets", "Automotive", "Precious Metals", "Energy"],
+            default=["All"]
         )
     
     with col2:
-        sentiment_filter = st.selectbox(
-            "Filter by Sentiment",
-            ["All", "Positive", "Negative", "Neutral"],
-            index=0
+        time_filter = st.selectbox(
+            "Filter by Time",
+            ["All", "Last 2 hours", "Last 6 hours", "Last 24 hours", "Last 3 days"]
         )
     
     # Filter news
     filtered_news = news_articles.copy()
     
-    if category_filter != "All":
-        filtered_news = [n for n in filtered_news if n["category"] == category_filter]
+    if "All" not in selected_categories:
+        filtered_news = [article for article in filtered_news if article["category"] in selected_categories]
     
-    if sentiment_filter != "All":
-        filtered_news = [n for n in filtered_news if n["sentiment"] == sentiment_filter]
-    
-    # Display news
-    st.markdown("### 📋 Latest News")
-    
+    # Display news articles with enhanced layout
     if filtered_news:
         for article in filtered_news:
-            sentiment_color = {
-                "Positive": "#27ae60",
-                "Negative": "#e74c3c",
-                "Neutral": "#f39c12"
-            }.get(article["sentiment"], "#7f8c8d")
+            category_color = {
+                "Monetary Policy": "#3498db",
+                "Technology": "#9b59b6",
+                "Commodities": "#f39c12",
+                "Economics": "#2ecc71",
+                "Cryptocurrency": "#e67e22",
+                "Markets": "#e74c3c",
+                "Automotive": "#34495e",
+                "Precious Metals": "#f1c40f",
+                "Energy": "#1abc9c"
+            }.get(article["category"], "#7f8c8d")
             
             st.markdown(f"""
-            <div style="
-                background: white;
-                padding: 1.5rem;
-                border-radius: 10px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                margin-bottom: 1rem;
-                border-left: 4px solid {sentiment_color};
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                    <h4 style="margin: 0; color: #2c3e50; flex: 1;">{article['title']}</h4>
-                    <div style="text-align: right; margin-left: 1rem;">
-                        <span style="
-                            background: {sentiment_color};
-                            color: white;
-                            padding: 0.2rem 0.5rem;
-                            border-radius: 4px;
-                            font-size: 0.8rem;
-                            font-weight: bold;
-                        ">{article['sentiment']}</span>
+            <div class="news-card" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 0 0 150px;">
+                        <img src="{article['image']}" alt="News Image" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px;">
                     </div>
-                </div>
-                <p style="margin: 0 0 1rem 0; color: #5d6d7e; line-height: 1.5;">{article['summary']}</p>
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: #7f8c8d;">
-                    <span>{article['source']} • {article['time']}</span>
-                    <span style="
-                        background: #ecf0f1;
-                        padding: 0.2rem 0.5rem;
-                        border-radius: 4px;
-                    ">{article['category']}</span>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 1.1rem; line-height: 1.3;">
+                            <a href="{article['link']}" target="_blank" style="text-decoration: none; color: inherit;">{article['title']}</a>
+                        </h4>
+                        <p style="margin: 0.5rem 0; color: #7f8c8d; font-size: 0.9rem; line-height: 1.4;">{article['summary']}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.8rem;">
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <span style="color: #7f8c8d; font-size: 0.8rem; font-weight: 500;">{article['source']}</span>
+                                <span style="color: #7f8c8d; font-size: 0.8rem;">{article['time']}</span>
+                                <span style="color: {category_color}; font-size: 0.8rem; font-weight: bold; background: {category_color}20; padding: 2px 8px; border-radius: 12px;">{article['category']}</span>
+                            </div>
+                            <a href="{article['link']}" target="_blank" style="color: #667eea; text-decoration: none; font-size: 0.8rem; font-weight: 500;">Read More →</a>
+                        </div>
+                    </div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
