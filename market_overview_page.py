@@ -446,34 +446,37 @@ def display_markets_section():
         {"Index": "ASX 200", "Country": "Australia", "Change": 0.34, "Value": 7512.67, "Status": "Up", "Region": "Oceania", "lat": -33.8688, "lon": 151.2093, "color": "#27ae60", "emoji": "🇦🇺", "description": "Sydney stock market"}
     ]
     
-    # Map filters
-    col_filter1, col_filter2 = st.columns(2)
+    # Region filters (like in your image)
+    col1, col2, col3 = st.columns([1, 1, 1])
     
-    with col_filter1:
-        selected_regions = st.multiselect(
-            "🌍 Filter by Region",
-            ["Americas", "Asia", "Europe", "Oceania"],
-            default=["Americas", "Asia", "Europe", "Oceania"]
-        )
+    with col1:
+        americas_selected = st.button("Americas", key="americas_btn", type="primary")
+    with col2:
+        europe_selected = st.button("Europe", key="europe_btn")
+    with col3:
+        asia_selected = st.button("Asia-Pacific", key="asia_btn")
     
-    with col_filter2:
-        performance_filter = st.selectbox(
-            "📊 Performance Filter",
-            ["All", "Gaining Only", "Declining Only"]
-        )
+    # Determine selected region
+    selected_region = "Americas"  # Default
+    if europe_selected:
+        selected_region = "Europe"
+    elif asia_selected:
+        selected_region = "Asia-Pacific"
     
-    # Filter data based on selections
-    filtered_data = [idx for idx in indices_data if idx["Region"] in selected_regions]
-    
-    if performance_filter == "Gaining Only":
-        filtered_data = [idx for idx in filtered_data if idx["Change"] > 0]
-    elif performance_filter == "Declining Only":
-        filtered_data = [idx for idx in filtered_data if idx["Change"] < 0]
+    # Filter data based on selected region
+    if selected_region == "Americas":
+        filtered_data = [idx for idx in indices_data if idx["Region"] in ["Americas"]]
+    elif selected_region == "Europe":
+        filtered_data = [idx for idx in indices_data if idx["Region"] in ["Europe"]]
+    elif selected_region == "Asia-Pacific":
+        filtered_data = [idx for idx in indices_data if idx["Region"] in ["Asia", "Oceania"]]
+    else:
+        filtered_data = indices_data
     
     if filtered_data:
         df_map = pd.DataFrame(filtered_data)
         
-        # Create enhanced interactive scatter plot on world map with better visualization
+        # Create world map with country-based coloring (like your image)
         fig = px.scatter_mapbox(
             df_map,
             lat="lat",
@@ -481,12 +484,12 @@ def display_markets_section():
             color="Change",
             size="Value",
             hover_name="Index",
-            hover_data=["Country", "Change", "Value", "Region", "description"],
+            hover_data=["Country", "Change", "Value", "Region"],
             color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
-            size_max=80,
+            size_max=60,
             zoom=1,
-            height=600,
-            title="🌍 Interactive Global Market Performance Map"
+            height=500,
+            title="World markets"
         )
         
         # Enhanced hover template with better performance details
@@ -894,22 +897,6 @@ def display_economic_events_section():
     
     st.markdown("#### 📅 Economic Events")
     
-    # Get real-time economic indicators
-    with st.spinner("Loading real-time economic data..."):
-        indicators = get_economic_indicators()
-    
-    if indicators:
-        st.markdown("##### 📊 Real-Time Economic Indicators")
-        
-        for indicator in indicators:
-            col1, col2, col3 = st.columns([2, 1, 1])
-            with col1:
-                st.markdown(f"**{indicator['name']}**")
-            with col2:
-                st.markdown(f"**{indicator['value']}**")
-            with col3:
-                st.markdown(f"*{indicator['date']}*")
-    
     # Enhanced economic events with real-time data
     current_year = datetime.now().year
     current_date = datetime.now().strftime("%Y-%m-%d")
@@ -1048,61 +1035,6 @@ def display_news_section():
     """Display financial news and market updates with real-time data"""
     
     st.markdown("#### 📰 News")
-    
-    # Get real-time news from Alpha Vantage
-    with st.spinner("Loading real-time financial news..."):
-        real_news = get_economic_news()
-    
-    if real_news:
-        st.markdown("##### 🔴 Live Financial News")
-        
-        for i, article in enumerate(real_news[:5]):  # Show top 5 articles
-            col1, col2 = st.columns([1, 3])
-            
-            with col1:
-                # Use a placeholder image or the first available image
-                image_url = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=200&h=120&fit=crop"
-                st.image(image_url, width=200)
-            
-            with col2:
-                # Extract article details
-                title = article.get("title", "No Title")
-                summary = article.get("summary", "No summary available")
-                source = article.get("source", "Unknown Source")
-                time_published = article.get("time_published", "Unknown Time")
-                url = article.get("url", "#")
-                
-                # Sentiment analysis
-                sentiment_score = article.get("overall_sentiment_score", 0)
-                sentiment_label = "Positive" if sentiment_score > 0.1 else "Negative" if sentiment_score < -0.1 else "Neutral"
-                sentiment_color = "#27ae60" if sentiment_score > 0.1 else "#e74c3c" if sentiment_score < -0.1 else "#f39c12"
-                
-                st.markdown(f"""
-                <div style="
-                    background: white;
-                    padding: 1rem;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    margin-bottom: 1rem;
-                    border-left: 4px solid {sentiment_color};
-                ">
-                    <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50;">
-                        <a href="{url}" target="_blank" style="color: #2c3e50; text-decoration: none;">
-                            {title}
-                        </a>
-                    </h4>
-                    <p style="margin: 0 0 0.5rem 0; color: #7f8c8d; font-size: 0.9rem;">
-                        {summary}
-                    </p>
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #95a5a6;">
-                        <span><strong>{source}</strong> • {time_published}</span>
-                        <span style="color: {sentiment_color}; font-weight: bold;">{sentiment_label}</span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-    # Fallback to enhanced mock news if API fails
-    st.markdown("##### 📈 Market Updates")
     
     # Enhanced news data with images and links
     news_articles = [
@@ -1336,18 +1268,18 @@ def display_market_analysis_section():
     
     with col2:
         st.metric(
-            label="API Status",
-            value="Connected",
-            delta="Live",
-            help="Alpha Vantage API connection status"
+            label="Market Breadth",
+            value="72%",
+            delta="+8%",
+            help="Percentage of stocks trading above their 50-day moving average"
         )
     
     with col3:
         st.metric(
-            label="Data Freshness",
-            value="< 1 min",
-            delta="Updated",
-            help="Last data update time"
+            label="VIX (Volatility)",
+            value="18.5",
+            delta="-2.1",
+            help="CBOE Volatility Index - lower values indicate less market fear"
         )
     
     # Sector performance
