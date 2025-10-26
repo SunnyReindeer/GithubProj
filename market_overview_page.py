@@ -9,6 +9,44 @@ import time
 import requests
 from typing import Dict, List, Optional
 
+# Alpha Vantage API Configuration
+ALPHA_VANTAGE_API_KEY = "PA25XA5HB5ZSXHQZ"
+ALPHA_VANTAGE_BASE_URL = "https://www.alphavantage.co/query"
+
+def get_alpha_vantage_data(symbol, function="GLOBAL_QUOTE"):
+    """Get real-time data from Alpha Vantage API"""
+    try:
+        params = {
+            "function": function,
+            "symbol": symbol,
+            "apikey": ALPHA_VANTAGE_API_KEY
+        }
+        
+        response = requests.get(ALPHA_VANTAGE_BASE_URL, params=params, timeout=10)
+        data = response.json()
+        
+        if "Error Message" in data:
+            return None
+        if "Note" in data:
+            return None  # Rate limit exceeded
+        
+        return data
+    except Exception as e:
+        return None
+
+def get_real_time_price(symbol):
+    """Get real-time price for a symbol"""
+    data = get_alpha_vantage_data(symbol)
+    if data and "Global Quote" in data:
+        quote = data["Global Quote"]
+        return {
+            "price": float(quote.get("05. price", 0)),
+            "change": float(quote.get("09. change", 0)),
+            "change_percent": float(quote.get("10. change percent", "0%").replace("%", "")),
+            "volume": int(quote.get("06. volume", 0))
+        }
+    return None
+
 def create_market_overview_page():
     """Create a comprehensive Market Overview page with Markets, Economic Events, and News"""
     
@@ -216,13 +254,6 @@ def display_markets_section():
     # 🚀 COMPREHENSIVE MARKETS OVERVIEW with Sparklines & Real-time Data
     st.markdown("### 📊 Global Markets Overview")
     
-    # Asset type selector
-    asset_type = st.selectbox(
-        "Select Asset Type",
-        ["All Assets", "World Indices", "Commodities", "Currencies", "Bonds", "Crypto"],
-        index=0
-    )
-    
     # Create comprehensive market data with sparklines and real-time updates
     current_time = datetime.now()
     
@@ -389,24 +420,95 @@ def display_markets_section():
         
         st.plotly_chart(fig, use_container_width=True)
     
-    # Display markets based on selected asset type with better layout
-    if asset_type == "All Assets" or asset_type == "World Indices":
-        st.markdown("#### 📊 World Indices")
-        
-        for region, indices in world_indices.items():
-            st.markdown(f"**{region}**")
+    # Overview of Assets Section with Asset Type Selector
+    st.markdown("#### 📊 Overview of Assets")
+    
+    # Asset type selector (moved here as requested)
+    asset_type = st.selectbox(
+        "Select Asset Type",
+        ["World Indices", "Commodities", "Currencies", "Bonds", "Crypto", "All Assets"],
+        index=0  # Default to World Indices
+    )
+    
+    # Layout: 2/3 for assets, 1/3 for Top Performers & Losers
+    col_assets, col_performers = st.columns([2, 1])
+    
+    with col_assets:
+        # Display markets based on selected asset type
+        if asset_type == "All Assets" or asset_type == "World Indices":
+            st.markdown("##### 🌍 World Indices")
             
-            # Use horizontal scroll for long lists
+            for region, indices in world_indices.items():
+                st.markdown(f"**{region}**")
+                
+                # Use horizontal scroll for long lists
+                with st.container():
+                    cols = st.columns(min(len(indices), 6))  # Max 6 columns for 2/3 width
+                    for i, (col, index) in enumerate(zip(cols, indices)):
+                        with col:
+                            color = "#27ae60" if index["Change"] >= 0 else "#e74c3c"
+                            
+                            # Create sparkline chart (bubble)
+                            fig_spark = go.Figure()
+                            fig_spark.add_trace(go.Scatter(
+                                y=index["Sparkline"],
+                                mode='lines',
+                                line=dict(color=color, width=2),
+                                showlegend=False,
+                                hoverinfo='skip'
+                            ))
+                            
+                            fig_spark.update_layout(
+                                height=30,
+                                margin=dict(l=0, r=0, t=0, b=0),
+                                plot_bgcolor='rgba(0,0,0,0)',
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                xaxis=dict(showgrid=False, showticklabels=False),
+                                yaxis=dict(showgrid=False, showticklabels=False)
+                            )
+                            
+                            st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_{region}_{i}")
+                            
+                            # Display market data
+                            st.markdown(f"""
+                            <div style="
+                                background: white;
+                                padding: 0.5rem;
+                                border-radius: 6px;
+                                box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+                                margin-bottom: 0.3rem;
+                                border-left: 2px solid {color};
+                                font-size: 0.8rem;
+                            ">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                    <span style="font-weight: bold; color: #2c3e50;">{index['Symbol']}</span>
+                                    <span style="font-size: 1rem;">{index['Country']}</span>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.9rem; font-weight: bold; color: #2c3e50;">
+                                        {index['Price']:,.0f}
+                                    </div>
+                                    <div style="font-size: 0.8rem; font-weight: bold; color: {color};">
+                                        {index['Change']:+.2f}%
+                                    </div>
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+    
+        if asset_type == "All Assets" or asset_type == "Commodities":
+            st.markdown("##### 🥇 Commodities")
+            
+            # Use horizontal scroll for commodities
             with st.container():
-                cols = st.columns(min(len(indices), 8))  # Max 8 columns
-                for i, (col, index) in enumerate(zip(cols, indices)):
+                cols = st.columns(min(len(commodities), 6))  # Max 6 columns
+                for i, (col, commodity) in enumerate(zip(cols, commodities)):
                     with col:
-                        color = "#27ae60" if index["Change"] >= 0 else "#e74c3c"
+                        color = "#27ae60" if commodity["Change"] >= 0 else "#e74c3c"
                         
-                        # Create sparkline chart
+                        # Create sparkline chart (bubble)
                         fig_spark = go.Figure()
                         fig_spark.add_trace(go.Scatter(
-                            y=index["Sparkline"],
+                            y=commodity["Sparkline"],
                             mode='lines',
                             line=dict(color=color, width=2),
                             showlegend=False,
@@ -422,9 +524,9 @@ def display_markets_section():
                             yaxis=dict(showgrid=False, showticklabels=False)
                         )
                         
-                        st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_{region}_{i}")
+                        st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_commodity_{i}")
                         
-                        # Display market data
+                        # Display commodity data
                         st.markdown(f"""
                         <div style="
                             background: white;
@@ -436,214 +538,155 @@ def display_markets_section():
                             font-size: 0.8rem;
                         ">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
-                                <span style="font-weight: bold; color: #2c3e50;">{index['Symbol']}</span>
-                                <span style="font-size: 1rem;">{index['Country']}</span>
+                                <span style="font-weight: bold; color: #2c3e50;">{commodity['Symbol']}</span>
+                                <span style="font-size: 0.7rem; color: #7f8c8d;">{commodity['Unit']}</span>
                             </div>
                             <div style="text-align: center;">
                                 <div style="font-size: 0.9rem; font-weight: bold; color: #2c3e50;">
-                                    {index['Price']:,.0f}
+                                    {commodity['Price']:,.2f}
                                 </div>
                                 <div style="font-size: 0.8rem; font-weight: bold; color: {color};">
-                                    {index['Change']:+.2f}%
+                                    {commodity['Change']:+.2f}%
                                 </div>
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
     
-    if asset_type == "All Assets" or asset_type == "Commodities":
-        st.markdown("#### 🥇 Commodities")
+        if asset_type == "All Assets" or asset_type == "Currencies":
+            st.markdown("##### 💱 Currencies")
+            
+            # Use horizontal scroll for currencies
+            with st.container():
+                cols = st.columns(min(len(currencies), 6))  # Max 6 columns
+                for i, (col, currency) in enumerate(zip(cols, currencies)):
+                    with col:
+                        color = "#27ae60" if currency["Change"] >= 0 else "#e74c3c"
+                        
+                        # Create sparkline chart (bubble)
+                        fig_spark = go.Figure()
+                        fig_spark.add_trace(go.Scatter(
+                            y=currency["Sparkline"],
+                            mode='lines',
+                            line=dict(color=color, width=2),
+                            showlegend=False,
+                            hoverinfo='skip'
+                        ))
+                        
+                        fig_spark.update_layout(
+                            height=30,
+                            margin=dict(l=0, r=0, t=0, b=0),
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            xaxis=dict(showgrid=False, showticklabels=False),
+                            yaxis=dict(showgrid=False, showticklabels=False)
+                        )
+                        
+                        st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_currency_{i}")
+                        
+                        # Display currency data
+                        st.markdown(f"""
+                        <div style="
+                            background: white;
+                            padding: 0.5rem;
+                            border-radius: 6px;
+                            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+                            margin-bottom: 0.3rem;
+                            border-left: 2px solid {color};
+                            font-size: 0.8rem;
+                        ">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                <span style="font-weight: bold; color: #2c3e50;">{currency['Symbol']}</span>
+                                <span style="font-size: 0.7rem; color: #7f8c8d;">{currency['Pair']}</span>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.9rem; font-weight: bold; color: #2c3e50;">
+                                    {currency['Price']:.4f}
+                                </div>
+                                <div style="font-size: 0.8rem; font-weight: bold; color: {color};">
+                                    {currency['Change']:+.2f}%
+                                </div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+    
+        if asset_type == "All Assets" or asset_type == "Bonds":
+            st.markdown("##### 📈 US Treasury Bonds")
+            
+            # Use horizontal scroll for bonds
+            with st.container():
+                cols = st.columns(min(len(bonds), 6))  # Max 6 columns
+                for i, (col, bond) in enumerate(zip(cols, bonds)):
+                    with col:
+                        color = "#27ae60" if bond["Change"] >= 0 else "#e74c3c"
+                        
+                        # Create sparkline chart (bubble)
+                        fig_spark = go.Figure()
+                        fig_spark.add_trace(go.Scatter(
+                            y=bond["Sparkline"],
+                            mode='lines',
+                            line=dict(color=color, width=2),
+                            showlegend=False,
+                            hoverinfo='skip'
+                        ))
+                        
+                        fig_spark.update_layout(
+                            height=30,
+                            margin=dict(l=0, r=0, t=0, b=0),
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            xaxis=dict(showgrid=False, showticklabels=False),
+                            yaxis=dict(showgrid=False, showticklabels=False)
+                        )
+                        
+                        st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_bond_{i}")
+                        
+                        # Display bond data
+                        st.markdown(f"""
+                        <div style="
+                            background: white;
+                            padding: 0.5rem;
+                            border-radius: 6px;
+                            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+                            margin-bottom: 0.3rem;
+                            border-left: 2px solid {color};
+                            font-size: 0.8rem;
+                        ">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                <span style="font-weight: bold; color: #2c3e50;">{bond['Symbol']}</span>
+                                <span style="font-size: 0.7rem; color: #7f8c8d;">{bond['Maturity']}</span>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.9rem; font-weight: bold; color: #2c3e50;">
+                                    {bond['Price']:.4f}%
+                                </div>
+                                <div style="font-size: 0.8rem; font-weight: bold; color: {color};">
+                                    {bond['Change']:+.2f}%
+                                </div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+    
+    # Top Performers & Losers Section (Right Column - 1/3 width)
+    with col_performers:
+        st.markdown("##### 🏆 Top Performers & Losers")
         
-        # Use horizontal scroll for commodities
-        with st.container():
-            cols = st.columns(min(len(commodities), 6))  # Max 6 columns
-            for i, (col, commodity) in enumerate(zip(cols, commodities)):
-                with col:
-                    color = "#27ae60" if commodity["Change"] >= 0 else "#e74c3c"
-                    
-                    # Create sparkline chart
-                    fig_spark = go.Figure()
-                    fig_spark.add_trace(go.Scatter(
-                        y=commodity["Sparkline"],
-                        mode='lines',
-                        line=dict(color=color, width=2),
-                        showlegend=False,
-                        hoverinfo='skip'
-                    ))
-                    
-                    fig_spark.update_layout(
-                        height=30,
-                        margin=dict(l=0, r=0, t=0, b=0),
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        xaxis=dict(showgrid=False, showticklabels=False),
-                        yaxis=dict(showgrid=False, showticklabels=False)
-                    )
-                    
-                    st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_commodity_{i}")
-                    
-                    # Display commodity data
-                    st.markdown(f"""
-                    <div style="
-                        background: white;
-                        padding: 0.5rem;
-                        border-radius: 6px;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-                        margin-bottom: 0.3rem;
-                        border-left: 2px solid {color};
-                        font-size: 0.8rem;
-                    ">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
-                            <span style="font-weight: bold; color: #2c3e50;">{commodity['Symbol']}</span>
-                            <span style="font-size: 0.7rem; color: #7f8c8d;">{commodity['Unit']}</span>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.9rem; font-weight: bold; color: #2c3e50;">
-                                {commodity['Price']:,.2f}
-                            </div>
-                            <div style="font-size: 0.8rem; font-weight: bold; color: {color};">
-                                {commodity['Change']:+.2f}%
-                            </div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-    
-    if asset_type == "All Assets" or asset_type == "Currencies":
-        st.markdown("#### 💱 Currencies")
+        # Mock data for better demonstration
+        top_gainers = [
+            {"Symbol": "TSLA", "Name": "Tesla Inc", "Change": 8.45, "Price": 248.32},
+            {"Symbol": "NVDA", "Name": "NVIDIA Corp", "Change": 6.78, "Price": 485.67},
+            {"Symbol": "AAPL", "Name": "Apple Inc", "Change": 4.23, "Price": 192.45},
+            {"Symbol": "MSFT", "Name": "Microsoft Corp", "Change": 3.89, "Price": 378.91},
+            {"Symbol": "AMZN", "Name": "Amazon.com Inc", "Change": 3.45, "Price": 156.78}
+        ]
         
-        # Use horizontal scroll for currencies
-        with st.container():
-            cols = st.columns(min(len(currencies), 6))  # Max 6 columns
-            for i, (col, currency) in enumerate(zip(cols, currencies)):
-                with col:
-                    color = "#27ae60" if currency["Change"] >= 0 else "#e74c3c"
-                    
-                    # Create sparkline chart
-                    fig_spark = go.Figure()
-                    fig_spark.add_trace(go.Scatter(
-                        y=currency["Sparkline"],
-                        mode='lines',
-                        line=dict(color=color, width=2),
-                        showlegend=False,
-                        hoverinfo='skip'
-                    ))
-                    
-                    fig_spark.update_layout(
-                        height=30,
-                        margin=dict(l=0, r=0, t=0, b=0),
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        xaxis=dict(showgrid=False, showticklabels=False),
-                        yaxis=dict(showgrid=False, showticklabels=False)
-                    )
-                    
-                    st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_currency_{i}")
-                    
-                    # Display currency data
-                    st.markdown(f"""
-                    <div style="
-                        background: white;
-                        padding: 0.5rem;
-                        border-radius: 6px;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-                        margin-bottom: 0.3rem;
-                        border-left: 2px solid {color};
-                        font-size: 0.8rem;
-                    ">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
-                            <span style="font-weight: bold; color: #2c3e50;">{currency['Symbol']}</span>
-                            <span style="font-size: 0.7rem; color: #7f8c8d;">{currency['Pair']}</span>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.9rem; font-weight: bold; color: #2c3e50;">
-                                {currency['Price']:.4f}
-                            </div>
-                            <div style="font-size: 0.8rem; font-weight: bold; color: {color};">
-                                {currency['Change']:+.2f}%
-                            </div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-    
-    if asset_type == "All Assets" or asset_type == "Bonds":
-        st.markdown("#### 📈 US Treasury Bonds")
+        top_losers = [
+            {"Symbol": "META", "Name": "Meta Platforms", "Change": -5.67, "Price": 345.21},
+            {"Symbol": "GOOGL", "Name": "Alphabet Inc", "Change": -4.23, "Price": 142.56},
+            {"Symbol": "NFLX", "Name": "Netflix Inc", "Change": -3.89, "Price": 478.32},
+            {"Symbol": "ADBE", "Name": "Adobe Inc", "Change": -3.45, "Price": 567.89},
+            {"Symbol": "CRM", "Name": "Salesforce Inc", "Change": -2.98, "Price": 234.56}
+        ]
         
-        # Use horizontal scroll for bonds
-        with st.container():
-            cols = st.columns(min(len(bonds), 6))  # Max 6 columns
-            for i, (col, bond) in enumerate(zip(cols, bonds)):
-                with col:
-                    color = "#27ae60" if bond["Change"] >= 0 else "#e74c3c"
-                    
-                    # Create sparkline chart
-                    fig_spark = go.Figure()
-                    fig_spark.add_trace(go.Scatter(
-                        y=bond["Sparkline"],
-                        mode='lines',
-                        line=dict(color=color, width=2),
-                        showlegend=False,
-                        hoverinfo='skip'
-                    ))
-                    
-                    fig_spark.update_layout(
-                        height=30,
-                        margin=dict(l=0, r=0, t=0, b=0),
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        xaxis=dict(showgrid=False, showticklabels=False),
-                        yaxis=dict(showgrid=False, showticklabels=False)
-                    )
-                    
-                    st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_bond_{i}")
-                    
-                    # Display bond data
-                    st.markdown(f"""
-                    <div style="
-                        background: white;
-                        padding: 0.5rem;
-                        border-radius: 6px;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-                        margin-bottom: 0.3rem;
-                        border-left: 2px solid {color};
-                        font-size: 0.8rem;
-                    ">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
-                            <span style="font-weight: bold; color: #2c3e50;">{bond['Symbol']}</span>
-                            <span style="font-size: 0.7rem; color: #7f8c8d;">{bond['Maturity']}</span>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.9rem; font-weight: bold; color: #2c3e50;">
-                                {bond['Price']:.4f}%
-                            </div>
-                            <div style="font-size: 0.8rem; font-weight: bold; color: {color};">
-                                {bond['Change']:+.2f}%
-                            </div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-    
-    # Top Performers & Losers Section
-    st.markdown("#### 🏆 Top Performers & Losers")
-    
-    # Mock data for better demonstration
-    top_gainers = [
-        {"Symbol": "TSLA", "Name": "Tesla Inc", "Change": 8.45, "Price": 248.32},
-        {"Symbol": "NVDA", "Name": "NVIDIA Corp", "Change": 6.78, "Price": 485.67},
-        {"Symbol": "AAPL", "Name": "Apple Inc", "Change": 4.23, "Price": 192.45},
-        {"Symbol": "MSFT", "Name": "Microsoft Corp", "Change": 3.89, "Price": 378.91},
-        {"Symbol": "AMZN", "Name": "Amazon.com Inc", "Change": 3.45, "Price": 156.78}
-    ]
-    
-    top_losers = [
-        {"Symbol": "META", "Name": "Meta Platforms", "Change": -5.67, "Price": 345.21},
-        {"Symbol": "GOOGL", "Name": "Alphabet Inc", "Change": -4.23, "Price": 142.56},
-        {"Symbol": "NFLX", "Name": "Netflix Inc", "Change": -3.89, "Price": 478.32},
-        {"Symbol": "ADBE", "Name": "Adobe Inc", "Change": -3.45, "Price": 567.89},
-        {"Symbol": "CRM", "Name": "Salesforce Inc", "Change": -2.98, "Price": 234.56}
-    ]
-    
-    col_gainers, col_losers = st.columns(2)
-    
-    with col_gainers:
         st.markdown("**🟢 Top Gainers**")
         for gainer in top_gainers:
             st.markdown(f"""
@@ -670,8 +713,7 @@ def display_markets_section():
                 </div>
             </div>
             """, unsafe_allow_html=True)
-    
-    with col_losers:
+        
         st.markdown("**🔴 Top Losers**")
         for loser in top_losers:
             st.markdown(f"""
@@ -699,88 +741,60 @@ def display_markets_section():
             </div>
             """, unsafe_allow_html=True)
     
-    # Global Market Heatmap
-    st.markdown("#### 🌡️ Global Market Heatmap")
+    # Heatmap and Market Summary in same row (1/2 each)
+    col_heatmap, col_summary = st.columns([1, 1])
     
-    # Create sample heatmap data
-    heatmap_data = [
-        {"Market": "S&P 500", "Country": "US", "Change": 0.85, "Value": 4785},
-        {"Market": "NASDAQ", "Country": "US", "Change": 1.24, "Value": 15011},
-        {"Market": "FTSE 100", "Country": "UK", "Change": 0.23, "Value": 7694},
-        {"Market": "DAX", "Country": "Germany", "Change": 0.89, "Value": 16751},
-        {"Market": "Nikkei 225", "Country": "Japan", "Change": 1.12, "Value": 33763},
-        {"Market": "Hang Seng", "Country": "Hong Kong", "Change": 0.78, "Value": 16389},
-        {"Market": "Shanghai Composite", "Country": "China", "Change": -0.32, "Value": 2887},
-        {"Market": "ASX 200", "Country": "Australia", "Change": -0.15, "Value": 7513}
-    ]
-    
-    df_heatmap = pd.DataFrame(heatmap_data)
-    
-    # Create treemap
-    fig_heatmap = px.treemap(
-        df_heatmap,
-        path=['Country', 'Market'],
-        values='Value',
-        color='Change',
-        color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
-        title="Market Performance by Country",
-        height=300
-    )
-    
-    fig_heatmap.update_layout(
-        title_font_size=14,
-        font_size=10,
-        margin=dict(t=30, l=0, r=0, b=0)
-    )
-    
-    # Center the heatmap
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
+    with col_heatmap:
+        # Global Market Heatmap
+        st.markdown("#### 🌡️ Global Market Heatmap")
+        
+        # Create sample heatmap data
+        heatmap_data = [
+            {"Market": "S&P 500", "Country": "US", "Change": 0.85, "Value": 4785},
+            {"Market": "NASDAQ", "Country": "US", "Change": 1.24, "Value": 15011},
+            {"Market": "FTSE 100", "Country": "UK", "Change": 0.23, "Value": 7694},
+            {"Market": "DAX", "Country": "Germany", "Change": 0.89, "Value": 16751},
+            {"Market": "Nikkei 225", "Country": "Japan", "Change": 1.12, "Value": 33763},
+            {"Market": "Hang Seng", "Country": "Hong Kong", "Change": 0.78, "Value": 16389},
+            {"Market": "Shanghai Composite", "Country": "China", "Change": -0.32, "Value": 2887},
+            {"Market": "ASX 200", "Country": "Australia", "Change": -0.15, "Value": 7513}
+        ]
+        
+        df_heatmap = pd.DataFrame(heatmap_data)
+        
+        # Create treemap
+        fig_heatmap = px.treemap(
+            df_heatmap,
+            path=['Country', 'Market'],
+            values='Value',
+            color='Change',
+            color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
+            title="Market Performance by Country",
+            height=300
+        )
+        
+        fig_heatmap.update_layout(
+            title_font_size=14,
+            font_size=10,
+            margin=dict(t=30, l=0, r=0, b=0)
+        )
+        
         st.plotly_chart(fig_heatmap, use_container_width=True)
     
-    # Add market summary metrics
-    st.markdown("### 📊 Market Summary")
+    with col_summary:
+        # Market Summary
+        st.markdown("#### 📊 Market Summary")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.metric("Total Markets", "24", "2")
+            st.metric("Gaining Markets", "18", "3")
+        
+        with col2:
+            st.metric("Declining Markets", "6", "-2")
+            st.metric("Average Change", "+0.45%", "0.12%")
     
-    # Sample market statistics
-    total_indices = 24
-    positive_indices = 18
-    negative_indices = 6
-    avg_change = 0.45
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <h3 style="margin: 0 0 0.5rem 0; font-size: 2rem;">{total_indices}</h3>
-            <p style="margin: 0; opacity: 0.9;">Total Indices</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <h3 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: #27ae60;">{positive_indices}</h3>
-            <p style="margin: 0; opacity: 0.9;">Gaining</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <h3 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: #e74c3c;">{negative_indices}</h3>
-            <p style="margin: 0; opacity: 0.9;">Declining</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        color = "#27ae60" if avg_change >= 0 else "#e74c3c"
-        st.markdown(f"""
-        <div class="metric-card">
-            <h3 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: {color};">{avg_change:+.2f}%</h3>
-            <p style="margin: 0; opacity: 0.9;">Avg Change</p>
-        </div>
-        """, unsafe_allow_html=True)
 
 def display_economic_events_section():
     """Display economic events and calendar with enhanced visuals"""
