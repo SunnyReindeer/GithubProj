@@ -213,56 +213,145 @@ def display_markets_section():
         st.error("Unable to load market data. Please try again later.")
         return
     
-    # World Map Visualization for Global Market Indices
-    st.markdown("### 🌍 Global Market Indices")
+    # 🚀 ULTRA INTERACTIVE & COOL World Map Visualization
+    st.markdown("### 🌍 Global Market Indices - Interactive World Map")
     
-    # Create comprehensive indices data with coordinates for world map
+    # Create comprehensive indices data with enhanced features
     indices_data = [
-        {"Index": "S&P 500", "Country": "United States", "Change": 0.85, "Value": 4785.32, "Status": "Up", "Region": "Americas", "lat": 39.8283, "lon": -98.5795, "color": "#27ae60"},
-        {"Index": "NASDAQ", "Country": "United States", "Change": 1.24, "Value": 15011.35, "Status": "Up", "Region": "Americas", "lat": 37.7749, "lon": -122.4194, "color": "#27ae60"},
-        {"Index": "Dow Jones", "Country": "United States", "Change": 0.45, "Value": 37592.98, "Status": "Up", "Region": "Americas", "lat": 40.7128, "lon": -74.0060, "color": "#27ae60"},
-        {"Index": "Shanghai Composite", "Country": "China", "Change": -0.32, "Value": 2886.96, "Status": "Down", "Region": "Asia", "lat": 31.2304, "lon": 121.4737, "color": "#e74c3c"},
-        {"Index": "Hang Seng", "Country": "Hong Kong", "Change": 0.78, "Value": 16388.79, "Status": "Up", "Region": "Asia", "lat": 22.3193, "lon": 114.1694, "color": "#27ae60"},
-        {"Index": "Shenzhen Component", "Country": "China", "Change": -0.15, "Value": 8961.46, "Status": "Down", "Region": "Asia", "lat": 22.5431, "lon": 114.0579, "color": "#e74c3c"},
-        {"Index": "Nikkei 225", "Country": "Japan", "Change": 1.12, "Value": 33763.18, "Status": "Up", "Region": "Asia", "lat": 35.6762, "lon": 139.6503, "color": "#27ae60"},
-        {"Index": "KOSPI", "Country": "South Korea", "Change": 0.67, "Value": 2498.81, "Status": "Up", "Region": "Asia", "lat": 37.5665, "lon": 126.9780, "color": "#27ae60"},
-        {"Index": "FTSE 100", "Country": "United Kingdom", "Change": 0.23, "Value": 7694.19, "Status": "Up", "Region": "Europe", "lat": 51.5074, "lon": -0.1278, "color": "#27ae60"},
-        {"Index": "DAX", "Country": "Germany", "Change": 0.89, "Value": 16751.44, "Status": "Up", "Region": "Europe", "lat": 52.5200, "lon": 13.4050, "color": "#27ae60"},
-        {"Index": "CAC 40", "Country": "France", "Change": 0.56, "Value": 7428.52, "Status": "Up", "Region": "Europe", "lat": 48.8566, "lon": 2.3522, "color": "#27ae60"},
-        {"Index": "ASX 200", "Country": "Australia", "Change": 0.34, "Value": 7512.67, "Status": "Up", "Region": "Oceania", "lat": -33.8688, "lon": 151.2093, "color": "#27ae60"}
+        {"Index": "S&P 500", "Country": "United States", "Change": 0.85, "Value": 4785.32, "Status": "Up", "Region": "Americas", "lat": 39.8283, "lon": -98.5795, "color": "#27ae60", "emoji": "🇺🇸", "description": "Broad market index"},
+        {"Index": "NASDAQ", "Country": "United States", "Change": 1.24, "Value": 15011.35, "Status": "Up", "Region": "Americas", "lat": 37.7749, "lon": -122.4194, "color": "#27ae60", "emoji": "🇺🇸", "description": "Tech-heavy index"},
+        {"Index": "Dow Jones", "Country": "United States", "Change": 0.45, "Value": 37592.98, "Status": "Up", "Region": "Americas", "lat": 40.7128, "lon": -74.0060, "color": "#27ae60", "emoji": "🇺🇸", "description": "Blue chip stocks"},
+        {"Index": "Shanghai Composite", "Country": "China", "Change": -0.32, "Value": 2886.96, "Status": "Down", "Region": "Asia", "lat": 31.2304, "lon": 121.4737, "color": "#e74c3c", "emoji": "🇨🇳", "description": "Mainland China stocks"},
+        {"Index": "Hang Seng", "Country": "Hong Kong", "Change": 0.78, "Value": 16388.79, "Status": "Up", "Region": "Asia", "lat": 22.3193, "lon": 114.1694, "color": "#27ae60", "emoji": "🇭🇰", "description": "Hong Kong blue chips"},
+        {"Index": "Shenzhen Component", "Country": "China", "Change": -0.15, "Value": 8961.46, "Status": "Down", "Region": "Asia", "lat": 22.5431, "lon": 114.0579, "color": "#e74c3c", "emoji": "🇨🇳", "description": "Shenzhen market"},
+        {"Index": "Nikkei 225", "Country": "Japan", "Change": 1.12, "Value": 33763.18, "Status": "Up", "Region": "Asia", "lat": 35.6762, "lon": 139.6503, "color": "#27ae60", "emoji": "🇯🇵", "description": "Tokyo stock market"},
+        {"Index": "KOSPI", "Country": "South Korea", "Change": 0.67, "Value": 2498.81, "Status": "Up", "Region": "Asia", "lat": 37.5665, "lon": 126.9780, "color": "#27ae60", "emoji": "🇰🇷", "description": "Seoul stock market"},
+        {"Index": "FTSE 100", "Country": "United Kingdom", "Change": 0.23, "Value": 7694.19, "Status": "Up", "Region": "Europe", "lat": 51.5074, "lon": -0.1278, "color": "#27ae60", "emoji": "🇬🇧", "description": "London blue chips"},
+        {"Index": "DAX", "Country": "Germany", "Change": 0.89, "Value": 16751.44, "Status": "Up", "Region": "Europe", "lat": 52.5200, "lon": 13.4050, "color": "#27ae60", "emoji": "🇩🇪", "description": "Frankfurt stock market"},
+        {"Index": "CAC 40", "Country": "France", "Change": 0.56, "Value": 7428.52, "Status": "Up", "Region": "Europe", "lat": 48.8566, "lon": 2.3522, "color": "#27ae60", "emoji": "🇫🇷", "description": "Paris stock market"},
+        {"Index": "ASX 200", "Country": "Australia", "Change": 0.34, "Value": 7512.67, "Status": "Up", "Region": "Oceania", "lat": -33.8688, "lon": 151.2093, "color": "#27ae60", "emoji": "🇦🇺", "description": "Sydney stock market"}
     ]
     
-    # Create world map with market indices
-    df_map = pd.DataFrame(indices_data)
+    # Add interactive controls
+    col_filter1, col_filter2, col_filter3 = st.columns(3)
     
-    # Create scatter plot on world map
-    fig = px.scatter_mapbox(
-        df_map,
-        lat="lat",
-        lon="lon",
-        color="Change",
-        size="Value",
-        hover_name="Index",
-        hover_data={"Country": True, "Change": ":.2f", "Value": ":,.0f", "lat": False, "lon": False},
-        color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
-        size_max=50,
-        zoom=1,
-        height=500,
-        title="Global Market Performance Map"
-    )
+    with col_filter1:
+        selected_regions = st.multiselect(
+            "🌍 Filter by Region",
+            ["Americas", "Asia", "Europe", "Oceania"],
+            default=["Americas", "Asia", "Europe", "Oceania"]
+        )
     
-    fig.update_layout(
-        mapbox_style="open-street-map",
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        title_font_size=18,
-        title_x=0.5,
-        margin=dict(l=0, r=0, t=40, b=0)
-    )
+    with col_filter2:
+        performance_filter = st.selectbox(
+            "📊 Performance Filter",
+            ["All", "Gaining Only", "Declining Only"]
+        )
     
-    # Marker properties are set in the scatter_mapbox call above
+    with col_filter3:
+        map_style = st.selectbox(
+            "🗺️ Map Style",
+            ["Open Street Map", "Satellite", "Dark", "Light"]
+        )
     
-    st.plotly_chart(fig, use_container_width=True)
+    # Filter data based on selections
+    filtered_data = [idx for idx in indices_data if idx["Region"] in selected_regions]
+    
+    if performance_filter == "Gaining Only":
+        filtered_data = [idx for idx in filtered_data if idx["Change"] > 0]
+    elif performance_filter == "Declining Only":
+        filtered_data = [idx for idx in filtered_data if idx["Change"] < 0]
+    
+    # Map style mapping
+    style_map = {
+        "Open Street Map": "open-street-map",
+        "Satellite": "satellite",
+        "Dark": "dark",
+        "Light": "carto-positron"
+    }
+    
+    if filtered_data:
+        df_map = pd.DataFrame(filtered_data)
+        
+        # Create ULTRA INTERACTIVE scatter plot on world map
+        fig = px.scatter_mapbox(
+            df_map,
+            lat="lat",
+            lon="lon",
+            color="Change",
+            size="Value",
+            hover_name="Index",
+            hover_data={
+                "Country": True, 
+                "Change": ":.2f", 
+                "Value": ":,.0f", 
+                "Region": True,
+                "description": True,
+                "lat": False, 
+                "lon": False
+            },
+            color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
+            size_max=60,
+            zoom=1,
+            height=600,
+            title="🚀 Interactive Global Market Performance Map",
+            labels={"Change": "Market Change (%)", "Value": "Index Value"}
+        )
+        
+        # Enhanced layout with creative styling
+        fig.update_layout(
+            mapbox_style=style_map[map_style],
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            title_font_size=20,
+            title_x=0.5,
+            title_font_color="#2c3e50",
+            margin=dict(l=0, r=0, t=50, b=0),
+            coloraxis_colorbar=dict(
+                title="Market Change (%)",
+                title_font_size=14,
+                tickfont_size=12,
+                len=0.8,
+                y=0.5,
+                yanchor="middle"
+            )
+        )
+        
+        # Add custom hover template
+        fig.update_traces(
+            hovertemplate="<b>%{hovertext}</b><br>" +
+                         "Country: %{customdata[0]}<br>" +
+                         "Change: %{customdata[1]:.2f}%<br>" +
+                         "Value: %{customdata[2]:,.0f}<br>" +
+                         "Region: %{customdata[3]}<br>" +
+                         "Description: %{customdata[4]}<br>" +
+                         "<extra></extra>"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Add market statistics
+        st.markdown("#### 📊 Market Statistics")
+        
+        col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
+        
+        with col_stat1:
+            st.metric("Total Markets", len(filtered_data))
+        
+        with col_stat2:
+            gaining = len([idx for idx in filtered_data if idx["Change"] > 0])
+            st.metric("Gaining Markets", gaining, f"+{gaining - len(filtered_data) + gaining}")
+        
+        with col_stat3:
+            declining = len([idx for idx in filtered_data if idx["Change"] < 0])
+            st.metric("Declining Markets", declining, f"{declining - len(filtered_data) + declining}")
+        
+        with col_stat4:
+            avg_change = sum([idx["Change"] for idx in filtered_data]) / len(filtered_data)
+            st.metric("Average Change", f"{avg_change:+.2f}%")
+    
+    else:
+        st.warning("No markets match your selected filters. Please adjust your selection.")
     
     # Compact market indices cards below the map
     st.markdown("#### 📊 Market Details")
@@ -309,7 +398,7 @@ def display_markets_section():
                 </div>
                 """, unsafe_allow_html=True)
     
-    # Compact Top Performers & Losers
+    # Compact Top Performers & Losers with appropriate sizing
     st.markdown("### 🏆 Top Performers & Losers")
     
     # Mock data for better demonstration
@@ -329,63 +418,69 @@ def display_markets_section():
         {"Symbol": "CRM", "Name": "Salesforce Inc", "Change": -2.98, "Price": 234.56}
     ]
     
-    col1, col2 = st.columns(2)
+    # Use a centered container with appropriate width
+    col1, col2, col3 = st.columns([1, 2, 1])  # Center the content
     
-    with col1:
-        st.markdown("#### 🟢 Top Gainers")
-        for gainer in top_gainers:
-            st.markdown(f"""
-            <div class="market-card" style="
-                background: linear-gradient(135deg, #d5f4e6 0%, #a8e6cf 100%);
-                border-left: 3px solid #27ae60;
-                padding: 0.8rem;
-                margin-bottom: 0.5rem;
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h5 style="margin: 0; color: #2c3e50; font-size: 0.9rem;">{gainer['Symbol']}</h5>
-                        <p style="margin: 0; color: #7f8c8d; font-size: 0.8rem;">{gainer['Name']}</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: #27ae60;">
-                            +{gainer['Change']:.2f}%
-                        </p>
-                        <p style="margin: 0; font-size: 0.8rem; color: #2c3e50;">
-                            ${gainer['Price']:.2f}
-                        </p>
+    with col2:  # Use the middle column
+        col_gainers, col_losers = st.columns(2)
+        
+        with col_gainers:
+            st.markdown("#### 🟢 Top Gainers")
+            for gainer in top_gainers:
+                st.markdown(f"""
+                <div class="market-card" style="
+                    background: linear-gradient(135deg, #d5f4e6 0%, #a8e6cf 100%);
+                    border-left: 3px solid #27ae60;
+                    padding: 0.6rem;
+                    margin-bottom: 0.4rem;
+                    border-radius: 8px;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h6 style="margin: 0; color: #2c3e50; font-size: 0.85rem; font-weight: bold;">{gainer['Symbol']}</h6>
+                            <p style="margin: 0; color: #7f8c8d; font-size: 0.7rem;">{gainer['Name']}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-size: 1rem; font-weight: bold; color: #27ae60;">
+                                +{gainer['Change']:.2f}%
+                            </p>
+                            <p style="margin: 0; font-size: 0.7rem; color: #2c3e50;">
+                                ${gainer['Price']:.2f}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("#### 🔴 Top Losers")
-        for loser in top_losers:
-            st.markdown(f"""
-            <div class="market-card" style="
-                background: linear-gradient(135deg, #fadbd8 0%, #f1948a 100%);
-                border-left: 3px solid #e74c3c;
-                padding: 0.8rem;
-                margin-bottom: 0.5rem;
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h5 style="margin: 0; color: #2c3e50; font-size: 0.9rem;">{loser['Symbol']}</h5>
-                        <p style="margin: 0; color: #7f8c8d; font-size: 0.8rem;">{loser['Name']}</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: #e74c3c;">
-                            {loser['Change']:.2f}%
-                        </p>
-                        <p style="margin: 0; font-size: 0.8rem; color: #2c3e50;">
-                            ${loser['Price']:.2f}
-                        </p>
+                """, unsafe_allow_html=True)
+        
+        with col_losers:
+            st.markdown("#### 🔴 Top Losers")
+            for loser in top_losers:
+                st.markdown(f"""
+                <div class="market-card" style="
+                    background: linear-gradient(135deg, #fadbd8 0%, #f1948a 100%);
+                    border-left: 3px solid #e74c3c;
+                    padding: 0.6rem;
+                    margin-bottom: 0.4rem;
+                    border-radius: 8px;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h6 style="margin: 0; color: #2c3e50; font-size: 0.85rem; font-weight: bold;">{loser['Symbol']}</h6>
+                            <p style="margin: 0; color: #7f8c8d; font-size: 0.7rem;">{loser['Name']}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-size: 1rem; font-weight: bold; color: #e74c3c;">
+                                {loser['Change']:.2f}%
+                            </p>
+                            <p style="margin: 0; font-size: 0.7rem; color: #2c3e50;">
+                                ${loser['Price']:.2f}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
     
-    # Compact Global Market Heatmap
+    # Compact Global Market Heatmap with appropriate sizing
     st.markdown("### 🔥 Global Market Heatmap")
     
     # Create enhanced heatmap data
@@ -401,34 +496,38 @@ def display_markets_section():
     
     df_heatmap = pd.DataFrame(heatmap_data)
     
-    # Create compact treemap
-    fig = px.treemap(
-        df_heatmap,
-        path=['Region', 'Index'],
-        values='Size',
-        color='Change',
-        color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
-        title="Global Market Performance Heatmap",
-        hover_data={'Change': ':.2f', 'Value': ':,.0f'}
-    )
+    # Use centered container for heatmap
+    col_heatmap1, col_heatmap2, col_heatmap3 = st.columns([1, 2, 1])
     
-    fig.update_layout(
-        height=350,  # Reduced height
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(size=10),
-        title_font_size=16,
-        title_x=0.5,
-        margin=dict(l=0, r=0, t=30, b=0)
-    )
-    
-    fig.update_traces(
-        textinfo="label+value",
-        texttemplate="<b>%{label}</b><br>%{value:.1f}%",
-        hovertemplate="<b>%{label}</b><br>Change: %{color:.2f}%<br>Value: %{customdata[1]:,.0f}<extra></extra>"
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
+    with col_heatmap2:  # Center the heatmap
+        # Create compact treemap
+        fig = px.treemap(
+            df_heatmap,
+            path=['Region', 'Index'],
+            values='Size',
+            color='Change',
+            color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
+            title="Global Market Performance Heatmap",
+            hover_data={'Change': ':.2f', 'Value': ':,.0f'}
+        )
+        
+        fig.update_layout(
+            height=300,  # Further reduced height
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(size=9),
+            title_font_size=14,
+            title_x=0.5,
+            margin=dict(l=0, r=0, t=25, b=0)
+        )
+        
+        fig.update_traces(
+            textinfo="label+value",
+            texttemplate="<b>%{label}</b><br>%{value:.1f}%",
+            hovertemplate="<b>%{label}</b><br>Change: %{color:.2f}%<br>Value: %{customdata[1]:,.0f}<extra></extra>"
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
     
     # Add market summary metrics
     st.markdown("### 📊 Market Summary")
