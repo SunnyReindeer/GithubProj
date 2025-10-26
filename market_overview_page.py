@@ -216,14 +216,18 @@ def display_markets_section():
     # 🚀 ULTRA INTERACTIVE & COOL World Map Visualization
     st.markdown("### 🌍 Global Market Indices - Interactive World Map")
     
-    # Create comprehensive indices data with enhanced features
+    # Create comprehensive indices data with enhanced features including Taiwan and South America
     indices_data = [
         {"Index": "S&P 500", "Country": "United States", "Change": 0.85, "Value": 4785.32, "Status": "Up", "Region": "Americas", "lat": 39.8283, "lon": -98.5795, "color": "#27ae60", "emoji": "🇺🇸", "description": "Broad market index"},
         {"Index": "NASDAQ", "Country": "United States", "Change": 1.24, "Value": 15011.35, "Status": "Up", "Region": "Americas", "lat": 37.7749, "lon": -122.4194, "color": "#27ae60", "emoji": "🇺🇸", "description": "Tech-heavy index"},
         {"Index": "Dow Jones", "Country": "United States", "Change": 0.45, "Value": 37592.98, "Status": "Up", "Region": "Americas", "lat": 40.7128, "lon": -74.0060, "color": "#27ae60", "emoji": "🇺🇸", "description": "Blue chip stocks"},
+        {"Index": "Bovespa", "Country": "Brazil", "Change": 0.67, "Value": 125678.45, "Status": "Up", "Region": "Americas", "lat": -23.5505, "lon": -46.6333, "color": "#27ae60", "emoji": "🇧🇷", "description": "São Paulo stock market"},
+        {"Index": "MERVAL", "Country": "Argentina", "Change": -0.23, "Value": 456789.12, "Status": "Down", "Region": "Americas", "lat": -34.6037, "lon": -58.3816, "color": "#e74c3c", "emoji": "🇦🇷", "description": "Buenos Aires stock market"},
+        {"Index": "IPSA", "Country": "Chile", "Change": 0.89, "Value": 5678.90, "Status": "Up", "Region": "Americas", "lat": -33.4489, "lon": -70.6693, "color": "#27ae60", "emoji": "🇨🇱", "description": "Santiago stock market"},
         {"Index": "Shanghai Composite", "Country": "China", "Change": -0.32, "Value": 2886.96, "Status": "Down", "Region": "Asia", "lat": 31.2304, "lon": 121.4737, "color": "#e74c3c", "emoji": "🇨🇳", "description": "Mainland China stocks"},
         {"Index": "Hang Seng", "Country": "Hong Kong", "Change": 0.78, "Value": 16388.79, "Status": "Up", "Region": "Asia", "lat": 22.3193, "lon": 114.1694, "color": "#27ae60", "emoji": "🇭🇰", "description": "Hong Kong blue chips"},
         {"Index": "Shenzhen Component", "Country": "China", "Change": -0.15, "Value": 8961.46, "Status": "Down", "Region": "Asia", "lat": 22.5431, "lon": 114.0579, "color": "#e74c3c", "emoji": "🇨🇳", "description": "Shenzhen market"},
+        {"Index": "Taiwan Weighted", "Country": "Taiwan", "Change": 0.56, "Value": 17890.12, "Status": "Up", "Region": "Asia", "lat": 25.0330, "lon": 121.5654, "color": "#27ae60", "emoji": "🇹🇼", "description": "Taipei stock market"},
         {"Index": "Nikkei 225", "Country": "Japan", "Change": 1.12, "Value": 33763.18, "Status": "Up", "Region": "Asia", "lat": 35.6762, "lon": 139.6503, "color": "#27ae60", "emoji": "🇯🇵", "description": "Tokyo stock market"},
         {"Index": "KOSPI", "Country": "South Korea", "Change": 0.67, "Value": 2498.81, "Status": "Up", "Region": "Asia", "lat": 37.5665, "lon": 126.9780, "color": "#27ae60", "emoji": "🇰🇷", "description": "Seoul stock market"},
         {"Index": "FTSE 100", "Country": "United Kingdom", "Change": 0.23, "Value": 7694.19, "Status": "Up", "Region": "Europe", "lat": 51.5074, "lon": -0.1278, "color": "#27ae60", "emoji": "🇬🇧", "description": "London blue chips"},
@@ -233,7 +237,7 @@ def display_markets_section():
     ]
     
     # Add interactive controls
-    col_filter1, col_filter2, col_filter3 = st.columns(3)
+    col_filter1, col_filter2 = st.columns(2)
     
     with col_filter1:
         selected_regions = st.multiselect(
@@ -248,12 +252,6 @@ def display_markets_section():
             ["All", "Gaining Only", "Declining Only"]
         )
     
-    with col_filter3:
-        map_style = st.selectbox(
-            "🗺️ Map Style",
-            ["Open Street Map", "Satellite", "Dark", "Light"]
-        )
-    
     # Filter data based on selections
     filtered_data = [idx for idx in indices_data if idx["Region"] in selected_regions]
     
@@ -262,13 +260,7 @@ def display_markets_section():
     elif performance_filter == "Declining Only":
         filtered_data = [idx for idx in filtered_data if idx["Change"] < 0]
     
-    # Map style mapping
-    style_map = {
-        "Open Street Map": "open-street-map",
-        "Satellite": "satellite",
-        "Dark": "dark",
-        "Light": "carto-positron"
-    }
+    # Use light map style by default
     
     if filtered_data:
         df_map = pd.DataFrame(filtered_data)
@@ -300,7 +292,7 @@ def display_markets_section():
         
         # Enhanced layout with creative styling
         fig.update_layout(
-            mapbox_style=style_map[map_style],
+            mapbox_style="carto-positron",  # Light style by default
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             title_font_size=20,
@@ -353,132 +345,127 @@ def display_markets_section():
     else:
         st.warning("No markets match your selected filters. Please adjust your selection.")
     
-    # Compact market indices cards below the map
-    st.markdown("#### 📊 Market Details")
+    # Layout: Market Details on left (2/3), Top Performers & Losers on right (1/3)
+    col_market_details, col_top_performers = st.columns([2, 1])
     
-    # Group by region for compact display
-    regions = {}
-    for index in indices_data:
-        region = index['Region']
-        if region not in regions:
-            regions[region] = []
-        regions[region].append(index)
-    
-    # Display indices in a more compact format
-    for region, indices in regions.items():
-        st.markdown(f"**{region}**")
+    with col_market_details:
+        st.markdown("#### 📊 Market Details")
         
-        # Create columns for this region (more compact)
-        cols = st.columns(len(indices))
-        for i, (col, index) in enumerate(zip(cols, indices)):
-            with col:
-                color = "#27ae60" if index['Change'] >= 0 else "#e74c3c"
-                icon = "📈" if index['Change'] >= 0 else "📉"
-                
-                st.markdown(f"""
-                <div class="market-card" style="
-                    border-left: 3px solid {color};
-                    padding: 1rem;
-                    margin-bottom: 0.5rem;
-                ">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h5 style="margin: 0; color: #2c3e50; font-size: 0.9rem;">{index['Index']}</h5>
-                            <p style="margin: 0; color: #7f8c8d; font-size: 0.8rem;">{index['Country']}</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: {color};">
-                                {index['Change']:+.2f}%
-                            </p>
-                            <p style="margin: 0; font-size: 0.8rem; color: #7f8c8d;">
-                                {index['Value']:,.0f}
-                            </p>
+        # Group by region for compact display
+        regions = {}
+        for index in indices_data:
+            region = index['Region']
+            if region not in regions:
+                regions[region] = []
+            regions[region].append(index)
+        
+        # Display indices in a more compact format
+        for region, indices in regions.items():
+            st.markdown(f"**{region}**")
+            
+            # Create columns for this region (more compact)
+            cols = st.columns(len(indices))
+            for i, (col, index) in enumerate(zip(cols, indices)):
+                with col:
+                    color = "#27ae60" if index['Change'] >= 0 else "#e74c3c"
+                    icon = "📈" if index['Change'] >= 0 else "📉"
+                    
+                    st.markdown(f"""
+                    <div class="market-card" style="
+                        border-left: 3px solid {color};
+                        padding: 0.8rem;
+                        margin-bottom: 0.4rem;
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h6 style="margin: 0; color: #2c3e50; font-size: 0.85rem; font-weight: bold;">{index['Index']}</h6>
+                                <p style="margin: 0; color: #7f8c8d; font-size: 0.7rem;">{index['Country']} {index['emoji']}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="margin: 0; font-size: 1rem; font-weight: bold; color: {color};">
+                                    {index['Change']:+.2f}%
+                                </p>
+                                <p style="margin: 0; font-size: 0.7rem; color: #7f8c8d;">
+                                    {index['Value']:,.0f}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
     
-    # Compact Top Performers & Losers with appropriate sizing
-    st.markdown("### 🏆 Top Performers & Losers")
-    
-    # Mock data for better demonstration
-    top_gainers = [
-        {"Symbol": "TSLA", "Name": "Tesla Inc", "Change": 8.45, "Price": 248.32},
-        {"Symbol": "NVDA", "Name": "NVIDIA Corp", "Change": 6.78, "Price": 485.67},
-        {"Symbol": "AAPL", "Name": "Apple Inc", "Change": 4.23, "Price": 192.45},
-        {"Symbol": "MSFT", "Name": "Microsoft Corp", "Change": 3.89, "Price": 378.91},
-        {"Symbol": "AMZN", "Name": "Amazon.com Inc", "Change": 3.45, "Price": 156.78}
-    ]
-    
-    top_losers = [
-        {"Symbol": "META", "Name": "Meta Platforms", "Change": -5.67, "Price": 345.21},
-        {"Symbol": "GOOGL", "Name": "Alphabet Inc", "Change": -4.23, "Price": 142.56},
-        {"Symbol": "NFLX", "Name": "Netflix Inc", "Change": -3.89, "Price": 478.32},
-        {"Symbol": "ADBE", "Name": "Adobe Inc", "Change": -3.45, "Price": 567.89},
-        {"Symbol": "CRM", "Name": "Salesforce Inc", "Change": -2.98, "Price": 234.56}
-    ]
-    
-    # Use a centered container with appropriate width
-    col1, col2, col3 = st.columns([1, 2, 1])  # Center the content
-    
-    with col2:  # Use the middle column
-        col_gainers, col_losers = st.columns(2)
+    with col_top_performers:
+        st.markdown("#### 🏆 Top Performers & Losers")
         
-        with col_gainers:
-            st.markdown("#### 🟢 Top Gainers")
-            for gainer in top_gainers:
-                st.markdown(f"""
-                <div class="market-card" style="
-                    background: linear-gradient(135deg, #d5f4e6 0%, #a8e6cf 100%);
-                    border-left: 3px solid #27ae60;
-                    padding: 0.6rem;
-                    margin-bottom: 0.4rem;
-                    border-radius: 8px;
-                ">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h6 style="margin: 0; color: #2c3e50; font-size: 0.85rem; font-weight: bold;">{gainer['Symbol']}</h6>
-                            <p style="margin: 0; color: #7f8c8d; font-size: 0.7rem;">{gainer['Name']}</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="margin: 0; font-size: 1rem; font-weight: bold; color: #27ae60;">
-                                +{gainer['Change']:.2f}%
-                            </p>
-                            <p style="margin: 0; font-size: 0.7rem; color: #2c3e50;">
-                                ${gainer['Price']:.2f}
-                            </p>
-                        </div>
+        # Mock data for better demonstration
+        top_gainers = [
+            {"Symbol": "TSLA", "Name": "Tesla Inc", "Change": 8.45, "Price": 248.32},
+            {"Symbol": "NVDA", "Name": "NVIDIA Corp", "Change": 6.78, "Price": 485.67},
+            {"Symbol": "AAPL", "Name": "Apple Inc", "Change": 4.23, "Price": 192.45},
+            {"Symbol": "MSFT", "Name": "Microsoft Corp", "Change": 3.89, "Price": 378.91},
+            {"Symbol": "AMZN", "Name": "Amazon.com Inc", "Change": 3.45, "Price": 156.78}
+        ]
+        
+        top_losers = [
+            {"Symbol": "META", "Name": "Meta Platforms", "Change": -5.67, "Price": 345.21},
+            {"Symbol": "GOOGL", "Name": "Alphabet Inc", "Change": -4.23, "Price": 142.56},
+            {"Symbol": "NFLX", "Name": "Netflix Inc", "Change": -3.89, "Price": 478.32},
+            {"Symbol": "ADBE", "Name": "Adobe Inc", "Change": -3.45, "Price": 567.89},
+            {"Symbol": "CRM", "Name": "Salesforce Inc", "Change": -2.98, "Price": 234.56}
+        ]
+        
+        st.markdown("**🟢 Top Gainers**")
+        for gainer in top_gainers:
+            st.markdown(f"""
+            <div class="market-card" style="
+                background: linear-gradient(135deg, #d5f4e6 0%, #a8e6cf 100%);
+                border-left: 3px solid #27ae60;
+                padding: 0.5rem;
+                margin-bottom: 0.3rem;
+                border-radius: 6px;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h6 style="margin: 0; color: #2c3e50; font-size: 0.8rem; font-weight: bold;">{gainer['Symbol']}</h6>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 0.65rem;">{gainer['Name']}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0; font-size: 0.9rem; font-weight: bold; color: #27ae60;">
+                            +{gainer['Change']:.2f}%
+                        </p>
+                        <p style="margin: 0; font-size: 0.65rem; color: #2c3e50;">
+                            ${gainer['Price']:.2f}
+                        </p>
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
+            </div>
+            """, unsafe_allow_html=True)
         
-        with col_losers:
-            st.markdown("#### 🔴 Top Losers")
-            for loser in top_losers:
-                st.markdown(f"""
-                <div class="market-card" style="
-                    background: linear-gradient(135deg, #fadbd8 0%, #f1948a 100%);
-                    border-left: 3px solid #e74c3c;
-                    padding: 0.6rem;
-                    margin-bottom: 0.4rem;
-                    border-radius: 8px;
-                ">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h6 style="margin: 0; color: #2c3e50; font-size: 0.85rem; font-weight: bold;">{loser['Symbol']}</h6>
-                            <p style="margin: 0; color: #7f8c8d; font-size: 0.7rem;">{loser['Name']}</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="margin: 0; font-size: 1rem; font-weight: bold; color: #e74c3c;">
-                                {loser['Change']:.2f}%
-                            </p>
-                            <p style="margin: 0; font-size: 0.7rem; color: #2c3e50;">
-                                ${loser['Price']:.2f}
-                            </p>
-                        </div>
+        st.markdown("**🔴 Top Losers**")
+        for loser in top_losers:
+            st.markdown(f"""
+            <div class="market-card" style="
+                background: linear-gradient(135deg, #fadbd8 0%, #f1948a 100%);
+                border-left: 3px solid #e74c3c;
+                padding: 0.5rem;
+                margin-bottom: 0.3rem;
+                border-radius: 6px;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h6 style="margin: 0; color: #2c3e50; font-size: 0.8rem; font-weight: bold;">{loser['Symbol']}</h6>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 0.65rem;">{loser['Name']}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0; font-size: 0.9rem; font-weight: bold; color: #e74c3c;">
+                            {loser['Change']:.2f}%
+                        </p>
+                        <p style="margin: 0; font-size: 0.65rem; color: #2c3e50;">
+                            ${loser['Price']:.2f}
+                        </p>
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
+            </div>
+            """, unsafe_allow_html=True)
     
     # Compact Global Market Heatmap with appropriate sizing
     st.markdown("### 🔥 Global Market Heatmap")
