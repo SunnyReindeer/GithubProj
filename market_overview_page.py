@@ -536,7 +536,6 @@ def display_markets_section():
             title_font_color="#2c3e50",
             coloraxis_colorbar=dict(
                 title="Market Change (%)",
-                titlefont=dict(color="#2c3e50"),
                 tickfont=dict(color="#2c3e50")
             ),
             margin=dict(l=0, r=0, t=40, b=0)
@@ -556,8 +555,6 @@ def display_markets_section():
             margin=dict(l=0, r=0, t=50, b=0),
             coloraxis_colorbar=dict(
                 title="Market Change (%)",
-                title_font_size=14,
-                tickfont_size=12,
                 len=0.8,
                 y=0.5,
                 yanchor="middle"
