@@ -190,55 +190,77 @@ def get_market_analysis():
         }
 
 def get_fear_greed_index():
-    """Get current Fear & Greed Index from Alternative.me API"""
+    """Get current CNN Fear & Greed Index for STOCK MARKET"""
     try:
-        # Use Alternative.me API for Fear & Greed Index (free, no API key needed)
-        url = "https://api.alternative.me/fng/"
-        response = requests.get(url, timeout=10)
-        
-        print(f"DEBUG: API Response Status = {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"DEBUG: API Response Data = {data}")
-            
-            if 'data' in data and len(data['data']) > 0:
-                # Get the most recent value
-                latest_value = int(data['data'][0]['value'])
-                print(f"DEBUG: Extracted Fear & Greed Index = {latest_value}")
-                return latest_value
-        
-        # Fallback: try to get from CNN directly
+        # CNN Fear & Greed Index for STOCK MARKET (not crypto)
         cnn_url = "https://edition.cnn.com/markets/fear-and-greed"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
         }
         
-        response = requests.get(cnn_url, headers=headers, timeout=10)
-        soup = BeautifulSoup(response.content, 'html.parser')
+        print(f"DEBUG: Fetching CNN Fear & Greed Index from: {cnn_url}")
+        response = requests.get(cnn_url, headers=headers, timeout=15)
+        print(f"DEBUG: CNN Response Status = {response.status_code}")
         
-        # Look for the Fear & Greed Index value
-        try:
-            # Try to find the index value in various ways
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Look for the Fear & Greed Index value in multiple ways
             import re
             
-            # Look for numbers in the page content
-            text_content = soup.get_text()
-            numbers = re.findall(r'\b(\d{1,2})\b', text_content)
+            # Method 1: Look for specific patterns in the page
+            fear_greed_elements = soup.find_all(text=re.compile(r'fear.*greed|greed.*fear', re.I))
+            print(f"DEBUG: Found {len(fear_greed_elements)} fear/greed elements")
             
-            # Filter for reasonable Fear & Greed Index values (0-100)
+            # Method 2: Look for numbers that could be the index
+            all_text = soup.get_text()
+            print(f"DEBUG: Page text length: {len(all_text)}")
+            
+            # Look for patterns like "Fear & Greed Index: XX" or similar
+            patterns = [
+                r'fear.*greed.*index.*?(\d{1,2})',
+                r'(\d{1,2}).*fear.*greed',
+                r'index.*?(\d{1,2})',
+                r'current.*?(\d{1,2})',
+                r'(\d{1,2}).*today'
+            ]
+            
+            for pattern in patterns:
+                matches = re.findall(pattern, all_text, re.I)
+                if matches:
+                    for match in matches:
+                        value = int(match)
+                        if 0 <= value <= 100:  # Valid Fear & Greed Index range
+                            print(f"DEBUG: Found Fear & Greed Index = {value} using pattern: {pattern}")
+                            return value
+            
+            # Method 3: Look for any number between 0-100 in the content
+            numbers = re.findall(r'\b(\d{1,2})\b', all_text)
             valid_values = [int(n) for n in numbers if 0 <= int(n) <= 100]
+            
             if valid_values:
-                # Return the most common value or the first reasonable one
-                return max(set(valid_values), key=valid_values.count) if valid_values else 33
-                
-        except:
-            pass
+                # Filter out common false positives
+                filtered_values = [v for v in valid_values if v not in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100]]
+                if filtered_values:
+                    # Return the most common reasonable value
+                    most_common = max(set(filtered_values), key=filtered_values.count)
+                    print(f"DEBUG: Found Fear & Greed Index = {most_common} from filtered values")
+                    return most_common
+                else:
+                    # If no filtered values, use the most common from all values
+                    most_common = max(set(valid_values), key=valid_values.count)
+                    print(f"DEBUG: Found Fear & Greed Index = {most_common} from all values")
+                    return most_common
         
-        # Final fallback
-        return 33
+        print("DEBUG: Could not extract Fear & Greed Index from CNN, using fallback")
+        return 33  # Fallback to current known value
         
     except Exception as e:
+        print(f"DEBUG: Error fetching CNN Fear & Greed Index: {e}")
         return 33  # Fallback to current real value
 
 def create_market_overview_page():
