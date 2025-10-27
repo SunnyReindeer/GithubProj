@@ -350,8 +350,6 @@ def display_markets_section():
         if st.button("🔄 Refresh Data", type="primary"):
             st.rerun()
     
-    with col3:
-        st.markdown("**API Status:** 🟢 Connected")
     
     # Create comprehensive market data with sparklines and real-time updates
     current_time = datetime.now()
@@ -472,25 +470,21 @@ def display_markets_section():
     ]
     
     # Region filters (like CNN Markets)
-    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+    col1, col2, col3 = st.columns([1, 1, 1])
     
     with col1:
-        all_selected = st.button("All", key="all_btn", type="primary")
-    with col2:
         americas_selected = st.button("Americas", key="americas_btn")
-    with col3:
+    with col2:
         europe_selected = st.button("Europe", key="europe_btn")
-    with col4:
+    with col3:
         asia_selected = st.button("Asia-Pacific", key="asia_btn")
     
     # Initialize session state for region selection
     if 'selected_region' not in st.session_state:
-        st.session_state.selected_region = "All"
+        st.session_state.selected_region = "Americas"
     
     # Update selected region based on button clicks
-    if all_selected:
-        st.session_state.selected_region = "All"
-    elif americas_selected:
+    if americas_selected:
         st.session_state.selected_region = "Americas"
     elif europe_selected:
         st.session_state.selected_region = "Europe"
@@ -498,9 +492,7 @@ def display_markets_section():
         st.session_state.selected_region = "Asia-Pacific"
     
     # Filter data based on selected region
-    if st.session_state.selected_region == "All":
-        filtered_data = indices_data
-    elif st.session_state.selected_region == "Americas":
+    if st.session_state.selected_region == "Americas":
         filtered_data = [idx for idx in indices_data if idx["Region"] == "Americas"]
     elif st.session_state.selected_region == "Europe":
         filtered_data = [idx for idx in indices_data if idx["Region"] == "Europe"]
@@ -1099,7 +1091,6 @@ def display_news_section():
     """Display financial news and market updates with real-time data"""
     
     st.markdown("#### 📰 News")
-    st.info("News section coming soon...")
 
 def display_market_analysis_section():
     """Display market analysis and insights with real-time data"""
