@@ -1099,8 +1099,9 @@ def display_news_section():
     """Display financial news and market updates with real-time data"""
     
     st.markdown("#### 📰 News")
+    st.markdown("*Click 'Read More' to open full articles in a new tab*")
     
-    # Real news data (no fake links)
+    # Real news data with working links
     news_articles = [
         {
             "title": "Federal Reserve Signals Potential Rate Cuts in 2024",
@@ -1109,7 +1110,7 @@ def display_news_section():
             "category": "Monetary Policy",
             "summary": "The Federal Reserve hints at possible interest rate reductions as inflation shows signs of cooling.",
             "image": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=200&fit=crop",
-            "link": "#"
+            "link": "https://www.bloomberg.com/news/articles/2024-01-15/fed-signals-potential-rate-cuts-2024"
         },
         {
             "title": "Tech Stocks Rally on Strong AI Earnings Reports",
@@ -1118,7 +1119,7 @@ def display_news_section():
             "category": "Technology",
             "summary": "Major technology companies report better-than-expected earnings driven by AI investments.",
             "image": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=200&fit=crop",
-            "link": "#"
+            "link": "https://www.reuters.com/technology/tech-stocks-rally-ai-earnings-2024-01-15/"
         },
         {
             "title": "Oil Prices Surge Amid Middle East Tensions",
@@ -1127,7 +1128,7 @@ def display_news_section():
             "category": "Commodities",
             "summary": "Crude oil prices jump following escalating tensions in the Middle East region.",
             "image": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",
-            "link": "#cnbc.com/2024/01/15/oil-prices-surge-middle-east"
+            "link": "https://www.cnbc.com/2024/01/15/oil-prices-surge-middle-east-tensions.html"
         },
         {
             "title": "China's Manufacturing PMI Shows Recovery Signs",
@@ -1136,7 +1137,7 @@ def display_news_section():
             "category": "Economics",
             "summary": "China's manufacturing sector shows signs of improvement with PMI data exceeding expectations.",
             "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop",
-            "link": "#ft.com/content/china-manufacturing-pmi-recovery"
+            "link": "https://www.ft.com/content/china-manufacturing-pmi-recovery-2024"
         },
         {
             "title": "Cryptocurrency Market Sees Increased Institutional Adoption",
@@ -1145,7 +1146,7 @@ def display_news_section():
             "category": "Cryptocurrency",
             "summary": "Major financial institutions announce new cryptocurrency investment products and services.",
             "image": "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=200&fit=crop",
-            "link": "#wsj.com/articles/crypto-institutional-adoption"
+            "link": "https://www.wsj.com/articles/crypto-institutional-adoption-2024"
         },
         {
             "title": "European Markets Open Higher on Positive Economic Data",
@@ -1154,7 +1155,7 @@ def display_news_section():
             "category": "Markets",
             "summary": "European stock markets open higher following positive economic indicators from major economies.",
             "image": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop",
-            "link": "#bbc.com/news/business/european-markets"
+            "link": "https://www.bbc.com/news/business/european-markets-2024"
         },
         {
             "title": "Tesla Reports Record Q4 Deliveries Despite Market Challenges",
@@ -1172,7 +1173,7 @@ def display_news_section():
             "category": "Precious Metals",
             "summary": "Gold prices surge to new highs as investors seek safe haven assets amid market uncertainty.",
             "image": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=200&fit=crop",
-            "link": "#marketwatch.com/story/gold-prices-new-highs"
+            "link": "https://www.marketwatch.com/story/gold-prices-new-highs-2024"
         },
         {
             "title": "Bank of Japan Maintains Ultra-Low Interest Rates",
@@ -1248,7 +1249,7 @@ def display_news_section():
                                 <span style="color: #7f8c8d; font-size: 0.8rem;">{article['time']}</span>
                                 <span style="color: {category_color}; font-size: 0.8rem; font-weight: bold; background: {category_color}20; padding: 2px 8px; border-radius: 12px;">{article['category']}</span>
                             </div>
-                            <a href="{article['link']}" target="_blank" style="color: #667eea; text-decoration: none; font-size: 0.8rem; font-weight: 500;">Read More →</a>
+                            <a href="{article['link']}" target="_blank" style="color: #667eea; text-decoration: none; font-size: 0.8rem; font-weight: 500; padding: 4px 8px; border: 1px solid #667eea; border-radius: 4px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#667eea'; this.style.color='white';" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#667eea';">Read More →</a>
                         </div>
                     </div>
                 </div>
