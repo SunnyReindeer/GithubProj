@@ -106,14 +106,9 @@ def get_market_analysis():
         # Get market sentiment from Alpha Vantage
         sentiment_data = get_alpha_vantage_data("NEWS_SENTIMENT", "NEWS_SENTIMENT")
         
-        # Get VIX data for volatility
-        vix_data = get_alpha_vantage_data("TIME_SERIES_DAILY", "VIX")
-        
         analysis = {
             "market_sentiment": "Neutral",
-            "fear_greed_index": fear_greed_index,
-            "volatility": "Normal",
-            "trend": "Sideways"
+            "fear_greed_index": fear_greed_index
         }
         
         # Analyze sentiment from news with improved logic
@@ -157,36 +152,12 @@ def get_market_analysis():
                     else:
                         analysis["market_sentiment"] = "Neutral"
         
-        # Determine volatility based on VIX
-        if vix_data and "Time Series (Daily)" in vix_data:
-            latest_vix = float(list(vix_data["Time Series (Daily)"].values())[0]["4. close"])
-            if latest_vix > 30:
-                analysis["volatility"] = "High"
-            elif latest_vix < 15:
-                analysis["volatility"] = "Low"
-            else:
-                analysis["volatility"] = "Normal"
-        
-        # Determine trend based on Fear & Greed Index
-        if fear_greed_index < 25:
-            analysis["trend"] = "Extreme Fear"
-        elif fear_greed_index < 45:
-            analysis["trend"] = "Fear"
-        elif fear_greed_index > 75:
-            analysis["trend"] = "Extreme Greed"
-        elif fear_greed_index > 55:
-            analysis["trend"] = "Greed"
-        else:
-            analysis["trend"] = "Neutral"
-        
         return analysis
     except Exception as e:
         # Fallback to current real values if API fails
         return {
             "market_sentiment": "Neutral",
-            "fear_greed_index": 33,  # Current real value is 33
-            "volatility": "Normal",
-            "trend": "Fear"
+            "fear_greed_index": 33  # Current real value is 33
         }
 
 def get_fear_greed_index():
@@ -1234,50 +1205,6 @@ def display_market_analysis_section():
         analysis = get_market_analysis()
     
     
-    # Additional real-time metrics
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric(
-            label="Market Trend",
-            value=analysis.get("trend", "Sideways"),
-            help="Current market trend analysis"
-        )
-    
-    with col2:
-        st.metric(
-            label="Market Breadth",
-            value="72%",
-            delta="+8%",
-            help="Percentage of stocks trading above their 50-day moving average"
-        )
-    
-    with col3:
-        # Get real VIX data
-        vix_value = "18.5"  # Default fallback
-        vix_delta = "-2.1"  # Default fallback
-        
-        try:
-            vix_data = get_alpha_vantage_data("TIME_SERIES_DAILY", "VIX")
-            if vix_data and "Time Series (Daily)" in vix_data:
-                latest_data = list(vix_data["Time Series (Daily)"].values())[0]
-                vix_value = f"{float(latest_data['4. close']):.1f}"
-                
-                # Calculate delta (simplified)
-                previous_data = list(vix_data["Time Series (Daily)"].values())[1]
-                previous_close = float(previous_data['4. close'])
-                current_close = float(latest_data['4. close'])
-                delta = current_close - previous_close
-                vix_delta = f"{delta:+.1f}"
-        except:
-            pass
-        
-        st.metric(
-            label="VIX (Volatility)",
-            value=vix_value,
-            delta=vix_delta,
-            help="CBOE Volatility Index - lower values indicate less market fear"
-        )
     
     # Sector performance
     st.markdown("### 🏭 Sector Performance")
