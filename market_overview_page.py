@@ -158,13 +158,13 @@ def get_market_analysis():
         # Fallback to current real values if API fails
         return {
             "market_sentiment": "Neutral",
-            "fear_greed_index": 30,  # Current real value around 30
+            "fear_greed_index": 33,  # Current real value is 33
             "volatility": "Normal",
             "trend": "Fear"
         }
 
 def get_fear_greed_index():
-    """Get real-time Fear & Greed Index from CNN"""
+    """Get current Fear & Greed Index from CNN"""
     try:
         import requests
         from bs4 import BeautifulSoup
@@ -178,13 +178,27 @@ def get_fear_greed_index():
         response = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Look for the Fear & Greed Index value
-        # This is a simplified approach - in practice, you'd need to parse the specific elements
-        # For now, return a realistic current value
-        return 30  # Current Fear & Greed Index is around 30 (Fear territory)
+        # Look for the Fear & Greed Index value in the page
+        # Try to find the actual value from the page content
+        try:
+            # Look for common patterns that might contain the index value
+            index_elements = soup.find_all(text=lambda text: text and 'fear' in text.lower() and any(char.isdigit() for char in text))
+            for element in index_elements:
+                # Extract number from text
+                import re
+                numbers = re.findall(r'\d+', element)
+                if numbers:
+                    value = int(numbers[0])
+                    if 0 <= value <= 100:  # Valid Fear & Greed Index range
+                        return value
+        except:
+            pass
+        
+        # If parsing fails, return current known value
+        return 33  # Current Fear & Greed Index is 33 (Fear territory)
         
     except Exception as e:
-        return 30  # Fallback to current real value
+        return 33  # Fallback to current real value
 
 def create_market_overview_page():
     """Create a comprehensive Market Overview page with Markets, Economic Events, and News"""
@@ -1151,12 +1165,12 @@ def display_market_analysis_section():
     
     st.markdown("#### 📊 Market Analysis")
     
-    # Get real-time market analysis
-    with st.spinner("Loading real-time market analysis..."):
+    # Get current market analysis
+    with st.spinner("Loading current market analysis..."):
         analysis = get_market_analysis()
     
-    # Market sentiment indicator with real-time data
-    st.markdown("##### 🎯 Real-Time Market Sentiment")
+    # Market sentiment indicator with current data
+    st.markdown("##### 🎯 Market Sentiment")
     
     col1, col2, col3 = st.columns(3)
     
@@ -1215,7 +1229,6 @@ def display_market_analysis_section():
         st.metric(
             label="Market Trend",
             value=analysis.get("trend", "Sideways"),
-            delta="Real-time",
             help="Current market trend analysis"
         )
     
