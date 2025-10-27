@@ -533,28 +533,13 @@ def display_markets_section():
             mapbox_style="carto-positron",
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
-            title_font_color="#2c3e50",
-            coloraxis_colorbar=dict(
-                title="Market Change (%)",
-                tickfont=dict(color="#2c3e50")
-            ),
-            margin=dict(l=0, r=0, t=40, b=0)
-        )
-        
-        # Enhanced hover template with better performance details
-        # Note: Custom hover template removed to avoid compatibility issues
-        
-        # Enhanced layout with light style
-        fig.update_layout(
-            mapbox_style="carto-positron",  # Light style
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
             title_font_size=18,
             title_x=0.5,
             title_font_color="#2c3e50",
             margin=dict(l=0, r=0, t=50, b=0),
             coloraxis_colorbar=dict(
                 title="Market Change (%)",
+                tickfont=dict(color="#2c3e50"),
                 len=0.8,
                 y=0.5,
                 yanchor="middle"
@@ -1049,17 +1034,6 @@ def display_economic_events_section():
             "previous": "1.42M"
         }
     ]
-    
-    # Filter options
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        importance_filter = st.selectbox(
-            "Filter by Importance",
-            ["All", "High", "Medium", "Low"],
-            index=0
-        )
-    
     
     # Apply filters
     filtered_events = economic_events.copy()
