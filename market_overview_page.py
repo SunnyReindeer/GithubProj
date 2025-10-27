@@ -510,7 +510,7 @@ def display_markets_section():
             lat="lat",
             lon="lon",
             color="Change",
-            size="Value",
+            size="Change",
             hover_name="Index",
             hover_data=["Country", "Change", "Value", "Region", "description"],
             color_continuous_scale=['#e74c3c', '#f39c12', '#27ae60'],
@@ -530,7 +530,7 @@ def display_markets_section():
             title_font_color="#2c3e50",
             margin=dict(l=0, r=0, t=50, b=0),
             coloraxis_colorbar=dict(
-                title="Market Change (%)",
+                title="Change (%) - Color & Size",
                 tickfont=dict(color="#2c3e50"),
                 len=0.8,
                 y=0.5,
