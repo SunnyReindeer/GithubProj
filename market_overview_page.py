@@ -164,38 +164,48 @@ def get_market_analysis():
         }
 
 def get_fear_greed_index():
-    """Get current Fear & Greed Index from CNN"""
+    """Get current Fear & Greed Index from Alternative.me API"""
     try:
-        import requests
-        from bs4 import BeautifulSoup
+        # Use Alternative.me API for Fear & Greed Index (free, no API key needed)
+        url = "https://api.alternative.me/fng/"
+        response = requests.get(url, timeout=10)
         
-        # CNN Fear & Greed Index URL
-        url = "https://edition.cnn.com/markets/fear-and-greed"
+        if response.status_code == 200:
+            data = response.json()
+            if 'data' in data and len(data['data']) > 0:
+                # Get the most recent value
+                latest_value = int(data['data'][0]['value'])
+                return latest_value
+        
+        # Fallback: try to get from CNN directly
+        cnn_url = "https://edition.cnn.com/markets/fear-and-greed"
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(cnn_url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Look for the Fear & Greed Index value in the page
-        # Try to find the actual value from the page content
+        # Look for the Fear & Greed Index value
         try:
-            # Look for common patterns that might contain the index value
-            index_elements = soup.find_all(text=lambda text: text and 'fear' in text.lower() and any(char.isdigit() for char in text))
-            for element in index_elements:
-                # Extract number from text
-                import re
-                numbers = re.findall(r'\d+', element)
-                if numbers:
-                    value = int(numbers[0])
-                    if 0 <= value <= 100:  # Valid Fear & Greed Index range
-                        return value
+            # Try to find the index value in various ways
+            import re
+            
+            # Look for numbers in the page content
+            text_content = soup.get_text()
+            numbers = re.findall(r'\b(\d{1,2})\b', text_content)
+            
+            # Filter for reasonable Fear & Greed Index values (0-100)
+            valid_values = [int(n) for n in numbers if 0 <= int(n) <= 100]
+            if valid_values:
+                # Return the most common value or the first reasonable one
+                return max(set(valid_values), key=valid_values.count) if valid_values else 33
+                
         except:
             pass
         
-        # If parsing fails, return current known value
-        return 33  # Current Fear & Greed Index is 33 (Fear territory)
+        # Final fallback
+        return 33
         
     except Exception as e:
         return 33  # Fallback to current real value
