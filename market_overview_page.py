@@ -97,8 +97,11 @@ def get_economic_indicators():
 def get_market_analysis():
     """Get real-time market analysis and sentiment"""
     try:
-        # Get real Fear & Greed Index from CNN
+        # Get real Fear & Greed Index
         fear_greed_index = get_fear_greed_index()
+        
+        # Debug: Print the Fear & Greed Index value
+        print(f"DEBUG: Fear & Greed Index = {fear_greed_index}")
         
         # Get market sentiment from Alpha Vantage
         sentiment_data = get_alpha_vantage_data("NEWS_SENTIMENT", "NEWS_SENTIMENT")
@@ -113,23 +116,46 @@ def get_market_analysis():
             "trend": "Sideways"
         }
         
-        # Analyze sentiment from news
+        # Analyze sentiment from news with improved logic
         if sentiment_data and "feed" in sentiment_data:
             positive_count = 0
             negative_count = 0
+            neutral_count = 0
+            total_score = 0
+            article_count = 0
             
-            for article in sentiment_data["feed"][:5]:  # Analyze top 5 articles
+            for article in sentiment_data["feed"][:10]:  # Analyze top 10 articles
                 if "overall_sentiment_score" in article:
                     score = float(article["overall_sentiment_score"])
+                    total_score += score
+                    article_count += 1
+                    
                     if score > 0.1:
                         positive_count += 1
                     elif score < -0.1:
                         negative_count += 1
+                    else:
+                        neutral_count += 1
             
-            if positive_count > negative_count:
-                analysis["market_sentiment"] = "Positive"
-            elif negative_count > positive_count:
-                analysis["market_sentiment"] = "Negative"
+            # Determine sentiment based on multiple factors
+            if article_count > 0:
+                avg_score = total_score / article_count
+                
+                # More sophisticated sentiment determination
+                if avg_score > 0.2 and positive_count > negative_count:
+                    analysis["market_sentiment"] = "Positive"
+                elif avg_score < -0.2 and negative_count > positive_count:
+                    analysis["market_sentiment"] = "Negative"
+                elif abs(avg_score) <= 0.1:
+                    analysis["market_sentiment"] = "Neutral"
+                else:
+                    # Use count-based logic as fallback
+                    if positive_count > negative_count:
+                        analysis["market_sentiment"] = "Positive"
+                    elif negative_count > positive_count:
+                        analysis["market_sentiment"] = "Negative"
+                    else:
+                        analysis["market_sentiment"] = "Neutral"
         
         # Determine volatility based on VIX
         if vix_data and "Time Series (Daily)" in vix_data:
@@ -170,11 +196,16 @@ def get_fear_greed_index():
         url = "https://api.alternative.me/fng/"
         response = requests.get(url, timeout=10)
         
+        print(f"DEBUG: API Response Status = {response.status_code}")
+        
         if response.status_code == 200:
             data = response.json()
+            print(f"DEBUG: API Response Data = {data}")
+            
             if 'data' in data and len(data['data']) > 0:
                 # Get the most recent value
                 latest_value = int(data['data'][0]['value'])
+                print(f"DEBUG: Extracted Fear & Greed Index = {latest_value}")
                 return latest_value
         
         # Fallback: try to get from CNN directly
