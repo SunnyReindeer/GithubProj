@@ -7,6 +7,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import time
 import requests
+from bs4 import BeautifulSoup
 from typing import Dict, List, Optional
 
 # Alpha Vantage API Configuration
@@ -1227,10 +1228,29 @@ def display_market_analysis_section():
         )
     
     with col3:
+        # Get real VIX data
+        vix_value = "18.5"  # Default fallback
+        vix_delta = "-2.1"  # Default fallback
+        
+        try:
+            vix_data = get_alpha_vantage_data("TIME_SERIES_DAILY", "VIX")
+            if vix_data and "Time Series (Daily)" in vix_data:
+                latest_data = list(vix_data["Time Series (Daily)"].values())[0]
+                vix_value = f"{float(latest_data['4. close']):.1f}"
+                
+                # Calculate delta (simplified)
+                previous_data = list(vix_data["Time Series (Daily)"].values())[1]
+                previous_close = float(previous_data['4. close'])
+                current_close = float(latest_data['4. close'])
+                delta = current_close - previous_close
+                vix_delta = f"{delta:+.1f}"
+        except:
+            pass
+        
         st.metric(
             label="VIX (Volatility)",
-            value="18.5",
-            delta="-2.1",
+            value=vix_value,
+            delta=vix_delta,
             help="CBOE Volatility Index - lower values indicate less market fear"
         )
     
