@@ -1233,58 +1233,6 @@ def display_market_analysis_section():
     with st.spinner("Loading current market analysis..."):
         analysis = get_market_analysis()
     
-    # Market sentiment indicator with current data
-    st.markdown("##### 🎯 Market Sentiment")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        sentiment = analysis.get("market_sentiment", "Neutral")
-        sentiment_color = "#27ae60" if sentiment == "Positive" else "#e74c3c" if sentiment == "Negative" else "#f39c12"
-        st.markdown(f"""
-        <div style="
-            background: {sentiment_color}20;
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            border: 2px solid {sentiment_color};
-        ">
-            <h3 style="margin: 0; color: {sentiment_color};">{sentiment}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #7f8c8d;">Market Sentiment</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        fear_greed = analysis.get("fear_greed_index", 50)
-        fear_greed_color = "#e74c3c" if fear_greed < 30 else "#f39c12" if fear_greed < 70 else "#27ae60"
-        st.markdown(f"""
-        <div style="
-            background: {fear_greed_color}20;
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            border: 2px solid {fear_greed_color};
-        ">
-            <h3 style="margin: 0; color: {fear_greed_color};">{fear_greed}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #7f8c8d;">Fear & Greed Index</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        volatility = analysis.get("volatility", "Normal")
-        volatility_color = "#e74c3c" if volatility == "High" else "#27ae60" if volatility == "Low" else "#f39c12"
-        st.markdown(f"""
-        <div style="
-            background: {volatility_color}20;
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            border: 2px solid {volatility_color};
-        ">
-            <h3 style="margin: 0; color: {volatility_color};">{volatility}</h3>
-            <p style="margin: 0.5rem 0 0 0; color: #7f8c8d;">Volatility</p>
-        </div>
-        """, unsafe_allow_html=True)
     
     # Additional real-time metrics
     col1, col2, col3 = st.columns(3)
@@ -1368,29 +1316,6 @@ def display_market_analysis_section():
     )
     st.plotly_chart(fig, use_container_width=True)
     
-    # Market insights
-    st.markdown("### 💡 Market Insights")
-    
-    insights = [
-        "🔍 **Technical Analysis**: The S&P 500 is approaching a key resistance level at 4,800. A breakout could signal further upside potential.",
-        "📊 **Volume Analysis**: Trading volume has increased 15% compared to the 30-day average, indicating strong institutional interest.",
-        "🌍 **Global Markets**: European markets are showing strength, with the DAX up 1.2% and FTSE 100 up 0.8%.",
-        "💰 **Earnings Season**: 78% of companies have beaten earnings expectations this quarter, supporting the current rally.",
-        "🏦 **Interest Rates**: The 10-year Treasury yield has stabilized around 4.2%, providing support for equity valuations."
-    ]
-    
-    for insight in insights:
-        st.markdown(f"""
-        <div style="
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            border-left: 4px solid #3498db;
-        ">
-            <p style="margin: 0; color: #2c3e50;">{insight}</p>
-        </div>
-        """, unsafe_allow_html=True)
 
 def main():
     """Main function for market overview page"""
