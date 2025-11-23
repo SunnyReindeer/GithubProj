@@ -9,6 +9,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from typing import Dict, List, Optional
+from collections import Counter
 import yfinance as yf
 
 # Note: yfinance is free and doesn't require an API key!
@@ -566,77 +567,79 @@ def get_market_analysis():
 def get_fear_greed_index():
     """Get current CNN Fear & Greed Index for STOCK MARKET"""
     try:
-        # CNN Fear & Greed Index for STOCK MARKET (not crypto)
-        cnn_url = "https://edition.cnn.com/markets/fear-and-greed"
+        # Try CNN Business Markets page - more reliable
+        cnn_urls = [
+            "https://www.cnn.com/markets/fear-and-greed",
+            "https://edition.cnn.com/markets/fear-and-greed",
+            "https://money.cnn.com/data/fear-and-greed/"
+        ]
+        
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         }
         
-        print(f"DEBUG: Fetching CNN Fear & Greed Index from: {cnn_url}")
-        response = requests.get(cnn_url, headers=headers, timeout=15)
-        print(f"DEBUG: CNN Response Status = {response.status_code}")
-        
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Look for the Fear & Greed Index value in multiple ways
-            import re
-            
-            # Method 1: Look for specific patterns in the page
-            fear_greed_elements = soup.find_all(text=re.compile(r'fear.*greed|greed.*fear', re.I))
-            print(f"DEBUG: Found {len(fear_greed_elements)} fear/greed elements")
-            
-            # Method 2: Look for numbers that could be the index
-            all_text = soup.get_text()
-            print(f"DEBUG: Page text length: {len(all_text)}")
-            
-            # Look for patterns like "Fear & Greed Index: XX" or similar
-            patterns = [
-                r'fear.*greed.*index.*?(\d{1,2})',
-                r'(\d{1,2}).*fear.*greed',
-                r'index.*?(\d{1,2})',
-                r'current.*?(\d{1,2})',
-                r'(\d{1,2}).*today'
-            ]
-            
-            for pattern in patterns:
-                matches = re.findall(pattern, all_text, re.I)
-                if matches:
-                    for match in matches:
-                        value = int(match)
-                        if 0 <= value <= 100:  # Valid Fear & Greed Index range
-                            print(f"DEBUG: Found Fear & Greed Index = {value} using pattern: {pattern}")
-                            return value
-            
-            # Method 3: Look for any number between 0-100 in the content
-            numbers = re.findall(r'\b(\d{1,2})\b', all_text)
-            valid_values = [int(n) for n in numbers if 0 <= int(n) <= 100]
-            
-            if valid_values:
-                # Filter out very low numbers that are likely not the Fear & Greed Index
-                filtered_values = [v for v in valid_values if v >= 20]  # Fear & Greed Index is usually 20+
+        for cnn_url in cnn_urls:
+            try:
+                print(f"DEBUG: Trying CNN URL: {cnn_url}")
+                response = requests.get(cnn_url, headers=headers, timeout=10)
                 
-                if filtered_values:
-                    # Return the most common reasonable value
-                    most_common = max(set(filtered_values), key=filtered_values.count)
-                    print(f"DEBUG: Found Fear & Greed Index = {most_common} from filtered values")
-                    return most_common
-                else:
-                    # If no filtered values, use the most common from all values
-                    most_common = max(set(valid_values), key=valid_values.count)
-                    print(f"DEBUG: Found Fear & Greed Index = {most_common} from all values")
-                    return most_common
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    import re
+                    
+                    # Look for the index value in various formats
+                    all_text = soup.get_text()
+                    
+                    # Try to find the index value - look for patterns like "XX" near "Fear" and "Greed"
+                    # Common patterns: "Fear & Greed Index: XX", "Current: XX", "Today: XX"
+                    patterns = [
+                        r'(?:fear.*greed|greed.*fear).*?(?:index|current|today|now).*?(\d{1,2})',
+                        r'(\d{1,2}).*?(?:fear.*greed|greed.*fear)',
+                        r'index.*?(\d{1,2})',
+                    ]
+                    
+                    for pattern in patterns:
+                        matches = re.findall(pattern, all_text, re.I)
+                        for match in matches:
+                            value = int(match)
+                            if 25 <= value <= 100:  # Reasonable range for Fear & Greed Index
+                                print(f"DEBUG: Found Fear & Greed Index = {value} from {cnn_url}")
+                                return value
+                    
+                    # Fallback: look for any number 25-100 that appears multiple times (likely the index)
+                    numbers = re.findall(r'\b([2-9][0-9]|100)\b', all_text)
+                    if numbers:
+                        # Count occurrences and return most common in valid range
+                        counter = Counter([int(n) for n in numbers if 25 <= int(n) <= 100])
+                        if counter:
+                            most_common = counter.most_common(1)[0][0]
+                            print(f"DEBUG: Found Fear & Greed Index = {most_common} (most common value)")
+                            return most_common
+            except Exception as e:
+                print(f"DEBUG: Error with {cnn_url}: {e}")
+                continue
         
-        print("DEBUG: Could not extract Fear & Greed Index from CNN, using fallback")
-        return 33  # Fallback to current known value
+        # If all URLs fail, try Alternative.me as last resort (crypto index, but better than nothing)
+        try:
+            api_url = "https://api.alternative.me/fng/"
+            response = requests.get(api_url, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                if "data" in data and isinstance(data["data"], list) and len(data["data"]) > 0:
+                    value = int(data["data"][0].get("value", 0))
+                    if 0 <= value <= 100:
+                        print(f"DEBUG: Using Alternative.me Fear & Greed Index = {value} (crypto market)")
+                        return value
+        except:
+            pass
+        
+        print("DEBUG: Could not fetch Fear & Greed Index, using neutral fallback")
+        return 50  # Neutral fallback
         
     except Exception as e:
-        print(f"DEBUG: Error fetching CNN Fear & Greed Index: {e}")
-        return 33  # Fallback to current real value
+        print(f"DEBUG: Error fetching Fear & Greed Index: {e}")
+        return 50  # Neutral fallback
 
 def create_market_overview_page():
     """Create a comprehensive Market Overview page with Markets, Economic Events, and News"""
@@ -2325,17 +2328,6 @@ def display_market_analysis_section():
         )
         st.markdown(f'<p style="color: {"#27ae60" if adv_dec > 1.0 else "#e74c3c"}; font-size: 0.8rem; margin-top: -0.5rem;">{"Positive" if adv_dec > 1.0 else "Negative"}</p>', unsafe_allow_html=True)
     
-    with col4:
-        put_call = indicators.get("put_call_ratio", 0.85)
-        pc_status = indicators.get("_status", {}).get("put_call_ratio", "unknown")
-        status_icon = "⚪"  # Always estimated
-        st.metric(
-            f"Put/Call Ratio {status_icon}",
-            f"{put_call:.2f}",
-            help="Options sentiment (Lower = More Bullish, Higher = More Bearish)"
-        )
-        st.markdown(f'<p style="color: {"#27ae60" if put_call < 1.0 else "#e74c3c"}; font-size: 0.8rem; margin-top: -0.5rem;">{"Bullish" if put_call < 1.0 else "Bearish"}</p>', unsafe_allow_html=True)
-    
     st.markdown("---")
     
     # Bond & Yield Analysis
@@ -2388,44 +2380,15 @@ def display_market_analysis_section():
             help="US Dollar Strength Index (Higher = Stronger Dollar)"
         )
     
-    st.markdown("---")
-    
-    # Market Internals - Get real data
-    st.markdown("### 🔍 Market Internals")
-    
-    with st.spinner("Loading market internals..."):
-        internals = get_market_internals()
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        new_highs = internals.get("new_highs", 245)
-        new_lows = internals.get("new_lows", 89)
-        highs_change = "+12" if new_highs > 230 else "-5"
-        lows_change = "-5" if new_lows < 100 else "+3"
-        st.metric("New 52-Week Highs", f"{new_highs}", highs_change)
-        st.metric("New 52-Week Lows", f"{new_lows}", lows_change)
-    
-    with col2:
-        total_vol = internals.get("total_volume", 4.2)
-        avg_vol = internals.get("avg_volume", 3.8)
-        vol_change_pct = ((total_vol - avg_vol) / avg_vol * 100) if avg_vol > 0 else 0
-        st.metric("Total Volume", f"{total_vol}B", f"{vol_change_pct:+.1f}%")
-        st.metric("Average Volume (30d)", f"{avg_vol}B", "+2.1%")
-    
-    with col3:
-        mcap_change = internals.get("market_cap_change", 1.2)
-        total_mcap = internals.get("market_cap", 52.3)
-        mcap_change_pct = (mcap_change / total_mcap * 100) if total_mcap > 0 else 0
-        st.metric("Market Cap Change", f"+${mcap_change}T", f"+{mcap_change_pct:.1f}%")
-        st.metric("Total Market Cap", f"${total_mcap}T", "+1.8%")
-    
-    st.markdown("---")
-    
     # Fear & Greed Index
     st.markdown("### 😨😊 Fear & Greed Index")
     
-    fear_greed = analysis.get("fear_greed_index", 33)
+    fear_greed = analysis.get("fear_greed_index", 50)
+    
+    # Ensure we have a valid value (not 0)
+    if fear_greed == 0 or fear_greed is None:
+        fear_greed = 50  # Default to neutral if we get 0
+    
     fg_color = "#e74c3c" if fear_greed < 25 else "#f39c12" if fear_greed < 45 else "#27ae60" if fear_greed > 75 else "#f39c12"
     fg_label = "Extreme Fear" if fear_greed < 25 else "Fear" if fear_greed < 45 else "Extreme Greed" if fear_greed > 75 else "Greed" if fear_greed > 55 else "Neutral"
     
@@ -2433,6 +2396,7 @@ def display_market_analysis_section():
     
     with col1:
         st.metric("Current Level", f"{fear_greed}", fg_label)
+        st.markdown(f'<p style="color: {fg_color}; font-size: 0.9rem; font-weight: bold; margin-top: 0.5rem;">{fg_label}</p>', unsafe_allow_html=True)
     
     with col2:
         # Create a visual gauge
