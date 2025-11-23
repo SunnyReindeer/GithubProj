@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from typing import Dict, List, Optional
 from collections import Counter
 import yfinance as yf
+import fear_and_greed
 
 # Note: yfinance is free and doesn't require an API key!
 # Install with: pip install yfinance
@@ -565,81 +566,84 @@ def get_market_analysis():
         return fallback
 
 def get_fear_greed_index():
-    """Get current CNN Fear & Greed Index for STOCK MARKET"""
+    """Get current CNN Fear & Greed Index for STOCK MARKET using fear-and-greed package"""
     try:
-        # Try CNN Business Markets page - more reliable
-        cnn_urls = [
-            "https://www.cnn.com/markets/fear-and-greed",
-            "https://edition.cnn.com/markets/fear-and-greed",
-            "https://money.cnn.com/data/fear-and-greed/"
-        ]
+        # Use the fear-and-greed package which directly fetches from CNN
+        print("DEBUG: Fetching Fear & Greed Index using fear-and-greed package")
+        index = fear_and_greed.get()
         
+        if index and hasattr(index, 'value'):
+            value = float(index.value)  # Handle both int and float
+            if 0 <= value <= 100:
+                # Round to nearest integer for display
+                value_int = int(round(value))
+                print(f"DEBUG: Successfully fetched Fear & Greed Index = {value_int} (raw: {value})")
+                if hasattr(index, 'description'):
+                    print(f"DEBUG: Description = {index.description}")
+                if hasattr(index, 'last_update'):
+                    print(f"DEBUG: Last Update = {index.last_update}")
+                return value_int
+        
+        print("DEBUG: fear-and-greed package returned invalid value, trying fallback")
+        
+    except ImportError:
+        print("DEBUG: fear-and-greed package not installed, trying web scraping fallback")
+    except Exception as e:
+        print(f"DEBUG: Error with fear-and-greed package: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    # Fallback: Try direct API call to CNN's data endpoint
+    try:
+        # CNN's Fear & Greed Index API endpoint (if available)
+        api_url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json',
         }
         
-        for cnn_url in cnn_urls:
-            try:
-                print(f"DEBUG: Trying CNN URL: {cnn_url}")
-                response = requests.get(cnn_url, headers=headers, timeout=10)
+        response = requests.get(api_url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            # Try to extract the latest value from the JSON response
+            if isinstance(data, dict):
+                # Look for common keys that might contain the index value
+                for key in ['fear_and_greed', 'fearAndGreed', 'value', 'index', 'current']:
+                    if key in data:
+                        value = data[key]
+                        if isinstance(value, (int, float)) and 0 <= value <= 100:
+                            print(f"DEBUG: Found Fear & Greed Index = {value} from API")
+                            return int(value)
                 
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    import re
-                    
-                    # Look for the index value in various formats
-                    all_text = soup.get_text()
-                    
-                    # Try to find the index value - look for patterns like "XX" near "Fear" and "Greed"
-                    # Common patterns: "Fear & Greed Index: XX", "Current: XX", "Today: XX"
-                    patterns = [
-                        r'(?:fear.*greed|greed.*fear).*?(?:index|current|today|now).*?(\d{1,2})',
-                        r'(\d{1,2}).*?(?:fear.*greed|greed.*fear)',
-                        r'index.*?(\d{1,2})',
-                    ]
-                    
-                    for pattern in patterns:
-                        matches = re.findall(pattern, all_text, re.I)
-                        for match in matches:
-                            value = int(match)
-                            if 25 <= value <= 100:  # Reasonable range for Fear & Greed Index
-                                print(f"DEBUG: Found Fear & Greed Index = {value} from {cnn_url}")
-                                return value
-                    
-                    # Fallback: look for any number 25-100 that appears multiple times (likely the index)
-                    numbers = re.findall(r'\b([2-9][0-9]|100)\b', all_text)
-                    if numbers:
-                        # Count occurrences and return most common in valid range
-                        counter = Counter([int(n) for n in numbers if 25 <= int(n) <= 100])
-                        if counter:
-                            most_common = counter.most_common(1)[0][0]
-                            print(f"DEBUG: Found Fear & Greed Index = {most_common} (most common value)")
-                            return most_common
-            except Exception as e:
-                print(f"DEBUG: Error with {cnn_url}: {e}")
-                continue
-        
-        # If all URLs fail, try Alternative.me as last resort (crypto index, but better than nothing)
-        try:
-            api_url = "https://api.alternative.me/fng/"
-            response = requests.get(api_url, timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                if "data" in data and isinstance(data["data"], list) and len(data["data"]) > 0:
-                    value = int(data["data"][0].get("value", 0))
-                    if 0 <= value <= 100:
-                        print(f"DEBUG: Using Alternative.me Fear & Greed Index = {value} (crypto market)")
-                        return value
-        except:
-            pass
-        
-        print("DEBUG: Could not fetch Fear & Greed Index, using neutral fallback")
-        return 50  # Neutral fallback
-        
+                # Try to find in nested structures
+                if 'data' in data and isinstance(data['data'], list) and len(data['data']) > 0:
+                    latest = data['data'][0]
+                    if isinstance(latest, dict):
+                        for key in ['value', 'fear_and_greed', 'fearAndGreed', 'index']:
+                            if key in latest:
+                                value = latest[key]
+                                if isinstance(value, (int, float)) and 0 <= value <= 100:
+                                    print(f"DEBUG: Found Fear & Greed Index = {value} from API data")
+                                    return int(value)
     except Exception as e:
-        print(f"DEBUG: Error fetching Fear & Greed Index: {e}")
-        return 50  # Neutral fallback
+        print(f"DEBUG: API fallback failed: {e}")
+    
+    # Last resort: Use Alternative.me (crypto index, but better than nothing)
+    try:
+        api_url = "https://api.alternative.me/fng/"
+        response = requests.get(api_url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            if "data" in data and isinstance(data["data"], list) and len(data["data"]) > 0:
+                value = int(data["data"][0].get("value", 0))
+                if 0 <= value <= 100:
+                    print(f"DEBUG: Using Alternative.me Fear & Greed Index = {value} (crypto market)")
+                    return value
+    except:
+        pass
+    
+    print("DEBUG: All methods failed, using neutral fallback")
+    return 50  # Neutral fallback
 
 def create_market_overview_page():
     """Create a comprehensive Market Overview page with Markets, Economic Events, and News"""
