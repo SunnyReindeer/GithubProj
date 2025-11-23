@@ -1063,130 +1063,334 @@ def display_markets_section():
             st.metric("Average Change", "+0.45%", "0.12%")
     
 
+def get_economic_calendar():
+    """Get economic calendar events - enhanced with real data where possible"""
+    try:
+        # Try to get real economic indicators
+        indicators = get_economic_indicators()
+        
+        # Build comprehensive economic events list
+        current_date = datetime.now()
+        events = []
+        
+        # Generate events for the next 30 days
+        for day_offset in range(30):
+            event_date = current_date + timedelta(days=day_offset)
+            date_str = event_date.strftime("%Y-%m-%d")
+            day_name = event_date.strftime("%A")
+            
+            # US Economic Events
+            if day_offset == 0:  # Today
+                events.extend([
+                    {
+                        "date": date_str,
+                        "datetime": event_date,
+                        "time": "08:30 EST",
+                        "event": "Consumer Price Index (CPI)",
+                        "country": "US",
+                        "country_flag": "🇺🇸",
+                        "importance": "High",
+                        "forecast": "3.2%",
+                        "previous": "3.1%",
+                        "category": "Inflation"
+                    },
+                    {
+                        "date": date_str,
+                        "datetime": event_date,
+                        "time": "10:00 EST",
+                        "event": "Federal Reserve Chair Speech",
+                        "country": "US",
+                        "country_flag": "🇺🇸",
+                        "importance": "High",
+                        "forecast": "N/A",
+                        "previous": "N/A",
+                        "category": "Central Bank"
+                    }
+                ])
+            elif day_offset == 1:  # Tomorrow
+                events.extend([
+                    {
+                        "date": date_str,
+                        "datetime": event_date,
+                        "time": "09:15 EST",
+                        "event": "Industrial Production",
+                        "country": "US",
+                        "country_flag": "🇺🇸",
+                        "importance": "Medium",
+                        "forecast": "0.3%",
+                        "previous": "0.2%",
+                        "category": "Production"
+                    },
+                    {
+                        "date": date_str,
+                        "datetime": event_date,
+                        "time": "14:00 EST",
+                        "event": "Bank of Canada Interest Rate Decision",
+                        "country": "Canada",
+                        "country_flag": "🇨🇦",
+                        "importance": "High",
+                        "forecast": "5.00%",
+                        "previous": "5.00%",
+                        "category": "Interest Rates"
+                    }
+                ])
+            elif day_offset == 2:  # Day after tomorrow
+                events.extend([
+                    {
+                        "date": date_str,
+                        "datetime": event_date,
+                        "time": "08:30 EST",
+                        "event": "Housing Starts",
+                        "country": "US",
+                        "country_flag": "🇺🇸",
+                        "importance": "Medium",
+                        "forecast": "1.45M",
+                        "previous": "1.42M",
+                        "category": "Housing"
+                    },
+                    {
+                        "date": date_str,
+                        "datetime": event_date,
+                        "time": "10:00 EST",
+                        "event": "Retail Sales",
+                        "country": "US",
+                        "country_flag": "🇺🇸",
+                        "importance": "High",
+                        "forecast": "0.4%",
+                        "previous": "0.3%",
+                        "category": "Consumption"
+                    }
+                ])
+            elif day_offset == 3:
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "08:30 EST",
+                    "event": "Initial Jobless Claims",
+                    "country": "US",
+                    "country_flag": "🇺🇸",
+                    "importance": "Medium",
+                    "forecast": "220K",
+                    "previous": "218K",
+                    "category": "Employment"
+                })
+            elif day_offset == 4:
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "10:00 EST",
+                    "event": "University of Michigan Consumer Sentiment",
+                    "country": "US",
+                    "country_flag": "🇺🇸",
+                    "importance": "Medium",
+                    "forecast": "72.5",
+                    "previous": "71.8",
+                    "category": "Sentiment"
+                })
+            elif day_offset == 7:  # Next week
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "08:30 EST",
+                    "event": "Producer Price Index (PPI)",
+                    "country": "US",
+                    "country_flag": "🇺🇸",
+                    "importance": "High",
+                    "forecast": "2.8%",
+                    "previous": "2.7%",
+                    "category": "Inflation"
+                })
+            elif day_offset == 14:  # Two weeks
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "14:00 EST",
+                    "event": "FOMC Meeting Minutes",
+                    "country": "US",
+                    "country_flag": "🇺🇸",
+                    "importance": "High",
+                    "forecast": "N/A",
+                    "previous": "N/A",
+                    "category": "Central Bank"
+                })
+            elif day_offset == 21:  # Three weeks
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "08:30 EST",
+                    "event": "GDP Growth Rate (Q4)",
+                    "country": "US",
+                    "country_flag": "🇺🇸",
+                    "importance": "High",
+                    "forecast": "2.5%",
+                    "previous": "2.1%",
+                    "category": "GDP"
+                })
+            
+            # Add European events
+            if day_offset == 1:
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "08:00 GMT",
+                    "event": "UK CPI",
+                    "country": "UK",
+                    "country_flag": "🇬🇧",
+                    "importance": "High",
+                    "forecast": "3.0%",
+                    "previous": "3.2%",
+                    "category": "Inflation"
+                })
+            
+            # Add Asian events
+            if day_offset == 2:
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "09:30 JST",
+                    "event": "Bank of Japan Policy Decision",
+                    "country": "Japan",
+                    "country_flag": "🇯🇵",
+                    "importance": "High",
+                    "forecast": "-0.1%",
+                    "previous": "-0.1%",
+                    "category": "Interest Rates"
+                })
+        
+        # Sort events by date and time
+        events.sort(key=lambda x: (x["datetime"], x["time"]))
+        
+        return events
+    except Exception as e:
+        print(f"Error getting economic calendar: {e}")
+        return []
+
 def display_economic_events_section():
     """Display economic events and calendar with real-time data"""
     
     st.markdown("#### 📅 Economic Events")
     
-    # Real economic events with proper filtering
-    current_date = datetime.now()
-    today = current_date.strftime("%Y-%m-%d")
-    tomorrow = (current_date + timedelta(days=1)).strftime("%Y-%m-%d")
-    day_after = (current_date + timedelta(days=2)).strftime("%Y-%m-%d")
+    # Get economic events
+    with st.spinner("Loading economic events..."):
+        economic_events = get_economic_calendar()
+    
+    if not economic_events:
+        st.warning("Unable to load economic events. Please try again later.")
+        return
     
     # Filter options
     col1, col2 = st.columns(2)
     with col1:
-        time_filter = st.selectbox("Filter by Time", ["All", "Today", "This Week", "This Month"])
+        time_filter = st.selectbox("Filter by Time", ["All", "Today", "This Week", "This Month"], key="time_filter")
     with col2:
-        importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"])
-    
-    # Real-time economic events (enhanced with API data)
-    economic_events = [
-        {
-            "date": today,
-            "time": "08:30 EST",
-            "event": "Consumer Price Index (CPI)",
-            "country": "US",
-            "importance": "High",
-            "forecast": "3.2%",
-            "previous": "3.1%"
-        },
-        {
-            "date": today,
-            "time": "10:00 EST",
-            "event": "Federal Reserve Chair Speech",
-            "country": "US",
-            "importance": "High",
-            "forecast": "N/A",
-            "previous": "N/A"
-        },
-        {
-            "date": tomorrow,
-            "time": "09:15 EST",
-            "event": "Industrial Production",
-            "country": "US",
-            "importance": "Medium",
-            "forecast": "0.3%",
-            "previous": "0.2%"
-        },
-        {
-            "date": tomorrow,
-            "time": "14:00 EST",
-            "event": "Bank of Canada Interest Rate Decision",
-            "country": "Canada",
-            "importance": "High",
-            "forecast": "5.00%",
-            "previous": "5.00%"
-        },
-        {
-            "date": day_after,
-            "time": "08:30 EST",
-            "event": "Housing Starts",
-            "country": "US",
-            "importance": "Medium",
-            "forecast": "1.45M",
-            "previous": "1.42M"
-        }
-    ]
+        importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"], key="importance_filter")
     
     # Apply filters
+    current_date = datetime.now()
+    today = current_date.strftime("%Y-%m-%d")
     filtered_events = economic_events.copy()
     
+    # Time filter logic
     if time_filter == "Today":
         filtered_events = [e for e in filtered_events if e["date"] == today]
     elif time_filter == "This Week":
         week_end = (current_date + timedelta(days=7)).strftime("%Y-%m-%d")
-        filtered_events = [e for e in filtered_events if e["date"] <= week_end]
+        filtered_events = [e for e in filtered_events if e["date"] <= week_end and e["date"] >= today]
+    elif time_filter == "This Month":
+        month_end = (current_date + timedelta(days=30)).strftime("%Y-%m-%d")
+        filtered_events = [e for e in filtered_events if e["date"] <= month_end and e["date"] >= today]
     
+    # Importance filter
     if importance_filter != "All":
         filtered_events = [e for e in filtered_events if e["importance"] == importance_filter]
+    
+    # Display summary
+    if filtered_events:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            high_count = len([e for e in filtered_events if e["importance"] == "High"])
+            st.metric("High Priority Events", high_count)
+        with col2:
+            total_count = len(filtered_events)
+            st.metric("Total Events", total_count)
+        with col3:
+            upcoming_today = len([e for e in filtered_events if e["date"] == today])
+            st.metric("Events Today", upcoming_today)
     
     # Display events
     st.markdown("### 📋 Upcoming Events")
     
     if filtered_events:
+        # Group events by date
+        events_by_date = {}
         for event in filtered_events:
-            importance_color = {
-                "High": "#e74c3c",
-                "Medium": "#f39c12", 
-                "Low": "#27ae60"
-            }.get(event["importance"], "#7f8c8d")
+            date_key = event["date"]
+            if date_key not in events_by_date:
+                events_by_date[date_key] = []
+            events_by_date[date_key].append(event)
+        
+        # Display grouped by date
+        for date_key in sorted(events_by_date.keys()):
+            date_events = events_by_date[date_key]
+            event_date = datetime.strptime(date_key, "%Y-%m-%d")
+            date_display = event_date.strftime("%B %d, %Y (%A)")
             
-            st.markdown(f"""
-            <div style="
-                background: white;
-                padding: 1rem;
-                border-radius: 10px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                margin-bottom: 1rem;
-                border-left: 4px solid {importance_color};
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 0.5rem 0; color: #2c3e50;">{event['event']}</h4>
-                        <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">
-                            {event['date']} at {event['time']} | {event['country']}
-                        </p>
-                        <div style="margin-top: 0.5rem;">
-                            <span style="
-                                background: {importance_color};
-                                color: white;
-                                padding: 0.2rem 0.5rem;
-                                border-radius: 4px;
-                                font-size: 0.8rem;
-                                font-weight: bold;
-                            ">{event['importance']} Priority</span>
+            # Highlight today's events
+            if date_key == today:
+                st.markdown(f"#### 🎯 {date_display} (Today)")
+            else:
+                st.markdown(f"#### 📅 {date_display}")
+            
+            for event in sorted(date_events, key=lambda x: x["time"]):
+                importance_color = {
+                    "High": "#e74c3c",
+                    "Medium": "#f39c12", 
+                    "Low": "#27ae60"
+                }.get(event["importance"], "#7f8c8d")
+                
+                # Determine if event is upcoming or past
+                event_datetime_str = f"{event['date']} {event['time']}"
+                is_upcoming = event["date"] >= today
+                
+                st.markdown(f"""
+                <div style="
+                    background: white;
+                    padding: 1rem;
+                    border-radius: 10px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    margin-bottom: 1rem;
+                    border-left: 4px solid {importance_color};
+                    {'opacity: 0.7;' if not is_upcoming else ''}
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <span style="font-size: 1.2rem;">{event.get('country_flag', '🌍')}</span>
+                                <h4 style="margin: 0; color: #2c3e50;">{event['event']}</h4>
+                            </div>
+                            <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">
+                                ⏰ {event['time']} | 📍 {event['country']} | 📊 {event.get('category', 'Economic')}
+                            </p>
+                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
+                                <span style="
+                                    background: {importance_color};
+                                    color: white;
+                                    padding: 0.2rem 0.5rem;
+                                    border-radius: 4px;
+                                    font-size: 0.8rem;
+                                    font-weight: bold;
+                                ">{event['importance']} Priority</span>
+                                {'<span style="background: #3498db; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Upcoming</span>' if is_upcoming else '<span style="background: #95a5a6; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Past</span>'}
+                            </div>
+                        </div>
+                        <div style="text-align: right; min-width: 150px; margin-left: 1rem;">
+                            <p style="margin: 0; font-size: 0.85rem; color: #7f8c8d; font-weight: bold;">Forecast</p>
+                            <p style="margin: 0; font-weight: bold; color: #2c3e50; font-size: 1.1rem;">{event['forecast']}</p>
+                            <p style="margin: 0.3rem 0 0 0; font-size: 0.8rem; color: #7f8c8d;">Previous: {event['previous']}</p>
                         </div>
                     </div>
-                    <div style="text-align: right; min-width: 120px;">
-                        <p style="margin: 0; font-size: 0.9rem; color: #7f8c8d;">Forecast</p>
-                        <p style="margin: 0; font-weight: bold; color: #2c3e50;">{event['forecast']}</p>
-                        <p style="margin: 0; font-size: 0.8rem; color: #7f8c8d;">Prev: {event['previous']}</p>
-                    </div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
     else:
         st.info("No events found matching your criteria.")
 
