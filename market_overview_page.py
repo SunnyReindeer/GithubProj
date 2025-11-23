@@ -1462,51 +1462,35 @@ def display_economic_events_section():
                 event_datetime_str = f"{event['date']} {event['time']}"
                 is_upcoming = event["date"] >= today
                 
-                # Fix opacity style
-                opacity_style = "opacity: 0.7;" if not is_upcoming else ""
+                # Build status badge HTML
+                status_badge_color = "#3498db" if is_upcoming else "#95a5a6"
+                status_badge_text = "Upcoming" if is_upcoming else "Past"
                 
-                # Fix status badge HTML
-                status_badge = '<span style="background: #3498db; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Upcoming</span>' if is_upcoming else '<span style="background: #95a5a6; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Past</span>'
+                # Build complete HTML as a single string to avoid markdown parsing
+                html_parts = [
+                    '<div style="background: white; padding: 1rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 1rem; border-left: 4px solid ' + importance_color + ';' + (' opacity: 0.7;' if not is_upcoming else '') + '">',
+                    '<div style="display: flex; justify-content: space-between; align-items: start;">',
+                    '<div style="flex: 1;">',
+                    '<div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">',
+                    '<span style="font-size: 1.2rem;">' + event.get('country_flag', '🌍') + '</span>',
+                    '<h4 style="margin: 0; color: #2c3e50;">' + event['event'] + '</h4>',
+                    '</div>',
+                    '<p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">⏰ ' + event['time'] + ' | 📍 ' + event['country'] + ' | 📊 ' + event.get('category', 'Economic') + '</p>',
+                    '<div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">',
+                    '<span style="background: ' + importance_color + '; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + event['importance'] + ' Priority</span>',
+                    '<span style="background: ' + status_badge_color + '; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">' + status_badge_text + '</span>',
+                    '</div>',
+                    '</div>',
+                    '<div style="text-align: right; min-width: 150px; margin-left: 1rem;">',
+                    '<p style="margin: 0; font-size: 0.85rem; color: #7f8c8d; font-weight: bold;">Forecast</p>',
+                    '<p style="margin: 0; font-weight: bold; color: #2c3e50; font-size: 1.1rem;">' + event['forecast'] + '</p>',
+                    '<p style="margin: 0.3rem 0 0 0; font-size: 0.8rem; color: #7f8c8d;">Previous: ' + event['previous'] + '</p>',
+                    '</div>',
+                    '</div>',
+                    '</div>'
+                ]
                 
-                st.markdown(f"""
-                <div style="
-                    background: white;
-                    padding: 1rem;
-                    border-radius: 10px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                    margin-bottom: 1rem;
-                    border-left: 4px solid {importance_color};
-                    {opacity_style}
-                ">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <span style="font-size: 1.2rem;">{event.get('country_flag', '🌍')}</span>
-                                <h4 style="margin: 0; color: #2c3e50;">{event['event']}</h4>
-                            </div>
-                            <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">
-                                ⏰ {event['time']} | 📍 {event['country']} | 📊 {event.get('category', 'Economic')}
-                            </p>
-                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">
-                                <span style="
-                                    background: {importance_color};
-                                    color: white;
-                                    padding: 0.2rem 0.5rem;
-                                    border-radius: 4px;
-                                    font-size: 0.8rem;
-                                    font-weight: bold;
-                                ">{event['importance']} Priority</span>
-                                {status_badge}
-                            </div>
-                        </div>
-                        <div style="text-align: right; min-width: 150px; margin-left: 1rem;">
-                            <p style="margin: 0; font-size: 0.85rem; color: #7f8c8d; font-weight: bold;">Forecast</p>
-                            <p style="margin: 0; font-weight: bold; color: #2c3e50; font-size: 1.1rem;">{event['forecast']}</p>
-                            <p style="margin: 0.3rem 0 0 0; font-size: 0.8rem; color: #7f8c8d;">Previous: {event['previous']}</p>
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(''.join(html_parts), unsafe_allow_html=True)
     else:
         st.info("No events found matching your criteria.")
 
