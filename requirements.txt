@@ -7,4 +7,4 @@ plotly>=5.17.0
 python-dotenv>=1.0.0
 scipy>=1.11.0
 yfinance>=0.2.18
-fear-and-greed>=1.2.0
+fear-and-greed>=0.4
