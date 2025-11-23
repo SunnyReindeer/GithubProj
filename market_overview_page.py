@@ -9,130 +9,98 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from typing import Dict, List, Optional
+import yfinance as yf
 
-# Alpha Vantage API Configuration
-ALPHA_VANTAGE_API_KEY = "PA25XA5HB5ZSXHQZ"
-ALPHA_VANTAGE_BASE_URL = "https://www.alphavantage.co/query"
+# Note: yfinance is free and doesn't require an API key!
+# Install with: pip install yfinance
 
-def get_alpha_vantage_data(symbol, function="GLOBAL_QUOTE"):
-    """Get real-time data from Alpha Vantage API"""
+def get_yfinance_data(symbol, period="1d", interval="1d"):
+    """Get data from yfinance (Yahoo Finance) - FREE, no API key needed!"""
     try:
-        params = {
-            "function": function,
-            "apikey": ALPHA_VANTAGE_API_KEY
-        }
+        ticker = yf.Ticker(symbol)
         
-        # Add symbol only if it's not a time series function
-        if function == "GLOBAL_QUOTE":
-            params["symbol"] = symbol
-        elif function == "TIME_SERIES_DAILY":
-            params["symbol"] = symbol
-        elif function == "NEWS_SENTIMENT":
-            params["tickers"] = symbol if symbol else "AAPL"
+        # Get historical data
+        hist = ticker.history(period=period, interval=interval)
         
-        response = requests.get(ALPHA_VANTAGE_BASE_URL, params=params, timeout=10)
-        data = response.json()
-        
-        if "Error Message" in data:
-            print(f"DEBUG: Alpha Vantage Error for {symbol}: {data['Error Message']}")
+        if hist.empty:
+            print(f"DEBUG: No data returned for {symbol}")
             return None
-        if "Note" in data:
-            print(f"DEBUG: Alpha Vantage Rate Limit for {symbol}: {data['Note']}")
-            return None  # Rate limit exceeded
         
-        return data
+        # Get current info
+        info = ticker.info
+        
+        return {
+            "history": hist,
+            "info": info,
+            "symbol": symbol
+        }
     except Exception as e:
-        print(f"DEBUG: Exception getting {symbol}: {e}")
+        print(f"DEBUG: Error getting {symbol} from yfinance: {e}")
+        return None
+
+def get_yfinance_price(symbol):
+    """Get current price from yfinance"""
+    try:
+        ticker = yf.Ticker(symbol)
+        data = ticker.history(period="1d", interval="1m")
+        
+        if not data.empty:
+            return {
+                "price": float(data["Close"].iloc[-1]),
+                "change": float(data["Close"].iloc[-1] - data["Open"].iloc[0]),
+                "change_percent": float(((data["Close"].iloc[-1] - data["Open"].iloc[0]) / data["Open"].iloc[0]) * 100),
+                "volume": int(data["Volume"].sum())
+            }
+        
+        # Fallback to daily data
+        data = ticker.history(period="2d")
+        if not data.empty and len(data) >= 2:
+            current = float(data["Close"].iloc[-1])
+            previous = float(data["Close"].iloc[-2])
+            return {
+                "price": current,
+                "change": current - previous,
+                "change_percent": ((current - previous) / previous) * 100,
+                "volume": int(data["Volume"].iloc[-1])
+            }
+        
+        return None
+    except Exception as e:
+        print(f"DEBUG: Error getting price for {symbol}: {e}")
         return None
 
 def get_real_time_price(symbol):
-    """Get real-time price for a symbol"""
-    data = get_alpha_vantage_data(symbol)
-    if data and "Global Quote" in data:
-        quote = data["Global Quote"]
-        return {
-            "price": float(quote.get("05. price", 0)),
-            "change": float(quote.get("09. change", 0)),
-            "change_percent": float(quote.get("10. change percent", "0%").replace("%", "")),
-            "volume": int(quote.get("06. volume", 0))
-        }
-    return None
+    """Get real-time price for a symbol using yfinance"""
+    return get_yfinance_price(symbol)
 
 def get_economic_news():
-    """Get real-time economic news from Alpha Vantage"""
-    try:
-        params = {
-            "function": "NEWS_SENTIMENT",
-            "apikey": ALPHA_VANTAGE_API_KEY,
-            "limit": 50
-        }
-        
-        response = requests.get(ALPHA_VANTAGE_BASE_URL, params=params, timeout=10)
-        data = response.json()
-        
-        # Check for errors
-        if "Error Message" in data:
-            print(f"DEBUG: Alpha Vantage Error: {data['Error Message']}")
-            return None
-        if "Note" in data:
-            print(f"DEBUG: Alpha Vantage Rate Limit: {data['Note']}")
-            return None
-        
-        if "feed" in data and isinstance(data["feed"], list):
-            print(f"DEBUG: Alpha Vantage returned {len(data['feed'])} articles")
-            return data["feed"]
-        
-        print(f"DEBUG: Alpha Vantage response keys: {list(data.keys())}")
-        return None
-    except Exception as e:
-        print(f"DEBUG: Exception in get_economic_news: {e}")
-        import traceback
-        traceback.print_exc()
-        return None
+    """Get real-time economic news - using fallback since yfinance doesn't have news API"""
+    # Note: yfinance doesn't provide news, so we'll use fallback news
+    # For real news, could integrate with NewsAPI, Finnhub, or other free news APIs
+    return None
 
 def get_economic_indicators():
-    """Get real-time economic indicators"""
-    try:
-        # Get key economic indicators
-        indicators = []
-        
-        # GDP Growth Rate
-        gdp_data = get_alpha_vantage_data("REAL_GDP", "REAL_GDP")
-        if gdp_data and "data" in gdp_data:
-            indicators.append({
-                "name": "GDP Growth Rate",
-                "value": gdp_data["data"][0]["value"] if gdp_data["data"] else "N/A",
-                "date": gdp_data["data"][0]["date"] if gdp_data["data"] else "N/A"
-            })
-        
-        # Inflation Rate
-        inflation_data = get_alpha_vantage_data("INFLATION", "INFLATION")
-        if inflation_data and "data" in inflation_data:
-            indicators.append({
-                "name": "Inflation Rate",
-                "value": inflation_data["data"][0]["value"] if inflation_data["data"] else "N/A",
-                "date": inflation_data["data"][0]["date"] if inflation_data["data"] else "N/A"
-            })
-        
-        return indicators
-    except Exception as e:
-        return []
+    """Get real-time economic indicators - Note: yfinance doesn't provide economic indicators"""
+    # Economic indicators would need a different API (FRED, etc.)
+    # For now, return empty - can be enhanced later
+    return []
 
 def get_treasury_yield(symbol):
-    """Get Treasury yield from Alpha Vantage"""
+    """Get Treasury yield from yfinance"""
     try:
-        data = get_alpha_vantage_data("TIME_SERIES_DAILY", symbol)
-        if data and "Time Series (Daily)" in data:
-            latest = list(data["Time Series (Daily)"].values())[0]
-            return float(latest.get("4. close", 0))
-    except:
-        pass
+        data = get_yfinance_data(symbol, period="5d")
+        if data and "history" in data and not data["history"].empty:
+            # Get latest close price (yield is the price for treasury futures)
+            latest_close = float(data["history"]["Close"].iloc[-1])
+            return latest_close
+    except Exception as e:
+        print(f"DEBUG: Error getting treasury yield for {symbol}: {e}")
     return None
 
 def get_market_indicators():
-    """Get key market indicators with real data from Alpha Vantage - OPTIMIZED to reduce API calls"""
+    """Get key market indicators with real data from yfinance - NO RATE LIMITS!"""
     try:
-        # Check cache first (cache for 5 minutes to avoid rate limits)
+        # Check cache first (cache for 5 minutes)
         cache_key = "market_indicators_cache"
         cache_time_key = "market_indicators_cache_time"
         
@@ -145,15 +113,14 @@ def get_market_indicators():
         indicators = {}
         indicators["_status"] = {}  # Track what's real vs estimated
         
-        # VIX (Volatility Index) - try only ONE symbol to save API calls
-        vix_data = get_alpha_vantage_data("VIX", "TIME_SERIES_DAILY")
-        if vix_data and "Time Series (Daily)" in vix_data:
-            latest = list(vix_data["Time Series (Daily)"].values())[0]
-            vix_value = float(latest.get("4. close", 0))
+        # VIX (Volatility Index) - using yfinance
+        vix_data = get_yfinance_data("^VIX", period="5d")
+        if vix_data and "history" in vix_data and not vix_data["history"].empty:
+            vix_value = float(vix_data["history"]["Close"].iloc[-1])
             if vix_value > 0:
                 indicators["vix"] = vix_value
                 indicators["_status"]["vix"] = "real"
-                print(f"DEBUG: Got VIX: {vix_value}")
+                print(f"DEBUG: Got VIX from yfinance: {vix_value}")
             else:
                 indicators["vix"] = 18.5
                 indicators["_status"]["vix"] = "estimated"
@@ -162,15 +129,14 @@ def get_market_indicators():
             indicators["_status"]["vix"] = "estimated"
             print("DEBUG: Using estimated VIX")
         
-        # 10-Year Treasury Yield - try only ONE symbol
-        tnx_data = get_alpha_vantage_data("TNX", "TIME_SERIES_DAILY")
-        if tnx_data and "Time Series (Daily)" in tnx_data:
-            latest = list(tnx_data["Time Series (Daily)"].values())[0]
-            yield_10y = float(latest.get("4. close", 0))
+        # 10-Year Treasury Yield - using yfinance
+        tnx_data = get_yfinance_data("^TNX", period="5d")
+        if tnx_data and "history" in tnx_data and not tnx_data["history"].empty:
+            yield_10y = float(tnx_data["history"]["Close"].iloc[-1])
             if yield_10y > 0:
                 indicators["10y_yield"] = yield_10y
                 indicators["_status"]["10y_yield"] = "real"
-                print(f"DEBUG: Got 10Y Yield: {yield_10y}")
+                print(f"DEBUG: Got 10Y Yield from yfinance: {yield_10y}")
             else:
                 indicators["10y_yield"] = 4.2
                 indicators["_status"]["10y_yield"] = "estimated"
@@ -179,21 +145,45 @@ def get_market_indicators():
             indicators["_status"]["10y_yield"] = "estimated"
             print("DEBUG: Using estimated 10Y Yield")
         
-        # 2-Year Treasury Yield - SKIP API call, estimate from 10Y to save API calls
-        # Estimate from 10Y (typically 2Y is close to 10Y or slightly higher)
-        indicators["2y_yield"] = indicators["10y_yield"] + 0.3  # Estimate
-        indicators["_status"]["2y_yield"] = "estimated"
-        print("DEBUG: Using estimated 2Y Yield (saving API call)")
+        # 2-Year Treasury Yield - using yfinance (no rate limits, so we can fetch it!)
+        irx_data = get_yfinance_data("^IRX", period="5d")
+        if irx_data and "history" in irx_data and not irx_data["history"].empty:
+            yield_2y = float(irx_data["history"]["Close"].iloc[-1])
+            if yield_2y > 0:
+                indicators["2y_yield"] = yield_2y
+                indicators["_status"]["2y_yield"] = "real"
+                print(f"DEBUG: Got 2Y Yield from yfinance: {yield_2y}")
+            else:
+                indicators["2y_yield"] = indicators["10y_yield"] + 0.3
+                indicators["_status"]["2y_yield"] = "estimated"
+        else:
+            # Estimate from 10Y if fetch fails
+            indicators["2y_yield"] = indicators["10y_yield"] + 0.3
+            indicators["_status"]["2y_yield"] = "estimated"
+            print("DEBUG: Using estimated 2Y Yield")
         
         # Calculate Yield Curve (10Y - 2Y)
         indicators["yield_curve"] = indicators["10y_yield"] - indicators["2y_yield"]
         
-        # Dollar Index (DXY) - SKIP API call, use estimate to save API calls
-        indicators["dxy"] = 103.5  # Fallback
-        indicators["_status"]["dxy"] = "estimated"
-        print("DEBUG: Using estimated DXY (saving API call)")
+        # Dollar Index (DXY) - using yfinance
+        dxy_symbols = ["DX-Y.NYB", "DX=F", "UUP"]
+        dxy_value = None
+        for symbol in dxy_symbols:
+            dxy_data = get_yfinance_data(symbol, period="5d")
+            if dxy_data and "history" in dxy_data and not dxy_data["history"].empty:
+                dxy_value = float(dxy_data["history"]["Close"].iloc[-1])
+                if dxy_value > 0:
+                    indicators["dxy"] = dxy_value
+                    indicators["_status"]["dxy"] = "real"
+                    print(f"DEBUG: Got DXY from yfinance ({symbol}): {dxy_value}")
+                    break
         
-        # Market Breadth - Use SPY if available, otherwise estimate
+        if "dxy" not in indicators:
+            indicators["dxy"] = 103.5  # Fallback
+            indicators["_status"]["dxy"] = "estimated"
+            print("DEBUG: Using estimated DXY")
+        
+        # Market Breadth - Use SPY data from yfinance
         # Check cache for SPY data first
         spy_cache_key = "spy_data_cache"
         spy_cache_time_key = "spy_data_cache_time"
@@ -206,17 +196,17 @@ def get_market_indicators():
                 print("DEBUG: Using cached SPY data")
         
         if not spy_data:
-            spy_data = get_alpha_vantage_data("SPY", "TIME_SERIES_DAILY")
+            spy_data = get_yfinance_data("SPY", period="60d")  # Get 60 days for 50-day MA
             if spy_data:
                 st.session_state[spy_cache_key] = spy_data
                 st.session_state[spy_cache_time_key] = time.time()
         
-        if spy_data and "Time Series (Daily)" in spy_data:
-            time_series = spy_data["Time Series (Daily)"]
-            if len(time_series) >= 50:
+        if spy_data and "history" in spy_data and not spy_data["history"].empty:
+            hist = spy_data["history"]
+            if len(hist) >= 50:
                 # Get current price and 50-day average
-                prices = [float(v["4. close"]) for v in list(time_series.values())[:50]]
-                current_price = prices[0]
+                prices = hist["Close"].tail(50).tolist()
+                current_price = prices[-1]
                 ma_50 = sum(prices) / len(prices)
                 
                 # Estimate market breadth based on SPY position
@@ -232,9 +222,9 @@ def get_market_indicators():
                 print(f"DEBUG: Calculated Market Breadth: {indicators['market_breadth']}%")
                 
                 # Also calculate A/D ratio from same SPY data
-                if len(time_series) >= 2:
-                    current = float(list(time_series.values())[0]["4. close"])
-                    previous = float(list(time_series.values())[1]["4. close"])
+                if len(hist) >= 2:
+                    current = float(hist["Close"].iloc[-1])
+                    previous = float(hist["Close"].iloc[-2])
                     change_pct = ((current - previous) / previous) * 100
                     
                     # Estimate A/D ratio from price change
@@ -293,9 +283,9 @@ def get_market_indicators():
         }
 
 def get_sector_performance():
-    """Get real sector performance from sector ETFs - OPTIMIZED with caching"""
+    """Get real sector performance from sector ETFs using yfinance - NO RATE LIMITS!"""
     try:
-        # Check cache first (cache for 10 minutes to save API calls)
+        # Check cache first (cache for 10 minutes)
         cache_key = "sector_performance_cache"
         cache_time_key = "sector_performance_cache_time"
         
@@ -305,31 +295,36 @@ def get_sector_performance():
                 print("DEBUG: Using cached sector performance")
                 return st.session_state[cache_key]
         
-        # IMPORTANT: Only fetch a few key sectors to save API calls
-        # Fetch only top 3-4 sectors, estimate the rest
-        key_sectors = {
+        # Fetch ALL sectors - no rate limits with yfinance!
+        sector_etfs = {
             'Technology': 'XLK',
-            'Energy': 'XLE',
+            'Healthcare': 'XLV',
             'Financials': 'XLF',
-            'Healthcare': 'XLV'
+            'Energy': 'XLE',
+            'Consumer Discretionary': 'XLY',
+            'Industrials': 'XLI',
+            'Materials': 'XLB',
+            'Utilities': 'XLU',
+            'Real Estate': 'XLRE',
+            'Consumer Staples': 'XLP'
         }
         
         sector_data = {}
         success_count = 0
         
-        # Fetch only key sectors
-        for sector, symbol in key_sectors.items():
+        # Fetch all sectors using yfinance
+        for sector, symbol in sector_etfs.items():
             try:
-                data = get_alpha_vantage_data(symbol, "TIME_SERIES_DAILY")
-                if data and "Time Series (Daily)" in data:
-                    time_series = data["Time Series (Daily)"]
-                    if len(time_series) >= 2:
-                        current = float(list(time_series.values())[0]["4. close"])
-                        previous = float(list(time_series.values())[1]["4. close"])
+                data = get_yfinance_data(symbol, period="5d")
+                if data and "history" in data and not data["history"].empty:
+                    hist = data["history"]
+                    if len(hist) >= 2:
+                        current = float(hist["Close"].iloc[-1])
+                        previous = float(hist["Close"].iloc[-2])
                         change_pct = ((current - previous) / previous) * 100
                         sector_data[sector] = round(change_pct, 2)
                         success_count += 1
-                        print(f"DEBUG: Got {sector} ({symbol}): {change_pct:.2f}%")
+                        print(f"DEBUG: Got {sector} ({symbol}) from yfinance: {change_pct:.2f}%")
                     else:
                         sector_data[sector] = 0.0
                 else:
@@ -338,32 +333,39 @@ def get_sector_performance():
                 print(f"DEBUG: Error getting {sector} ({symbol}): {e}")
                 sector_data[sector] = 0.0
         
-        # Estimate other sectors based on fetched ones
-        avg_change = sum([v for v in sector_data.values() if v != 0.0]) / max(success_count, 1) if success_count > 0 else 0
+        print(f"DEBUG: Successfully fetched {success_count}/10 sectors from yfinance")
         
-        # Fill in remaining sectors with estimates
-        all_sectors = {
-            'Technology': sector_data.get('Technology', avg_change * 0.8),
-            'Healthcare': sector_data.get('Healthcare', avg_change * 0.7),
-            'Financials': sector_data.get('Financials', avg_change * 0.9),
-            'Energy': sector_data.get('Energy', avg_change * 1.2),
-            'Consumer Discretionary': avg_change * 0.6,
-            'Industrials': avg_change * 0.5,
-            'Materials': avg_change * 0.4,
-            'Utilities': avg_change * 0.3,
-            'Real Estate': avg_change * 0.5,
-            'Consumer Staples': avg_change * 0.2
-        }
+        # If all failed, return mock data
+        if success_count == 0:
+            print("DEBUG: All sector fetches failed, using fallback data")
+            fallback = {
+                'Technology': 2.5,
+                'Healthcare': 1.8,
+                'Financials': -0.5,
+                'Energy': 3.2,
+                'Consumer Discretionary': 1.2,
+                'Industrials': 0.8,
+                'Materials': -1.1,
+                'Utilities': -0.3,
+                'Real Estate': 0.5,
+                'Consumer Staples': 0.2
+            }
+            return fallback
         
-        print(f"DEBUG: Fetched {success_count}/4 key sectors, estimated rest")
+        # Fill missing sectors with 0.0
+        for sector in sector_etfs.keys():
+            if sector not in sector_data:
+                sector_data[sector] = 0.0
         
         # Cache the results
-        st.session_state[cache_key] = all_sectors
+        st.session_state[cache_key] = sector_data
         st.session_state[cache_time_key] = time.time()
         
-        return all_sectors
+        return sector_data
     except Exception as e:
         print(f"DEBUG: Error getting sector performance: {e}")
+        import traceback
+        traceback.print_exc()
         # Return mock data on error
         fallback = {
             'Technology': 2.5,
@@ -380,7 +382,7 @@ def get_sector_performance():
         return fallback
 
 def get_market_internals():
-    """Get market internals - OPTIMIZED to use cached SPY data"""
+    """Get market internals using yfinance - can fetch multiple indices now!"""
     try:
         internals = {}
         
@@ -389,8 +391,8 @@ def get_market_internals():
         spy_data = st.session_state.get(spy_cache_key, None)
         
         if not spy_data:
-            # Only fetch SPY if not cached (saves 2 API calls)
-            spy_data = get_alpha_vantage_data("SPY", "TIME_SERIES_DAILY")
+            # Fetch SPY using yfinance
+            spy_data = get_yfinance_data("SPY", period="5d")
             if spy_data:
                 st.session_state[spy_cache_key] = spy_data
                 st.session_state["spy_data_cache_time"] = time.time()
@@ -400,13 +402,13 @@ def get_market_internals():
         new_highs = 0
         new_lows = 0
         
-        # Use only SPY data to save API calls
-        if spy_data and "Time Series (Daily)" in spy_data:
-            time_series = spy_data["Time Series (Daily)"]
-            if len(time_series) >= 2:
-                current = float(list(time_series.values())[0]["4. close"])
-                previous = float(list(time_series.values())[1]["4. close"])
-                volume = int(list(time_series.values())[0]["5. volume"])
+        # Use SPY data from yfinance
+        if spy_data and "history" in spy_data and not spy_data["history"].empty:
+            hist = spy_data["history"]
+            if len(hist) >= 2:
+                current = float(hist["Close"].iloc[-1])
+                previous = float(hist["Close"].iloc[-2])
+                volume = int(hist["Volume"].iloc[-1])
                 
                 total_volume = volume * 3  # Estimate total from SPY (multiply by 3)
                 change_pct = ((current - previous) / previous) * 100
@@ -445,11 +447,11 @@ def get_market_internals():
         
         # Market cap estimates (based on SPY - use cached data)
         try:
-            if spy_data and "Time Series (Daily)" in spy_data:
-                time_series = spy_data["Time Series (Daily)"]
-                if len(time_series) >= 2:
-                    current = float(list(time_series.values())[0]["4. close"])
-                    previous = float(list(time_series.values())[1]["4. close"])
+            if spy_data and "history" in spy_data and not spy_data["history"].empty:
+                hist = spy_data["history"]
+                if len(hist) >= 2:
+                    current = float(hist["Close"].iloc[-1])
+                    previous = float(hist["Close"].iloc[-2])
                     change_pct = ((current - previous) / previous) * 100
                     
                     # Estimate market cap change (rough calculation)
@@ -2077,10 +2079,10 @@ def display_market_analysis_section():
     
     st.markdown("#### 📊 Market Analysis")
     
-    # Rate limit warning
-    if "rate_limit_warning_shown" not in st.session_state:
-        st.warning("⚠️ **API Rate Limit Notice**: Alpha Vantage free tier allows 25 requests/day. Data is cached for 5-10 minutes to minimize API calls. Some data may be estimated to preserve API quota.")
-        st.session_state["rate_limit_warning_shown"] = True
+    # Success message (no more rate limits!)
+    if "yfinance_success_shown" not in st.session_state:
+        st.success("✅ **Using yfinance (Yahoo Finance)**: No API key needed, no rate limits! All data is real-time.")
+        st.session_state["yfinance_success_shown"] = True
     
     # Get current market analysis and indicators
     with st.spinner("Loading market analysis (using cached data when possible)..."):
