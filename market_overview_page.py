@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 
 # Alpha Vantage API Configuration
 ALPHA_VANTAGE_API_KEY = "PA25XA5HB5ZSXHQZ"
-ALPHA_VANTAGE_BASE_URL = "#alphavantage.co/query"
+ALPHA_VANTAGE_BASE_URL = "https://www.alphavantage.co/query"
 
 def get_alpha_vantage_data(symbol, function="GLOBAL_QUOTE"):
     """Get real-time data from Alpha Vantage API"""
@@ -1500,82 +1500,42 @@ def get_financial_news():
         # Try to get real news from Alpha Vantage
         news_data = get_economic_news()
         
-        if news_data:
+        if news_data and isinstance(news_data, list):
             # Convert Alpha Vantage format to our format
             formatted_news = []
             for item in news_data[:20]:  # Limit to 20 articles
-                formatted_news.append({
-                    "title": item.get("title", "No Title"),
-                    "source": item.get("source", "Unknown"),
-                    "url": item.get("url", "#"),
-                    "published_date": item.get("time_published", datetime.now().strftime("%Y-%m-%d"))[:10],  # Extract date part
-                    "summary": item.get("summary", "No summary available.")
-                })
+                # Alpha Vantage returns URL in 'url' field - get the actual article URL
+                article_url = item.get("url", "") or item.get("link", "") or item.get("article_url", "")
+                
+                # Validate URL - must be a real article URL (not just domain, must have path)
+                if article_url and article_url != "#" and article_url.startswith("http") and len(article_url) > 30:
+                    # Extract date from time_published (format: YYYYMMDDTHHMMSS)
+                    time_published = item.get("time_published", "")
+                    if time_published and len(time_published) >= 8:
+                        pub_date = time_published[:8]  # YYYYMMDD
+                        formatted_date = f"{pub_date[:4]}-{pub_date[4:6]}-{pub_date[6:8]}"
+                    else:
+                        formatted_date = datetime.now().strftime("%Y-%m-%d")
+                    
+                    formatted_news.append({
+                        "title": item.get("title", "No Title"),
+                        "source": item.get("source", "Unknown"),
+                        "url": article_url,  # Use actual article URL from API
+                        "published_date": formatted_date,
+                        "summary": item.get("summary", item.get("text", "No summary available."))
+                    })
             
             if formatted_news:
+                print(f"DEBUG: Retrieved {len(formatted_news)} news articles from Alpha Vantage")
                 return formatted_news
         
-        # Fallback to sample news with real URLs
-        return [
-            {
-                "title": "Federal Reserve Holds Interest Rates Steady Amid Economic Uncertainty",
-                "source": "Bloomberg",
-                "url": "https://www.bloomberg.com/markets",
-                "published_date": datetime.now().strftime("%Y-%m-%d"),
-                "summary": "The Federal Reserve maintained its benchmark interest rate, citing ongoing economic data analysis."
-            },
-            {
-                "title": "Stock Markets Rally on Strong Earnings Reports",
-                "source": "Reuters",
-                "url": "https://www.reuters.com/business",
-                "published_date": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
-                "summary": "Major indices surged as companies exceeded earnings expectations across multiple sectors."
-            },
-            {
-                "title": "Inflation Data Shows Continued Cooling Trend",
-                "source": "CNBC",
-                "url": "https://www.cnbc.com/markets",
-                "published_date": (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"),
-                "summary": "Latest CPI data indicates inflation is moderating, providing relief to consumers and policymakers."
-            },
-            {
-                "title": "Tech Sector Faces Regulatory Scrutiny",
-                "source": "Wall Street Journal",
-                "url": "https://www.wsj.com/markets",
-                "published_date": (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d"),
-                "summary": "Major technology companies are preparing for new regulatory frameworks in key markets."
-            },
-            {
-                "title": "Energy Markets Volatile Amid Geopolitical Tensions",
-                "source": "Financial Times",
-                "url": "https://www.ft.com/markets",
-                "published_date": (datetime.now() - timedelta(days=4)).strftime("%Y-%m-%d"),
-                "summary": "Oil prices fluctuated as investors weighed supply concerns against demand forecasts."
-            },
-            {
-                "title": "Cryptocurrency Markets See Increased Institutional Adoption",
-                "source": "CoinDesk",
-                "url": "https://www.coindesk.com",
-                "published_date": (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d"),
-                "summary": "Major financial institutions are expanding their cryptocurrency offerings to clients."
-            },
-            {
-                "title": "Housing Market Shows Signs of Stabilization",
-                "source": "MarketWatch",
-                "url": "https://www.marketwatch.com",
-                "published_date": (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d"),
-                "summary": "Home prices and sales activity suggest the market is finding a new equilibrium."
-            },
-            {
-                "title": "Global Trade Agreements Boost Economic Outlook",
-                "source": "BBC Business",
-                "url": "https://www.bbc.com/news/business",
-                "published_date": (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d"),
-                "summary": "New trade partnerships are expected to stimulate economic growth in multiple regions."
-            }
-        ]
+        # If no real news available, return empty list (will show message in UI)
+        print("DEBUG: No news data available from Alpha Vantage API")
+        return []
     except Exception as e:
         print(f"Error getting financial news: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 def display_news_section():
