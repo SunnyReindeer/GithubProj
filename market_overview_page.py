@@ -130,90 +130,87 @@ def get_treasury_yield(symbol):
     return None
 
 def get_market_indicators():
-    """Get key market indicators with real data from Alpha Vantage"""
+    """Get key market indicators with real data from Alpha Vantage - OPTIMIZED to reduce API calls"""
     try:
+        # Check cache first (cache for 5 minutes to avoid rate limits)
+        cache_key = "market_indicators_cache"
+        cache_time_key = "market_indicators_cache_time"
+        
+        if cache_key in st.session_state:
+            cache_time = st.session_state.get(cache_time_key, 0)
+            if time.time() - cache_time < 300:  # 5 minutes cache
+                print("DEBUG: Using cached market indicators")
+                return st.session_state[cache_key]
+        
         indicators = {}
         indicators["_status"] = {}  # Track what's real vs estimated
         
-        # VIX (Volatility Index) - try multiple symbols
-        vix_value = None
-        vix_symbols = ["VIX", "^VIX", "VIX.X", "VIXCLS"]
-        for symbol in vix_symbols:
-            vix_data = get_alpha_vantage_data(symbol, "TIME_SERIES_DAILY")
-            if vix_data and "Time Series (Daily)" in vix_data:
-                latest = list(vix_data["Time Series (Daily)"].values())[0]
-                vix_value = float(latest.get("4. close", 0))
-                if vix_value > 0:
-                    indicators["vix"] = vix_value
-                    indicators["_status"]["vix"] = "real"
-                    print(f"DEBUG: Got VIX from {symbol}: {vix_value}")
-                    break
-        
-        if "vix" not in indicators:
+        # VIX (Volatility Index) - try only ONE symbol to save API calls
+        vix_data = get_alpha_vantage_data("VIX", "TIME_SERIES_DAILY")
+        if vix_data and "Time Series (Daily)" in vix_data:
+            latest = list(vix_data["Time Series (Daily)"].values())[0]
+            vix_value = float(latest.get("4. close", 0))
+            if vix_value > 0:
+                indicators["vix"] = vix_value
+                indicators["_status"]["vix"] = "real"
+                print(f"DEBUG: Got VIX: {vix_value}")
+            else:
+                indicators["vix"] = 18.5
+                indicators["_status"]["vix"] = "estimated"
+        else:
             indicators["vix"] = 18.5  # Fallback
             indicators["_status"]["vix"] = "estimated"
             print("DEBUG: Using estimated VIX")
         
-        # 10-Year Treasury Yield - try multiple symbols
-        yield_10y = None
-        tnx_symbols = ["TNX", "^TNX", "10Y", "T10Y"]
-        for symbol in tnx_symbols:
-            tnx_data = get_alpha_vantage_data(symbol, "TIME_SERIES_DAILY")
-            if tnx_data and "Time Series (Daily)" in tnx_data:
-                latest = list(tnx_data["Time Series (Daily)"].values())[0]
-                yield_10y = float(latest.get("4. close", 0))
-                if yield_10y > 0:
-                    indicators["10y_yield"] = yield_10y
-                    indicators["_status"]["10y_yield"] = "real"
-                    print(f"DEBUG: Got 10Y Yield from {symbol}: {yield_10y}")
-                    break
-        
-        if "10y_yield" not in indicators:
+        # 10-Year Treasury Yield - try only ONE symbol
+        tnx_data = get_alpha_vantage_data("TNX", "TIME_SERIES_DAILY")
+        if tnx_data and "Time Series (Daily)" in tnx_data:
+            latest = list(tnx_data["Time Series (Daily)"].values())[0]
+            yield_10y = float(latest.get("4. close", 0))
+            if yield_10y > 0:
+                indicators["10y_yield"] = yield_10y
+                indicators["_status"]["10y_yield"] = "real"
+                print(f"DEBUG: Got 10Y Yield: {yield_10y}")
+            else:
+                indicators["10y_yield"] = 4.2
+                indicators["_status"]["10y_yield"] = "estimated"
+        else:
             indicators["10y_yield"] = 4.2  # Fallback
             indicators["_status"]["10y_yield"] = "estimated"
             print("DEBUG: Using estimated 10Y Yield")
         
-        # 2-Year Treasury Yield - try multiple symbols
-        yield_2y = None
-        irx_symbols = ["^IRX", "IRX", "FVX", "^FVX", "SHY", "2Y", "T2Y"]
-        for symbol in irx_symbols:
-            yield_2y = get_treasury_yield(symbol)
-            if yield_2y and yield_2y > 0:
-                indicators["2y_yield"] = yield_2y
-                indicators["_status"]["2y_yield"] = "real"
-                print(f"DEBUG: Got 2Y Yield from {symbol}: {yield_2y}")
-                break
-        
-        if "2y_yield" not in indicators:
-            # Estimate from 10Y if we have it (typically 2Y is close to 10Y or slightly higher)
-            indicators["2y_yield"] = indicators["10y_yield"] + 0.3  # Fallback estimate
-            indicators["_status"]["2y_yield"] = "estimated"
-            print("DEBUG: Using estimated 2Y Yield")
+        # 2-Year Treasury Yield - SKIP API call, estimate from 10Y to save API calls
+        # Estimate from 10Y (typically 2Y is close to 10Y or slightly higher)
+        indicators["2y_yield"] = indicators["10y_yield"] + 0.3  # Estimate
+        indicators["_status"]["2y_yield"] = "estimated"
+        print("DEBUG: Using estimated 2Y Yield (saving API call)")
         
         # Calculate Yield Curve (10Y - 2Y)
         indicators["yield_curve"] = indicators["10y_yield"] - indicators["2y_yield"]
         
-        # Dollar Index (DXY) - try multiple symbols
-        dxy_value = None
-        dxy_symbols = ["DX-Y.NYB", "DX=F", "UUP", "DXY", "^DXY"]
-        for symbol in dxy_symbols:
-            dxy_data = get_alpha_vantage_data(symbol, "TIME_SERIES_DAILY")
-            if dxy_data and "Time Series (Daily)" in dxy_data:
-                latest = list(dxy_data["Time Series (Daily)"].values())[0]
-                dxy_value = float(latest.get("4. close", 0))
-                if dxy_value > 0:
-                    indicators["dxy"] = dxy_value
-                    indicators["_status"]["dxy"] = "real"
-                    print(f"DEBUG: Got DXY from {symbol}: {dxy_value}")
-                    break
+        # Dollar Index (DXY) - SKIP API call, use estimate to save API calls
+        indicators["dxy"] = 103.5  # Fallback
+        indicators["_status"]["dxy"] = "estimated"
+        print("DEBUG: Using estimated DXY (saving API call)")
         
-        if "dxy" not in indicators:
-            indicators["dxy"] = 103.5  # Fallback
-            indicators["_status"]["dxy"] = "estimated"
-            print("DEBUG: Using estimated DXY")
+        # Market Breadth - Use SPY if available, otherwise estimate
+        # Check cache for SPY data first
+        spy_cache_key = "spy_data_cache"
+        spy_cache_time_key = "spy_data_cache_time"
         
-        # Market Breadth - Estimate using SPY position relative to 50-day MA
-        spy_data = get_alpha_vantage_data("SPY", "TIME_SERIES_DAILY")
+        spy_data = None
+        if spy_cache_key in st.session_state:
+            cache_time = st.session_state.get(spy_cache_time_key, 0)
+            if time.time() - cache_time < 300:  # 5 minutes cache
+                spy_data = st.session_state[spy_cache_key]
+                print("DEBUG: Using cached SPY data")
+        
+        if not spy_data:
+            spy_data = get_alpha_vantage_data("SPY", "TIME_SERIES_DAILY")
+            if spy_data:
+                st.session_state[spy_cache_key] = spy_data
+                st.session_state[spy_cache_time_key] = time.time()
+        
         if spy_data and "Time Series (Daily)" in spy_data:
             time_series = spy_data["Time Series (Daily)"]
             if len(time_series) >= 50:
@@ -233,36 +230,35 @@ def get_market_indicators():
                     indicators["market_breadth"] = 35.0
                 indicators["_status"]["market_breadth"] = "calculated"
                 print(f"DEBUG: Calculated Market Breadth: {indicators['market_breadth']}%")
-            else:
-                indicators["market_breadth"] = 50.0  # Neutral if not enough data
-                indicators["_status"]["market_breadth"] = "estimated"
-        else:
-            indicators["market_breadth"] = 50.0  # Fallback
-            indicators["_status"]["market_breadth"] = "estimated"
-        
-        # Advance/Decline Ratio - Estimate from SPY price action
-        if spy_data and "Time Series (Daily)" in spy_data:
-            time_series = spy_data["Time Series (Daily)"]
-            if len(time_series) >= 2:
-                current = float(list(time_series.values())[0]["4. close"])
-                previous = float(list(time_series.values())[1]["4. close"])
-                change_pct = ((current - previous) / previous) * 100
                 
-                # Estimate A/D ratio from price change
-                if change_pct > 0.5:
-                    indicators["advance_decline"] = 1.5
-                elif change_pct > 0:
-                    indicators["advance_decline"] = 1.2
-                elif change_pct > -0.5:
-                    indicators["advance_decline"] = 0.9
+                # Also calculate A/D ratio from same SPY data
+                if len(time_series) >= 2:
+                    current = float(list(time_series.values())[0]["4. close"])
+                    previous = float(list(time_series.values())[1]["4. close"])
+                    change_pct = ((current - previous) / previous) * 100
+                    
+                    # Estimate A/D ratio from price change
+                    if change_pct > 0.5:
+                        indicators["advance_decline"] = 1.5
+                    elif change_pct > 0:
+                        indicators["advance_decline"] = 1.2
+                    elif change_pct > -0.5:
+                        indicators["advance_decline"] = 0.9
+                    else:
+                        indicators["advance_decline"] = 0.7
+                    indicators["_status"]["advance_decline"] = "calculated"
                 else:
-                    indicators["advance_decline"] = 0.7
-                indicators["_status"]["advance_decline"] = "calculated"
+                    indicators["advance_decline"] = 1.0
+                    indicators["_status"]["advance_decline"] = "estimated"
             else:
+                indicators["market_breadth"] = 50.0
                 indicators["advance_decline"] = 1.0
+                indicators["_status"]["market_breadth"] = "estimated"
                 indicators["_status"]["advance_decline"] = "estimated"
         else:
+            indicators["market_breadth"] = 50.0  # Fallback
             indicators["advance_decline"] = 1.0  # Fallback
+            indicators["_status"]["market_breadth"] = "estimated"
             indicators["_status"]["advance_decline"] = "estimated"
         
         # Put/Call Ratio - Estimate from VIX (higher VIX = higher put/call)
@@ -275,6 +271,10 @@ def get_market_indicators():
         else:
             indicators["put_call_ratio"] = 0.7  # Low fear = more calls
         indicators["_status"]["put_call_ratio"] = "estimated"
+        
+        # Cache the results
+        st.session_state[cache_key] = indicators
+        st.session_state[cache_time_key] = time.time()
         
         return indicators
     except Exception as e:
@@ -293,26 +293,32 @@ def get_market_indicators():
         }
 
 def get_sector_performance():
-    """Get real sector performance from sector ETFs"""
+    """Get real sector performance from sector ETFs - OPTIMIZED with caching"""
     try:
-        # Sector ETF symbols
-        sector_etfs = {
+        # Check cache first (cache for 10 minutes to save API calls)
+        cache_key = "sector_performance_cache"
+        cache_time_key = "sector_performance_cache_time"
+        
+        if cache_key in st.session_state:
+            cache_time = st.session_state.get(cache_time_key, 0)
+            if time.time() - cache_time < 600:  # 10 minutes cache
+                print("DEBUG: Using cached sector performance")
+                return st.session_state[cache_key]
+        
+        # IMPORTANT: Only fetch a few key sectors to save API calls
+        # Fetch only top 3-4 sectors, estimate the rest
+        key_sectors = {
             'Technology': 'XLK',
-            'Healthcare': 'XLV',
-            'Financials': 'XLF',
             'Energy': 'XLE',
-            'Consumer Discretionary': 'XLY',
-            'Industrials': 'XLI',
-            'Materials': 'XLB',
-            'Utilities': 'XLU',
-            'Real Estate': 'XLRE',
-            'Consumer Staples': 'XLP'
+            'Financials': 'XLF',
+            'Healthcare': 'XLV'
         }
         
         sector_data = {}
         success_count = 0
         
-        for sector, symbol in sector_etfs.items():
+        # Fetch only key sectors
+        for sector, symbol in key_sectors.items():
             try:
                 data = get_alpha_vantage_data(symbol, "TIME_SERIES_DAILY")
                 if data and "Time Series (Daily)" in data:
@@ -332,36 +338,34 @@ def get_sector_performance():
                 print(f"DEBUG: Error getting {sector} ({symbol}): {e}")
                 sector_data[sector] = 0.0
         
-        print(f"DEBUG: Successfully fetched {success_count}/10 sectors")
+        # Estimate other sectors based on fetched ones
+        avg_change = sum([v for v in sector_data.values() if v != 0.0]) / max(success_count, 1) if success_count > 0 else 0
         
-        # If all failed, return mock data
-        if success_count == 0:
-            print("DEBUG: All sector fetches failed, using fallback data")
-            return {
-                'Technology': 2.5,
-                'Healthcare': 1.8,
-                'Financials': -0.5,
-                'Energy': 3.2,
-                'Consumer Discretionary': 1.2,
-                'Industrials': 0.8,
-                'Materials': -1.1,
-                'Utilities': -0.3,
-                'Real Estate': 0.5,
-                'Consumer Staples': 0.2
-            }
+        # Fill in remaining sectors with estimates
+        all_sectors = {
+            'Technology': sector_data.get('Technology', avg_change * 0.8),
+            'Healthcare': sector_data.get('Healthcare', avg_change * 0.7),
+            'Financials': sector_data.get('Financials', avg_change * 0.9),
+            'Energy': sector_data.get('Energy', avg_change * 1.2),
+            'Consumer Discretionary': avg_change * 0.6,
+            'Industrials': avg_change * 0.5,
+            'Materials': avg_change * 0.4,
+            'Utilities': avg_change * 0.3,
+            'Real Estate': avg_change * 0.5,
+            'Consumer Staples': avg_change * 0.2
+        }
         
-        # Fill missing sectors with 0.0
-        for sector in sector_etfs.keys():
-            if sector not in sector_data:
-                sector_data[sector] = 0.0
+        print(f"DEBUG: Fetched {success_count}/4 key sectors, estimated rest")
         
-        return sector_data
+        # Cache the results
+        st.session_state[cache_key] = all_sectors
+        st.session_state[cache_time_key] = time.time()
+        
+        return all_sectors
     except Exception as e:
         print(f"DEBUG: Error getting sector performance: {e}")
-        import traceback
-        traceback.print_exc()
         # Return mock data on error
-        return {
+        fallback = {
             'Technology': 2.5,
             'Healthcare': 1.8,
             'Financials': -0.5,
@@ -373,49 +377,54 @@ def get_sector_performance():
             'Real Estate': 0.5,
             'Consumer Staples': 0.2
         }
+        return fallback
 
 def get_market_internals():
-    """Get market internals from major indices"""
+    """Get market internals - OPTIMIZED to use cached SPY data"""
     try:
         internals = {}
         
-        # Get SPY, QQQ, IWM data for estimates
-        indices = {
-            'SPY': 'S&P 500',
-            'QQQ': 'NASDAQ 100',
-            'IWM': 'Russell 2000'
-        }
+        # Use cached SPY data if available (from market indicators)
+        spy_cache_key = "spy_data_cache"
+        spy_data = st.session_state.get(spy_cache_key, None)
+        
+        if not spy_data:
+            # Only fetch SPY if not cached (saves 2 API calls)
+            spy_data = get_alpha_vantage_data("SPY", "TIME_SERIES_DAILY")
+            if spy_data:
+                st.session_state[spy_cache_key] = spy_data
+                st.session_state["spy_data_cache_time"] = time.time()
         
         total_volume = 0
         total_change = 0
         new_highs = 0
         new_lows = 0
         
-        for symbol, name in indices.items():
-            try:
-                data = get_alpha_vantage_data("TIME_SERIES_DAILY", symbol)
-                if data and "Time Series (Daily)" in data:
-                    time_series = data["Time Series (Daily)"]
-                    if len(time_series) >= 2:
-                        current = float(list(time_series.values())[0]["4. close"])
-                        previous = float(list(time_series.values())[1]["4. close"])
-                        volume = int(list(time_series.values())[0]["5. volume"])
-                        
-                        total_volume += volume
-                        change_pct = ((current - previous) / previous) * 100
-                        total_change += change_pct
-                        
-                        # Estimate new highs/lows based on price action
-                        if change_pct > 1.0:
-                            new_highs += 80
-                        elif change_pct > 0:
-                            new_highs += 40
-                        elif change_pct < -1.0:
-                            new_lows += 80
-                        elif change_pct < 0:
-                            new_lows += 40
-            except:
-                pass
+        # Use only SPY data to save API calls
+        if spy_data and "Time Series (Daily)" in spy_data:
+            time_series = spy_data["Time Series (Daily)"]
+            if len(time_series) >= 2:
+                current = float(list(time_series.values())[0]["4. close"])
+                previous = float(list(time_series.values())[1]["4. close"])
+                volume = int(list(time_series.values())[0]["5. volume"])
+                
+                total_volume = volume * 3  # Estimate total from SPY (multiply by 3)
+                change_pct = ((current - previous) / previous) * 100
+                total_change = change_pct
+                
+                # Estimate new highs/lows based on price action
+                if change_pct > 1.0:
+                    new_highs = 245
+                    new_lows = 89
+                elif change_pct > 0:
+                    new_highs = 200
+                    new_lows = 100
+                elif change_pct > -1.0:
+                    new_highs = 150
+                    new_lows = 120
+                else:
+                    new_highs = 100
+                    new_lows = 200
         
         # Calculate estimates
         if total_volume > 0:
@@ -434,9 +443,8 @@ def get_market_internals():
             internals["new_highs"] = 245
             internals["new_lows"] = 89
         
-        # Market cap estimates (based on SPY)
+        # Market cap estimates (based on SPY - use cached data)
         try:
-            spy_data = get_alpha_vantage_data("TIME_SERIES_DAILY", "SPY")
             if spy_data and "Time Series (Daily)" in spy_data:
                 time_series = spy_data["Time Series (Daily)"]
                 if len(time_series) >= 2:
@@ -472,16 +480,27 @@ def get_market_internals():
         }
 
 def get_market_analysis():
-    """Get real-time market analysis and sentiment"""
+    """Get real-time market analysis and sentiment - OPTIMIZED to reduce API calls"""
     try:
-        # Get real Fear & Greed Index
+        # Check cache first (cache for 10 minutes)
+        cache_key = "market_analysis_cache"
+        cache_time_key = "market_analysis_cache_time"
+        
+        if cache_key in st.session_state:
+            cache_time = st.session_state.get(cache_time_key, 0)
+            if time.time() - cache_time < 600:  # 10 minutes cache
+                print("DEBUG: Using cached market analysis")
+                return st.session_state[cache_key]
+        
+        # Get real Fear & Greed Index (this is web scraping, not API)
         fear_greed_index = get_fear_greed_index()
         
         # Debug: Print the Fear & Greed Index value
         print(f"DEBUG: Fear & Greed Index = {fear_greed_index}")
         
-        # Get market sentiment from Alpha Vantage
-        sentiment_data = get_alpha_vantage_data("NEWS_SENTIMENT", "NEWS_SENTIMENT")
+        # SKIP Alpha Vantage news sentiment to save API calls
+        # sentiment_data = get_alpha_vantage_data("NEWS_SENTIMENT", "NEWS_SENTIMENT")
+        sentiment_data = None
         
         analysis = {
             "market_sentiment": "Neutral",
@@ -529,13 +548,18 @@ def get_market_analysis():
                     else:
                         analysis["market_sentiment"] = "Neutral"
         
+        # Cache the results
+        st.session_state[cache_key] = analysis
+        st.session_state[cache_time_key] = time.time()
+        
         return analysis
     except Exception as e:
         # Fallback to current real values if API fails
-        return {
+        fallback = {
             "market_sentiment": "Neutral",
             "fear_greed_index": 33  # Current real value is 33
         }
+        return fallback
 
 def get_fear_greed_index():
     """Get current CNN Fear & Greed Index for STOCK MARKET"""
@@ -2053,8 +2077,13 @@ def display_market_analysis_section():
     
     st.markdown("#### 📊 Market Analysis")
     
+    # Rate limit warning
+    if "rate_limit_warning_shown" not in st.session_state:
+        st.warning("⚠️ **API Rate Limit Notice**: Alpha Vantage free tier allows 25 requests/day. Data is cached for 5-10 minutes to minimize API calls. Some data may be estimated to preserve API quota.")
+        st.session_state["rate_limit_warning_shown"] = True
+    
     # Get current market analysis and indicators
-    with st.spinner("Loading market analysis..."):
+    with st.spinner("Loading market analysis (using cached data when possible)..."):
         analysis = get_market_analysis()
         indicators = get_market_indicators()
     
