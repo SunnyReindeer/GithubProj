@@ -452,7 +452,7 @@ class MultiAssetStrategyManager:
                 "category": StrategyCategory.TREND_FOLLOWING,
                 "risk_level": 5,
                 "complexity": "Beginner",
-                "function": None  # Will use backtesting engine
+                "function": None
             },
             "crypto_rsi": {
                 "name": "Crypto RSI Strategy",
@@ -461,7 +461,7 @@ class MultiAssetStrategyManager:
                 "category": StrategyCategory.MEAN_REVERSION,
                 "risk_level": 4,
                 "complexity": "Beginner",
-                "function": None  # Will use backtesting engine
+                "function": None
             },
             "crypto_bollinger_bands": {
                 "name": "Crypto Bollinger Bands",
@@ -470,7 +470,7 @@ class MultiAssetStrategyManager:
                 "category": StrategyCategory.MEAN_REVERSION,
                 "risk_level": 4,
                 "complexity": "Beginner",
-                "function": None  # Will use backtesting engine
+                "function": None
             },
             "crypto_macd": {
                 "name": "Crypto MACD Strategy",
@@ -479,7 +479,7 @@ class MultiAssetStrategyManager:
                 "category": StrategyCategory.MOMENTUM,
                 "risk_level": 5,
                 "complexity": "Intermediate",
-                "function": None  # Will use backtesting engine
+                "function": None
             },
             
             # REIT strategies

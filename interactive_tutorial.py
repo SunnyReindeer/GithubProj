@@ -57,24 +57,8 @@ class InteractiveTutorial:
                 success_message="Great! You can see how AI personalizes recommendations for you."
             ),
             TutorialStep(
-                step_id="backtesting",
-                title="🔬 Step 4: Try Strategy Backtesting",
-                description="Let's test some strategies with historical data. Click on 'Strategy Backtesting' tab.",
-                action_type="navigate",
-                target_element="Strategy Backtesting",
-                success_message="Perfect! You're now in the backtesting section."
-            ),
-            TutorialStep(
-                step_id="select_strategy",
-                title="⚙️ Step 5: Select a Strategy",
-                description="Choose a strategy like 'RSI Strategy' from the dropdown and click 'Run Backtest'.",
-                action_type="complete",
-                target_element="strategy_selection",
-                success_message="Awesome! You've learned how to test strategies."
-            ),
-            TutorialStep(
                 step_id="trading_platform",
-                title="🌍 Step 6: Explore Trading Platform",
+                title="🌍 Step 4: Explore Trading Platform",
                 description="Now let's see the trading platform. Click on 'Trading Platform' tab.",
                 action_type="navigate",
                 target_element="Trading Platform",
@@ -260,11 +244,6 @@ def show_tutorial_hints():
     elif current_step.step_id == "questionnaire":
         st.info("💡 **Hint:** Click the 'Start Risk Assessment' button to begin the questionnaire!")
     
-    elif current_step.step_id == "backtesting":
-        st.info("💡 **Hint:** Click on '🤖 Strategy Backtesting' in the navigation menu!")
-    
-    elif current_step.step_id == "select_strategy":
-        st.info("💡 **Hint:** Use the 'Select Strategy' dropdown and click 'Run Backtest' button!")
     
     elif current_step.step_id == "trading_platform":
         st.info("💡 **Hint:** Click on '🌍 Trading Platform' in the navigation menu!")
@@ -373,24 +352,6 @@ def main():
         - Take your time with each question
         - There are no wrong answers
         - You can always retake it later
-        """)
-    
-    elif current_step.step_id == "backtesting":
-        st.markdown("""
-        ### 🔬 What is Backtesting?
-        Backtesting lets you test trading strategies using historical data to see how they would have performed.
-        
-        ### 🎯 Why It's Important:
-        - **Risk-Free Testing**: Test strategies without risking real money
-        - **Performance Validation**: See if a strategy actually works
-        - **Strategy Comparison**: Compare different approaches
-        - **Confidence Building**: Build confidence before live trading
-        
-        ### 📊 What You'll See:
-        - Total return and annual return
-        - Sharpe ratio (risk-adjusted return)
-        - Maximum drawdown (worst loss)
-        - Win rate and number of trades
         """)
     
     elif current_step.step_id == "trading_platform":

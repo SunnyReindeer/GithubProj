@@ -33,7 +33,6 @@ def show_introduction_portal():
         
         - 🤖 **AI-Powered Robo Advisor** - Get personalized investment recommendations
         - 📊 **Multi-Asset Trading** - Trade stocks, crypto, forex, commodities, and more
-        - 🔬 **Strategy Backtesting** - Test trading strategies with historical data
         - 📈 **Real-Time Analytics** - Monitor your portfolio with live data
         - 🎯 **Risk Assessment** - Understand your risk tolerance and investment style
         
@@ -81,7 +80,6 @@ def show_introduction_portal():
         ### 📊 **Professional Tools**
         - Real-time market data
         - Advanced charting capabilities
-        - Backtesting engine
         - Portfolio analytics
         """)
     
@@ -93,7 +91,7 @@ def show_introduction_portal():
         "✅ Complete risk assessment and understand your investment style",
         "✅ Get personalized portfolio recommendations",
         "✅ Learn about different asset classes (stocks, crypto, forex, commodities)",
-        "✅ Practice with paper trading and backtesting",
+        "✅ Practice with paper trading",
         "✅ Build confidence in investment decision-making"
     ]
     
@@ -148,7 +146,6 @@ def show_introduction_portal():
     
     with feature_cols[1]:
         st.markdown("""
-        ### 🔬 **Strategy Backtesting**
         - **Historical Testing**: Test strategies on past data
         - **Multiple Strategies**: MACD, RSI, Bollinger Bands, etc.
         - **Performance Metrics**: Returns, Sharpe ratio, drawdown
@@ -177,7 +174,6 @@ def show_introduction_portal():
     - See suggested portfolio allocations
     - Understand the reasoning behind recommendations
     
-    ### **Step 3: Practice with Backtesting** 🔬
     - Test different trading strategies
     - Learn how strategies perform historically
     - Build confidence before live trading
@@ -215,7 +211,6 @@ def show_introduction_portal():
             <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
                 <span style="background-color: #1f77b4; color: white; padding: 0.5rem 1rem; border-radius: 5px;">🤖 AI Robo Advisor</span>
                 <span style="background-color: #ff7f0e; color: white; padding: 0.5rem 1rem; border-radius: 5px;">🌍 Trading Platform</span>
-                <span style="background-color: #2ca02c; color: white; padding: 0.5rem 1rem; border-radius: 5px;">🔬 Strategy Backtesting</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -251,8 +246,6 @@ def show_quick_start_guide():
            - Read about the recommended strategies
            - Understand why these recommendations were made
         
-        3. **🔬 Practice with Backtesting**
-           - Go to "Strategy Backtesting" tab
            - Try different strategies on historical data
            - Learn how they perform without risking real money
         
@@ -272,7 +265,6 @@ def show_quick_start_guide():
            - Learn about new strategies you haven't tried
         
         2. **🔬 Test New Strategies**
-           - Use backtesting to validate new ideas
            - Compare different approaches
            - Optimize your existing strategies
         
@@ -287,7 +279,6 @@ def show_quick_start_guide():
         ### **I'm an Experienced Investor**
         
         1. **🚀 Advanced Strategy Development**
-           - Use the backtesting engine for complex strategies
            - Implement multi-timeframe analysis
            - Test advanced risk management techniques
         
