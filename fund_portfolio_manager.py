@@ -65,6 +65,8 @@ class AILabel(Enum):
     SUSTAINABLE = "Sustainable"
     INCOME_FOCUSED = "Income Focused"
     CAPITAL_APPRECIATION = "Capital Appreciation"
+    DEFENSIVE = "Defensive"
+    CYCLICAL = "Cyclical"
 
 @dataclass
 class FundHolding:
@@ -208,6 +210,8 @@ class AILabeler:
                 "Mid Cap": AILabel.MID_CAP,
                 "Income Focused": AILabel.INCOME_FOCUSED,
                 "REITs": AILabel.REAL_ESTATE,
+                "Defensive": AILabel.DEFENSIVE,
+                "Cyclical": AILabel.CYCLICAL,
             }
             for theme in themes:
                 if theme in theme_map:

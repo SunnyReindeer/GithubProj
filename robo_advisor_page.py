@@ -1,5 +1,6 @@
 """
-Robo Advisor Page for Risk Assessment and Strategy Recommendations
+Robo Advisor Page - Fund-Based Portfolio Recommendations (Like Syfe)
+Uses AI labeling for sectors and themes
 """
 import streamlit as st
 import pandas as pd
@@ -11,8 +12,7 @@ from typing import Dict, List, Any
 
 # Import our robo advisor modules
 from risk_assessment_engine import risk_engine, RiskProfile, RiskTolerance, InvestmentHorizon, ExperienceLevel
-from strategy_recommender import strategy_recommender, StrategyRecommendation
-from portfolio_optimizer import portfolio_optimizer, OptimizationResult, OptimizationMethod
+from fund_portfolio_manager import fund_manager, FundPortfolio, FundHolding, AILabel, PortfolioTheme
 
 def get_diversified_symbols(profile: RiskProfile) -> List[str]:
     """Get diversified symbols based on risk profile"""
@@ -188,51 +188,88 @@ def display_risk_profile(profile: RiskProfile):
         use_container_width=True
     )
 
-def display_strategy_recommendations(strategies: List[StrategyRecommendation]):
-    """Display recommended trading strategies"""
-    st.markdown("## 🤖 AI Strategy Recommendations")
+def display_fund_portfolios(portfolios: List[FundPortfolio]):
+    """Display recommended fund portfolios (like Syfe)"""
+    st.markdown("## 💼 Recommended Fund Portfolios")
+    st.markdown("These are diversified portfolios designed to match your risk profile, similar to Syfe's approach.")
     
-    if not strategies:
-        st.warning("No suitable strategies found for your risk profile.")
+    if not portfolios:
+        st.warning("No suitable portfolios found for your risk profile.")
         return
     
-    # Strategy overview
-    st.markdown("### 📈 Recommended Strategies")
+    # Portfolio overview cards
+    st.markdown("### 📊 Portfolio Overview")
     
-    for i, strategy in enumerate(strategies):
-        with st.expander(f"{i+1}. {strategy.strategy_name} (Suitability: {strategy.suitability_score:.0f}%)"):
+    # Create portfolio cards
+    cols = st.columns(min(len(portfolios), 3))
+    for i, (col, portfolio) in enumerate(zip(cols, portfolios)):
+        with col:
+            # Risk level color
+            risk_color = "#27ae60" if portfolio.risk_level <= 4 else "#f39c12" if portfolio.risk_level <= 7 else "#e74c3c"
+            
+            st.markdown(f"""
+            <div style="
+                background: white;
+                padding: 1.5rem;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                border-left: 4px solid {risk_color};
+                margin-bottom: 1rem;
+            ">
+                <h3 style="margin: 0 0 0.5rem 0; color: #2c3e50;">{portfolio.name}</h3>
+                <p style="margin: 0 0 0.5rem 0; color: #7f8c8d; font-size: 0.9rem;">{portfolio.description}</p>
+                <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+                    <div>
+                        <p style="margin: 0; font-size: 0.8rem; color: #7f8c8d;">Expected Return</p>
+                        <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: #27ae60;">{portfolio.expected_return:.1f}%</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-size: 0.8rem; color: #7f8c8d;">Risk Level</p>
+                        <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: {risk_color};">{portfolio.risk_level}/10</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-size: 0.8rem; color: #7f8c8d;">Match</p>
+                        <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: #3498db;">{portfolio.suitability_score:.0f}%</p>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Detailed portfolio view
+    st.markdown("### 📋 Portfolio Details")
+    
+    for i, portfolio in enumerate(portfolios):
+        with st.expander(f"📊 {portfolio.name} - {portfolio.suitability_score:.0f}% Match", expanded=(i == 0)):
+            # Portfolio description and metrics
             col1, col2 = st.columns([2, 1])
             
             with col1:
-                st.markdown(f"**Description:** {strategy.description}")
-                st.markdown(f"**Category:** {strategy.category.value.replace('_', ' ').title()}")
-                st.markdown(f"**Time Horizon:** {strategy.time_horizon}")
-                st.markdown(f"**Complexity:** {strategy.complexity}")
+                st.markdown(f"**Description:** {portfolio.description}")
+                st.markdown(f"**Rebalancing:** {portfolio.rebalancing_frequency}")
                 
                 # Performance metrics
                 st.markdown("**Expected Performance:**")
                 col_metrics1, col_metrics2, col_metrics3 = st.columns(3)
                 with col_metrics1:
-                    st.metric("Expected Return", f"{strategy.expected_return:.1f}%")
+                    st.metric("Expected Return", f"{portfolio.expected_return:.1f}%")
                 with col_metrics2:
-                    st.metric("Max Drawdown", f"{strategy.max_drawdown:.1f}%")
+                    st.metric("Volatility", f"{portfolio.expected_volatility:.1f}%")
                 with col_metrics3:
-                    st.metric("Volatility", f"{strategy.volatility:.1%}")
+                    st.metric("Risk Level", f"{portfolio.risk_level}/10")
             
             with col2:
                 # Suitability score gauge
                 fig = go.Figure(go.Indicator(
-                    mode = "gauge+number+delta",
-                    value = strategy.suitability_score,
+                    mode = "gauge+number",
+                    value = portfolio.suitability_score,
                     domain = {'x': [0, 1], 'y': [0, 1]},
-                    title = {'text': "Suitability Score"},
-                    delta = {'reference': 80},
+                    title = {'text': "Match Score"},
                     gauge = {
                         'axis': {'range': [None, 100]},
-                        'bar': {'color': "darkblue"},
+                        'bar': {'color': "#3498db"},
                         'steps': [
-                            {'range': [0, 50], 'color': "lightgray"},
-                            {'range': [50, 80], 'color': "yellow"},
+                            {'range': [0, 60], 'color': "lightgray"},
+                            {'range': [60, 80], 'color': "yellow"},
                             {'range': [80, 100], 'color': "green"}
                         ],
                         'threshold': {
@@ -245,170 +282,201 @@ def display_strategy_recommendations(strategies: List[StrategyRecommendation]):
                 fig.update_layout(height=200)
                 st.plotly_chart(fig, use_container_width=True)
             
-            # Pros and Cons
-            col_pros, col_cons = st.columns(2)
-            with col_pros:
-                st.markdown("**✅ Pros:**")
-                for pro in strategy.pros:
-                    st.markdown(f"• {pro}")
+            # Portfolio holdings with AI labels
+            st.markdown("### 💎 Portfolio Holdings")
+            st.markdown("Each holding includes AI-generated labels for sectors, themes, and characteristics.")
             
-            with col_cons:
-                st.markdown("**❌ Cons:**")
-                for con in strategy.cons:
-                    st.markdown(f"• {con}")
-            
-            # Strategy parameters
-            st.markdown("**⚙️ Strategy Parameters:**")
-            if strategy.parameters:
-                # Convert all values to strings to avoid PyArrow serialization issues
-                params_data = []
-                for k, v in strategy.parameters.items():
-                    # Convert complex objects to strings
-                    if isinstance(v, (list, dict)):
-                        value_str = str(v)
-                    elif isinstance(v, float):
-                        value_str = f"{v:.2f}"
-                    else:
-                        value_str = str(v)
-                    
-                    params_data.append({
-                        "Parameter": k.replace('_', ' ').title(),
-                        "Value": value_str
-                    })
+            holdings_data = []
+            for holding in portfolio.holdings:
+                # Format AI labels
+                label_texts = [label.value for label in holding.ai_labels]
+                labels_str = ", ".join(label_texts[:5])  # Show first 5 labels
                 
-                params_df = pd.DataFrame(params_data)
-                st.dataframe(params_df, use_container_width=True)
-            else:
-                st.info("No specific parameters for this strategy")
+                holdings_data.append({
+                    "Symbol": holding.symbol,
+                    "Name": holding.name,
+                    "Type": holding.asset_class,
+                    "Allocation": f"{holding.allocation:.1%}",
+                    "AI Labels": labels_str,
+                    "Description": holding.description
+                })
             
-            # Recommended symbols
-            st.markdown(f"**📊 Recommended Trading Pairs:** {', '.join(strategy.symbols)}")
+            df_holdings = pd.DataFrame(holdings_data)
+            st.dataframe(df_holdings, use_container_width=True, hide_index=True)
+            
+            # Allocation pie chart
+            st.markdown("#### 📊 Allocation Breakdown")
+            
+            allocation_data = []
+            for holding in portfolio.holdings:
+                allocation_data.append({
+                    'Holding': f"{holding.symbol} ({holding.name})",
+                    'Allocation': holding.allocation * 100
+                })
+            
+            df_allocation = pd.DataFrame(allocation_data)
+            
+            fig = px.pie(
+                df_allocation,
+                values='Allocation',
+                names='Holding',
+                title=f"{portfolio.name} - Asset Allocation",
+                color_discrete_sequence=px.colors.qualitative.Set3
+            )
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # AI Labels breakdown
+            st.markdown("#### 🤖 AI Labels Analysis")
+            
+            # Count labels across all holdings
+            label_counts = {}
+            for holding in portfolio.holdings:
+                for label in holding.ai_labels:
+                    label_counts[label.value] = label_counts.get(label.value, 0) + 1
+            
+            if label_counts:
+                labels_df = pd.DataFrame(list(label_counts.items()), columns=['Label', 'Count'])
+                labels_df = labels_df.sort_values('Count', ascending=False)
+                
+                fig = px.bar(
+                    labels_df,
+                    x='Count',
+                    y='Label',
+                    orientation='h',
+                    title="Most Common AI Labels in Portfolio",
+                    color='Count',
+                    color_continuous_scale='Blues'
+                )
+                fig.update_layout(height=400)
+                st.plotly_chart(fig, use_container_width=True)
 
-def display_portfolio_optimization(profile: RiskProfile, strategies: List[StrategyRecommendation]):
-    """Display portfolio optimization results"""
-    st.markdown("## 🎯 Portfolio Optimization")
+def display_portfolio_details(profile: RiskProfile, portfolio: FundPortfolio):
+    """Display detailed portfolio information with AI labels"""
+    st.markdown(f"## 📊 {portfolio.name} - Detailed Analysis")
     
-    # Get diversified symbols based on risk profile
-    symbols = get_diversified_symbols(profile)
+    # Portfolio summary
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Expected Return", f"{portfolio.expected_return:.1f}%")
+    with col2:
+        st.metric("Volatility", f"{portfolio.expected_volatility:.1f}%")
+    with col3:
+        st.metric("Risk Level", f"{portfolio.risk_level}/10")
+    with col4:
+        st.metric("Match Score", f"{portfolio.suitability_score:.0f}%")
     
-    if not symbols:
-        st.warning("No symbols available for optimization.")
+    # Holdings with AI labels
+    st.markdown("### 💎 Holdings with AI Labels")
+    
+    for holding in portfolio.holdings:
+        with st.expander(f"{holding.symbol} - {holding.name} ({holding.allocation:.1%})"):
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.markdown(f"**Description:** {holding.description}")
+                st.markdown(f"**Asset Class:** {holding.asset_class}")
+                st.markdown(f"**Allocation:** {holding.allocation:.1%}")
+                
+                # AI Labels
+                st.markdown("**🤖 AI Labels:**")
+                label_cols = st.columns(4)
+                for i, label in enumerate(holding.ai_labels[:8]):  # Show up to 8 labels
+                    with label_cols[i % 4]:
+                        st.markdown(f"""
+                        <div style="
+                            background: #e8f4f8;
+                            padding: 0.3rem 0.5rem;
+                            border-radius: 5px;
+                            margin: 0.2rem 0;
+                            font-size: 0.8rem;
+                            text-align: center;
+                        ">{label.value}</div>
+                        """, unsafe_allow_html=True)
+            
+            with col2:
+                # Try to get real-time price
+                try:
+                    import yfinance as yf
+                    ticker = yf.Ticker(holding.symbol)
+                    info = ticker.info
+                    current_price = info.get('currentPrice', info.get('regularMarketPrice', 'N/A'))
+                    if current_price != 'N/A':
+                        st.metric("Current Price", f"${current_price:.2f}")
+                except:
+                    pass
+    
+    # Sector breakdown by AI labels
+    st.markdown("### 📈 Portfolio Composition by AI Labels")
+    
+    # Group by sector labels
+    sector_allocations = {}
+    theme_allocations = {}
+    
+    for holding in portfolio.holdings:
+        for label in holding.ai_labels:
+            label_str = label.value
+            
+            # Check if it's a sector
+            if label_str in ["Technology", "Healthcare", "Financial Services", "Energy", 
+                           "Consumer", "Industrial", "Materials", "Utilities", "Real Estate", 
+                           "Communication Services"]:
+                if label_str not in sector_allocations:
+                    sector_allocations[label_str] = 0
+                sector_allocations[label_str] += holding.allocation
+            
+            # Check if it's a theme
+            if label_str in ["Growth Stock", "Value Stock", "Dividend Stock", "Blue Chip",
+                           "Large Cap", "Small Cap", "Mid Cap", "ESG Compliant", 
+                           "Income Focused", "Capital Appreciation"]:
+                if label_str not in theme_allocations:
+                    theme_allocations[label_str] = 0
+                theme_allocations[label_str] += holding.allocation
+    
+    if sector_allocations:
+        st.markdown("#### 🏢 Sector Allocation")
+        sector_df = pd.DataFrame(list(sector_allocations.items()), columns=['Sector', 'Allocation'])
+        sector_df['Allocation'] = sector_df['Allocation'] * 100
+        sector_df = sector_df.sort_values('Allocation', ascending=False)
+        
+        fig = px.bar(
+            sector_df,
+            x='Allocation',
+            y='Sector',
+            orientation='h',
+            title="Portfolio by Sector (AI Labeled)",
+            color='Allocation',
+            color_continuous_scale='Blues'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    if theme_allocations:
+        st.markdown("#### 🎯 Theme Allocation")
+        theme_df = pd.DataFrame(list(theme_allocations.items()), columns=['Theme', 'Allocation'])
+        theme_df['Allocation'] = theme_df['Allocation'] * 100
+        theme_df = theme_df.sort_values('Allocation', ascending=False)
+        
+        fig = px.bar(
+            theme_df,
+            x='Allocation',
+            y='Theme',
+            orientation='h',
+            title="Portfolio by Investment Theme (AI Labeled)",
+            color='Allocation',
+            color_continuous_scale='Greens'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+def display_investment_plan(profile: RiskProfile, portfolios: List[FundPortfolio]):
+    """Display comprehensive investment plan based on fund portfolios"""
+    st.markdown("## 📋 Your Personalized Investment Plan")
+    
+    if not portfolios:
+        st.warning("No portfolios available for plan generation.")
         return
     
-    # Show selected symbols for optimization
-    st.info(f"**Selected Assets for Optimization:** {', '.join(symbols)}")
-    
-    # Optimization method selection
-    st.markdown("### 🔧 Optimization Settings")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        optimization_method = st.selectbox(
-            "Optimization Method",
-            options=[method.value for method in OptimizationMethod],
-            format_func=lambda x: x.replace('_', ' ').title()
-        )
-    
-    with col2:
-        show_advanced = st.checkbox("Show Advanced Options")
-    
-    if show_advanced:
-        st.markdown("**Advanced Settings:**")
-        col_adv1, col_adv2 = st.columns(2)
-        with col_adv1:
-            rebalancing_threshold = st.slider("Rebalancing Threshold", 0.01, 0.20, 0.05, 0.01)
-        with col_adv2:
-            max_position_size = st.slider("Max Position Size", 0.1, 0.5, 0.3, 0.05)
-    
-    # Run optimization
-    if st.button("🚀 Optimize Portfolio", type="primary"):
-        with st.spinner("Optimizing portfolio..."):
-            try:
-                method = OptimizationMethod(optimization_method)
-                result = portfolio_optimizer.optimize_portfolio(symbols, profile, method)
-                
-                # Display optimization results
-                st.markdown("### 📊 Optimization Results")
-                
-                # Key metrics
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    st.metric("Expected Return", f"{result.expected_return:.2%}")
-                with col2:
-                    st.metric("Volatility", f"{result.expected_volatility:.2%}")
-                with col3:
-                    st.metric("Sharpe Ratio", f"{result.sharpe_ratio:.2f}")
-                with col4:
-                    st.metric("Max Drawdown", f"{result.max_drawdown:.2%}")
-                
-                # Portfolio allocation chart
-                st.markdown("### 💼 Optimized Portfolio Allocation")
-                
-                allocation_data = []
-                for symbol, weight in result.optimal_weights.items():
-                    if weight > 0.01:  # Only show weights > 1%
-                        allocation_data.append({
-                            'Symbol': symbol,
-                            'Weight': weight * 100
-                        })
-                
-                if allocation_data:
-                    df_allocation = pd.DataFrame(allocation_data)
-                    
-                    # Bar chart
-                    fig = px.bar(
-                        df_allocation,
-                        x='Symbol',
-                        y='Weight',
-                        title="Optimized Portfolio Weights",
-                        color='Weight',
-                        color_continuous_scale='Viridis'
-                    )
-                    fig.update_layout(height=400)
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Allocation table
-                    st.dataframe(
-                        df_allocation.style.format({'Weight': '{:.1f}%'}),
-                        use_container_width=True
-                    )
-                
-                # Risk analysis
-                st.markdown("### 📈 Risk Analysis")
-                
-                # Generate optimization report
-                report = portfolio_optimizer.generate_optimization_report(result, profile)
-                
-                # Risk match assessment
-                risk_match = report['risk_analysis']['risk_tolerance_match']
-                st.info(f"**Risk Profile Match:** {risk_match}")
-                
-                # Diversification score
-                div_score = report['risk_analysis']['diversification_score']
-                st.metric("Diversification Score", f"{div_score:.1f}/100")
-                
-                # Concentration risk
-                concentration = report['risk_analysis']['concentration_risk']
-                st.warning(f"**Concentration Risk:** {concentration}")
-                
-                # Recommendations
-                st.markdown("### 💡 Recommendations")
-                for recommendation in report['recommendations']:
-                    st.markdown(f"• {recommendation}")
-                
-                # Store results in session state
-                st.session_state.optimization_result = result
-                st.session_state.optimization_report = report
-                
-            except Exception as e:
-                st.error(f"Optimization failed: {str(e)}")
-
-def display_trading_plan(profile: RiskProfile, strategies: List[StrategyRecommendation]):
-    """Display comprehensive trading plan"""
-    st.markdown("## 📋 Your Personalized Trading Plan")
-    
-    # Generate trading plan
-    trading_plan = strategy_recommender.generate_trading_plan(profile, strategies)
+    # Use the top recommended portfolio
+    recommended_portfolio = portfolios[0]
     
     # Plan overview
     st.markdown("### 🎯 Plan Overview")
@@ -416,70 +484,128 @@ def display_trading_plan(profile: RiskProfile, strategies: List[StrategyRecommen
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Your Profile:**")
-        st.markdown(f"• Risk Tolerance: {trading_plan['user_profile']['risk_tolerance'].title()}")
-        st.markdown(f"• Investment Horizon: {trading_plan['user_profile']['investment_horizon'].replace('_', ' ').title()}")
-        st.markdown(f"• Experience Level: {trading_plan['user_profile']['experience_level'].title()}")
-        st.markdown(f"• Risk Score: {trading_plan['user_profile']['risk_score']:.0f}/100")
+        st.markdown(f"• Risk Tolerance: {profile.risk_tolerance.value.title()}")
+        st.markdown(f"• Investment Horizon: {profile.investment_horizon.value.replace('_', ' ').title()}")
+        st.markdown(f"• Experience Level: {profile.experience_level.value.title()}")
+        st.markdown(f"• Risk Score: {profile.score:.0f}/100")
     
     with col2:
-        st.markdown("**Expected Performance:**")
-        perf = trading_plan['expected_performance']
-        st.markdown(f"• Annual Return: {perf['annual_return']:.1f}%")
-        st.markdown(f"• Volatility: {perf['volatility']:.1f}%")
-        st.markdown(f"• Max Drawdown: {perf['max_drawdown']:.1f}%")
-        st.markdown(f"• Sharpe Ratio: {perf['sharpe_ratio']:.2f}")
+        st.markdown("**Recommended Portfolio:**")
+        st.markdown(f"• **{recommended_portfolio.name}**")
+        st.markdown(f"• Expected Return: {recommended_portfolio.expected_return:.1f}%")
+        st.markdown(f"• Volatility: {recommended_portfolio.expected_volatility:.1f}%")
+        st.markdown(f"• Risk Level: {recommended_portfolio.risk_level}/10")
+        st.markdown(f"• Match Score: {recommended_portfolio.suitability_score:.0f}%")
     
-    # Strategy allocation
-    st.markdown("### 📊 Strategy Allocation")
+    # Portfolio allocation summary
+    st.markdown("### 💼 Portfolio Allocation Summary")
     
-    strategy_data = []
-    for strategy in trading_plan['recommended_strategies']:
-        strategy_data.append({
-            'Strategy': strategy['name'],
-            'Allocation': f"{strategy['allocation']:.1%}",
-            'Expected Return': f"{strategy['expected_return']:.1f}%",
-            'Max Drawdown': f"{strategy['max_drawdown']:.1f}%",
-            'Suitability': f"{strategy['suitability_score']:.0f}%"
+    allocation_summary = []
+    for holding in recommended_portfolio.holdings:
+        allocation_summary.append({
+            'Symbol': holding.symbol,
+            'Name': holding.name,
+            'Type': holding.asset_class,
+            'Allocation': f"{holding.allocation:.1%}",
+            'AI Labels': ", ".join([label.value for label in holding.ai_labels[:3]])
         })
     
-    df_strategies = pd.DataFrame(strategy_data)
-    st.dataframe(df_strategies, use_container_width=True)
+    df_summary = pd.DataFrame(allocation_summary)
+    st.dataframe(df_summary, use_container_width=True, hide_index=True)
     
     # Implementation plan
     st.markdown("### 🚀 Implementation Plan")
     
-    implementation = trading_plan['implementation_plan']
-    for phase, description in implementation.items():
-        st.markdown(f"**{phase.replace('_', ' ').title()}:** {description}")
+    st.markdown(f"""
+    **Step 1: Initial Investment**
+    - Start with the recommended portfolio: **{recommended_portfolio.name}**
+    - Allocate funds according to the percentages shown above
+    - Consider dollar-cost averaging for large investments
+    
+    **Step 2: Rebalancing**
+    - Rebalancing Frequency: **{recommended_portfolio.rebalancing_frequency}**
+    - Monitor your portfolio regularly
+    - Rebalance when allocations drift more than 5% from target
+    
+    **Step 3: Monitoring**
+    - Review performance quarterly
+    - Check if your risk profile has changed
+    - Adjust portfolio if your goals change
+    """)
     
     # Risk management
     st.markdown("### ⚠️ Risk Management")
     
-    risk_mgmt = trading_plan['risk_management']
-    st.markdown(f"**Rebalancing Frequency:** {risk_mgmt['rebalancing_frequency']}")
+    st.markdown(f"""
+    **Portfolio Risk Level:** {recommended_portfolio.risk_level}/10
     
-    st.markdown("**Risk Metrics:**")
-    for metric, value in risk_mgmt['risk_metrics'].items():
-        st.markdown(f"• {metric.replace('_', ' ').title()}: {value}")
+    **Risk Factors:**
+    - Expected Volatility: {recommended_portfolio.expected_volatility:.1f}%
+    - Diversification: {len(recommended_portfolio.holdings)} holdings across different asset classes
+    - AI Label Analysis: Portfolio includes {len(set([label.value for holding in recommended_portfolio.holdings for label in holding.ai_labels]))} different AI-labeled categories
     
-    # Market analysis
-    st.markdown("### 📈 Market Analysis")
+    **Recommendations:**
+    - Monitor your portfolio regularly
+    - Stay within your risk tolerance
+    - Consider adding more conservative holdings if market conditions change
+    """)
     
-    market_analysis = trading_plan['market_analysis']
-    st.markdown(f"**Current Trend:** {market_analysis['current_trend']}")
-    st.markdown(f"**Volatility Level:** {market_analysis['volatility_level']}")
-    st.markdown(f"**Market Phase:** {market_analysis['market_phase']}")
-    st.markdown(f"**Recommended Approach:** {market_analysis['recommended_approach']}")
+    # AI Labels summary
+    st.markdown("### 🤖 AI Labels Summary")
+    
+    all_labels = {}
+    for holding in recommended_portfolio.holdings:
+        for label in holding.ai_labels:
+            all_labels[label.value] = all_labels.get(label.value, 0) + holding.allocation
+    
+    if all_labels:
+        labels_df = pd.DataFrame(list(all_labels.items()), columns=['Label', 'Weight'])
+        labels_df['Weight'] = labels_df['Weight'] * 100
+        labels_df = labels_df.sort_values('Weight', ascending=False).head(10)
+        
+        st.markdown("**Top 10 AI Labels in Your Portfolio:**")
+        st.dataframe(labels_df.style.format({'Weight': '{:.1f}%'}), use_container_width=True, hide_index=True)
     
     # Download plan
-    st.markdown("### 💾 Download Your Plan")
+    st.markdown("### 💾 Download Your Investment Plan")
     
-    plan_json = json.dumps(trading_plan, indent=2, default=str)
+    plan_data = {
+        "user_profile": {
+            "risk_tolerance": profile.risk_tolerance.value,
+            "risk_score": profile.score,
+            "investment_horizon": profile.investment_horizon.value,
+            "experience_level": profile.experience_level.value
+        },
+        "recommended_portfolio": {
+            "name": recommended_portfolio.name,
+            "theme": recommended_portfolio.theme.value,
+            "description": recommended_portfolio.description,
+            "expected_return": recommended_portfolio.expected_return,
+            "expected_volatility": recommended_portfolio.expected_volatility,
+            "risk_level": recommended_portfolio.risk_level,
+            "suitability_score": recommended_portfolio.suitability_score,
+            "rebalancing_frequency": recommended_portfolio.rebalancing_frequency
+        },
+        "holdings": [
+            {
+                "symbol": h.symbol,
+                "name": h.name,
+                "allocation": h.allocation,
+                "asset_class": h.asset_class,
+                "ai_labels": [label.value for label in h.ai_labels],
+                "description": h.description
+            }
+            for h in recommended_portfolio.holdings
+        ],
+        "generated_at": datetime.now().isoformat()
+    }
+    
+    plan_json = json.dumps(plan_data, indent=2, default=str)
     
     st.download_button(
-        label="📥 Download Trading Plan (JSON)",
+        label="📥 Download Investment Plan (JSON)",
         data=plan_json,
-        file_name=f"trading_plan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+        file_name=f"investment_plan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
         mime="application/json"
     )
 
@@ -503,7 +629,7 @@ def main():
     )
     
     st.markdown("# 🤖 AI Robo Advisor")
-    st.markdown("Get personalized trading strategies based on your risk profile and investment goals.")
+    st.markdown("Get personalized fund portfolio recommendations (like Syfe) with AI-labeled investments based on your risk profile.")
     
     # Show tutorial hints
     show_tutorial_hints()
@@ -511,17 +637,17 @@ def main():
     # Initialize session state
     if 'risk_profile' not in st.session_state:
         st.session_state.risk_profile = None
-    if 'strategy_recommendations' not in st.session_state:
-        st.session_state.strategy_recommendations = None
-    if 'trading_plan' not in st.session_state:
-        st.session_state.trading_plan = None
+    if 'fund_portfolios' not in st.session_state:
+        st.session_state.fund_portfolios = None
+    if 'selected_portfolio' not in st.session_state:
+        st.session_state.selected_portfolio = None
     
     # Create tabs
     tab1, tab2, tab3, tab4 = st.tabs([
         "🎯 Risk Assessment", 
-        "📊 Strategy Recommendations", 
-        "🎯 Portfolio Optimization",
-        "📋 Trading Plan"
+        "💼 Fund Portfolios", 
+        "📊 Portfolio Details",
+        "📋 Investment Plan"
     ])
     
     with tab1:
@@ -547,41 +673,60 @@ def main():
                 st.error("Please answer all questions to proceed.")
     
     with tab2:
-        st.markdown("### Step 2: AI Strategy Recommendations")
+        st.markdown("### Step 2: Fund Portfolio Recommendations")
+        st.markdown("Get recommended fund portfolios (like Syfe) that match your risk profile. Each portfolio includes AI-labeled investments.")
         
         if st.session_state.risk_profile:
             profile = st.session_state.risk_profile
             
-            if st.button("🤖 Get Strategy Recommendations", type="primary"):
-                with st.spinner("Analyzing strategies for your profile..."):
-                    # Get strategy recommendations
-                    strategies = strategy_recommender.recommend_strategies(profile, max_strategies=5)
-                    st.session_state.strategy_recommendations = strategies
+            if st.button("💼 Get Fund Portfolio Recommendations", type="primary"):
+                with st.spinner("Analyzing portfolios for your profile..."):
+                    # Get fund portfolio recommendations
+                    portfolios = fund_manager.recommend_portfolios(profile, max_portfolios=3)
+                    st.session_state.fund_portfolios = portfolios
+                    
+                    if portfolios:
+                        st.success(f"✅ Found {len(portfolios)} suitable portfolio(s) for your risk profile!")
                     
                     # Display recommendations
-                    display_strategy_recommendations(strategies)
+                    display_fund_portfolios(portfolios)
+            elif st.session_state.fund_portfolios:
+                # Show existing recommendations
+                display_fund_portfolios(st.session_state.fund_portfolios)
         else:
             st.info("Please complete the risk assessment first.")
     
     with tab3:
-        st.markdown("### Step 3: Portfolio Optimization")
+        st.markdown("### Step 3: Portfolio Details & AI Labels")
         
-        if st.session_state.risk_profile and st.session_state.strategy_recommendations:
+        if st.session_state.risk_profile and st.session_state.fund_portfolios:
             profile = st.session_state.risk_profile
-            strategies = st.session_state.strategy_recommendations
+            portfolios = st.session_state.fund_portfolios
             
-            display_portfolio_optimization(profile, strategies)
+            # Portfolio selector
+            portfolio_names = [p.name for p in portfolios]
+            selected_name = st.selectbox(
+                "Select Portfolio to View Details",
+                portfolio_names,
+                index=0
+            )
+            
+            selected_portfolio = next(p for p in portfolios if p.name == selected_name)
+            st.session_state.selected_portfolio = selected_portfolio
+            
+            # Display detailed portfolio
+            display_portfolio_details(profile, selected_portfolio)
         else:
-            st.info("Please complete the risk assessment and get strategy recommendations first.")
+            st.info("Please complete the risk assessment and get portfolio recommendations first.")
     
     with tab4:
-        st.markdown("### Step 4: Your Personalized Trading Plan")
+        st.markdown("### Step 4: Your Personalized Investment Plan")
         
-        if st.session_state.risk_profile and st.session_state.strategy_recommendations:
+        if st.session_state.risk_profile and st.session_state.fund_portfolios:
             profile = st.session_state.risk_profile
-            strategies = st.session_state.strategy_recommendations
+            portfolios = st.session_state.fund_portfolios
             
-            display_trading_plan(profile, strategies)
+            display_investment_plan(profile, portfolios)
         else:
             st.info("Please complete all previous steps first.")
     
@@ -589,19 +734,28 @@ def main():
     with st.sidebar:
         st.markdown("## ℹ️ About Robo Advisor")
         st.markdown("""
-        Our AI-powered robo advisor analyzes your risk preferences and recommends personalized trading strategies.
+        Our AI-powered robo advisor (like Syfe) creates personalized fund portfolios based on your risk profile.
         
         **Features:**
         - 🎯 Risk assessment questionnaire
-        - 🤖 AI strategy matching
-        - 🎯 Portfolio optimization
-        - 📋 Personalized trading plans
+        - 💼 Fund portfolio recommendations
+        - 🤖 AI labeling for sectors & themes
+        - 📊 Detailed portfolio analysis
+        - 📋 Personalized investment plans
         
         **How it works:**
         1. Complete the risk assessment
-        2. Get AI strategy recommendations
-        3. Optimize your portfolio
-        4. Download your trading plan
+        2. Get fund portfolio recommendations
+        3. View portfolio details with AI labels
+        4. Download your investment plan
+        
+        **AI Labels:**
+        Each investment is automatically labeled with:
+        - Sectors (Technology, Healthcare, etc.)
+        - Themes (Growth, Value, Dividend, etc.)
+        - Geographic regions
+        - Risk levels
+        - Investment styles
         """)
         
         if st.session_state.risk_profile:
@@ -610,6 +764,12 @@ def main():
             st.markdown(f"**Risk Tolerance:** {profile.risk_tolerance.value.title()}")
             st.markdown(f"**Risk Score:** {profile.score:.0f}/100")
             st.markdown(f"**Experience:** {profile.experience_level.value.title()}")
+            
+            if st.session_state.fund_portfolios:
+                st.markdown("## 💼 Recommended Portfolios")
+                for i, portfolio in enumerate(st.session_state.fund_portfolios[:3]):
+                    st.markdown(f"**{i+1}. {portfolio.name}**")
+                    st.markdown(f"   Match: {portfolio.suitability_score:.0f}% | Risk: {portfolio.risk_level}/10")
 
 if __name__ == "__main__":
     main()
