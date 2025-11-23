@@ -1073,8 +1073,8 @@ def get_economic_calendar():
         current_date = datetime.now()
         events = []
         
-        # Generate events for the next 30 days
-        for day_offset in range(30):
+        # Generate events for the next 90 days
+        for day_offset in range(90):
             event_date = current_date + timedelta(days=day_offset)
             date_str = event_date.strftime("%Y-%m-%d")
             day_name = event_date.strftime("%A")
@@ -1256,6 +1256,111 @@ def get_economic_calendar():
                     "previous": "-0.1%",
                     "category": "Interest Rates"
                 })
+            
+            # Add more events throughout the 90-day period
+            # Weekly events (every 7 days)
+            if day_offset % 7 == 4 and day_offset > 0:  # Every Thursday after first week
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "08:30 EST",
+                    "event": "Initial Jobless Claims",
+                    "country": "US",
+                    "country_flag": "🇺🇸",
+                    "importance": "Medium",
+                    "forecast": "220K",
+                    "previous": "218K",
+                    "category": "Employment"
+                })
+            
+            # Monthly events (first business day of each month)
+            if day_offset in [30, 60]:  # Approximate monthly intervals
+                events.extend([
+                    {
+                        "date": date_str,
+                        "datetime": event_date,
+                        "time": "08:30 EST",
+                        "event": "Non-Farm Payrolls",
+                        "country": "US",
+                        "country_flag": "🇺🇸",
+                        "importance": "High",
+                        "forecast": "200K",
+                        "previous": "187K",
+                        "category": "Employment"
+                    },
+                    {
+                        "date": date_str,
+                        "datetime": event_date,
+                        "time": "10:00 EST",
+                        "event": "ISM Manufacturing PMI",
+                        "country": "US",
+                        "country_flag": "🇺🇸",
+                        "importance": "High",
+                        "forecast": "52.0",
+                        "previous": "51.5",
+                        "category": "Manufacturing"
+                    }
+                ])
+            
+            # Quarterly events
+            if day_offset in [45, 75]:  # Quarterly intervals
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "08:30 EST",
+                    "event": "GDP Preliminary Release",
+                    "country": "US",
+                    "country_flag": "🇺🇸",
+                    "importance": "High",
+                    "forecast": "2.3%",
+                    "previous": "2.1%",
+                    "category": "GDP"
+                })
+            
+            # FOMC meetings (approximately every 6-8 weeks)
+            if day_offset in [28, 56, 84]:
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "14:00 EST",
+                    "event": "FOMC Interest Rate Decision",
+                    "country": "US",
+                    "country_flag": "🇺🇸",
+                    "importance": "High",
+                    "forecast": "5.25%",
+                    "previous": "5.25%",
+                    "category": "Interest Rates"
+                })
+            
+            # European Central Bank events
+            if day_offset in [14, 44, 74]:
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "08:45 CET",
+                    "event": "ECB Interest Rate Decision",
+                    "country": "EU",
+                    "country_flag": "🇪🇺",
+                    "importance": "High",
+                    "forecast": "4.50%",
+                    "previous": "4.50%",
+                    "category": "Interest Rates"
+                })
+            
+            # China economic data
+            if day_offset in [10, 40, 70]:
+                events.append({
+                    "date": date_str,
+                    "datetime": event_date,
+                    "time": "02:00 CST",
+                    "event": "China GDP Growth Rate",
+                    "country": "China",
+                    "country_flag": "🇨🇳",
+                    "importance": "High",
+                    "forecast": "5.2%",
+                    "previous": "5.0%",
+                    "category": "GDP"
+                })
         
         # Sort events by date and time
         events.sort(key=lambda x: (x["datetime"], x["time"]))
@@ -1281,7 +1386,7 @@ def display_economic_events_section():
     # Filter options
     col1, col2 = st.columns(2)
     with col1:
-        time_filter = st.selectbox("Filter by Time", ["All", "Today", "This Week", "This Month"], key="time_filter")
+        time_filter = st.selectbox("Filter by Time", ["All (90 Days)", "Today", "This Week", "This Month", "Next 3 Months"], key="time_filter")
     with col2:
         importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"], key="importance_filter")
     
@@ -1299,6 +1404,10 @@ def display_economic_events_section():
     elif time_filter == "This Month":
         month_end = (current_date + timedelta(days=30)).strftime("%Y-%m-%d")
         filtered_events = [e for e in filtered_events if e["date"] <= month_end and e["date"] >= today]
+    elif time_filter == "Next 3 Months":
+        three_months_end = (current_date + timedelta(days=90)).strftime("%Y-%m-%d")
+        filtered_events = [e for e in filtered_events if e["date"] <= three_months_end and e["date"] >= today]
+    # "All (90 Days)" shows all events from the calendar (which generates 90 days of events)
     
     # Importance filter
     if importance_filter != "All":
