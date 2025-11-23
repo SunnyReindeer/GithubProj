@@ -1444,11 +1444,12 @@ def display_economic_events_section():
             event_date = datetime.strptime(date_key, "%Y-%m-%d")
             date_display = event_date.strftime("%B %d, %Y (%A)")
             
-            # Highlight today's events
+            # Use Streamlit's native markdown with proper escaping
+            st.markdown("")  # Add spacing
             if date_key == today:
-                st.markdown(f"#### 🎯 {date_display} (Today)")
+                st.markdown(f"### 🎯 {date_display} (Today)")
             else:
-                st.markdown(f"#### 📅 {date_display}")
+                st.markdown(f"### 📅 {date_display}")
             
             for event in sorted(date_events, key=lambda x: x["time"]):
                 importance_color = {
