@@ -19,20 +19,30 @@ def get_alpha_vantage_data(symbol, function="GLOBAL_QUOTE"):
     try:
         params = {
             "function": function,
-            "symbol": symbol,
             "apikey": ALPHA_VANTAGE_API_KEY
         }
+        
+        # Add symbol only if it's not a time series function
+        if function == "GLOBAL_QUOTE":
+            params["symbol"] = symbol
+        elif function == "TIME_SERIES_DAILY":
+            params["symbol"] = symbol
+        elif function == "NEWS_SENTIMENT":
+            params["tickers"] = symbol if symbol else "AAPL"
         
         response = requests.get(ALPHA_VANTAGE_BASE_URL, params=params, timeout=10)
         data = response.json()
         
         if "Error Message" in data:
+            print(f"DEBUG: Alpha Vantage Error for {symbol}: {data['Error Message']}")
             return None
         if "Note" in data:
+            print(f"DEBUG: Alpha Vantage Rate Limit for {symbol}: {data['Note']}")
             return None  # Rate limit exceeded
         
         return data
     except Exception as e:
+        print(f"DEBUG: Exception getting {symbol}: {e}")
         return None
 
 def get_real_time_price(symbol):
@@ -123,53 +133,87 @@ def get_market_indicators():
     """Get key market indicators with real data from Alpha Vantage"""
     try:
         indicators = {}
+        indicators["_status"] = {}  # Track what's real vs estimated
         
-        # VIX (Volatility Index)
-        vix_data = get_alpha_vantage_data("TIME_SERIES_DAILY", "VIX")
-        if vix_data and "Time Series (Daily)" in vix_data:
-            latest = list(vix_data["Time Series (Daily)"].values())[0]
-            indicators["vix"] = float(latest.get("4. close", 0))
-        else:
+        # VIX (Volatility Index) - try multiple symbols
+        vix_value = None
+        vix_symbols = ["VIX", "^VIX", "VIX.X", "VIXCLS"]
+        for symbol in vix_symbols:
+            vix_data = get_alpha_vantage_data(symbol, "TIME_SERIES_DAILY")
+            if vix_data and "Time Series (Daily)" in vix_data:
+                latest = list(vix_data["Time Series (Daily)"].values())[0]
+                vix_value = float(latest.get("4. close", 0))
+                if vix_value > 0:
+                    indicators["vix"] = vix_value
+                    indicators["_status"]["vix"] = "real"
+                    print(f"DEBUG: Got VIX from {symbol}: {vix_value}")
+                    break
+        
+        if "vix" not in indicators:
             indicators["vix"] = 18.5  # Fallback
+            indicators["_status"]["vix"] = "estimated"
+            print("DEBUG: Using estimated VIX")
         
-        # 10-Year Treasury Yield
-        tnx_data = get_alpha_vantage_data("TIME_SERIES_DAILY", "TNX")
-        if tnx_data and "Time Series (Daily)" in tnx_data:
-            latest = list(tnx_data["Time Series (Daily)"].values())[0]
-            indicators["10y_yield"] = float(latest.get("4. close", 0))
-        else:
+        # 10-Year Treasury Yield - try multiple symbols
+        yield_10y = None
+        tnx_symbols = ["TNX", "^TNX", "10Y", "T10Y"]
+        for symbol in tnx_symbols:
+            tnx_data = get_alpha_vantage_data(symbol, "TIME_SERIES_DAILY")
+            if tnx_data and "Time Series (Daily)" in tnx_data:
+                latest = list(tnx_data["Time Series (Daily)"].values())[0]
+                yield_10y = float(latest.get("4. close", 0))
+                if yield_10y > 0:
+                    indicators["10y_yield"] = yield_10y
+                    indicators["_status"]["10y_yield"] = "real"
+                    print(f"DEBUG: Got 10Y Yield from {symbol}: {yield_10y}")
+                    break
+        
+        if "10y_yield" not in indicators:
             indicators["10y_yield"] = 4.2  # Fallback
+            indicators["_status"]["10y_yield"] = "estimated"
+            print("DEBUG: Using estimated 10Y Yield")
         
         # 2-Year Treasury Yield - try multiple symbols
         yield_2y = None
-        for symbol in ["^IRX", "IRX", "FVX", "^FVX", "SHY"]:
+        irx_symbols = ["^IRX", "IRX", "FVX", "^FVX", "SHY", "2Y", "T2Y"]
+        for symbol in irx_symbols:
             yield_2y = get_treasury_yield(symbol)
-            if yield_2y:
+            if yield_2y and yield_2y > 0:
+                indicators["2y_yield"] = yield_2y
+                indicators["_status"]["2y_yield"] = "real"
+                print(f"DEBUG: Got 2Y Yield from {symbol}: {yield_2y}")
                 break
         
-        if yield_2y:
-            indicators["2y_yield"] = yield_2y
-        else:
+        if "2y_yield" not in indicators:
             # Estimate from 10Y if we have it (typically 2Y is close to 10Y or slightly higher)
             indicators["2y_yield"] = indicators["10y_yield"] + 0.3  # Fallback estimate
+            indicators["_status"]["2y_yield"] = "estimated"
+            print("DEBUG: Using estimated 2Y Yield")
         
         # Calculate Yield Curve (10Y - 2Y)
         indicators["yield_curve"] = indicators["10y_yield"] - indicators["2y_yield"]
         
         # Dollar Index (DXY) - try multiple symbols
-        dxy_data = None
-        for symbol in ["DX-Y.NYB", "DX=F", "UUP", "DXY"]:
-            dxy_data = get_alpha_vantage_data("TIME_SERIES_DAILY", symbol)
+        dxy_value = None
+        dxy_symbols = ["DX-Y.NYB", "DX=F", "UUP", "DXY", "^DXY"]
+        for symbol in dxy_symbols:
+            dxy_data = get_alpha_vantage_data(symbol, "TIME_SERIES_DAILY")
             if dxy_data and "Time Series (Daily)" in dxy_data:
                 latest = list(dxy_data["Time Series (Daily)"].values())[0]
-                indicators["dxy"] = float(latest.get("4. close", 0))
-                break
+                dxy_value = float(latest.get("4. close", 0))
+                if dxy_value > 0:
+                    indicators["dxy"] = dxy_value
+                    indicators["_status"]["dxy"] = "real"
+                    print(f"DEBUG: Got DXY from {symbol}: {dxy_value}")
+                    break
         
         if "dxy" not in indicators:
             indicators["dxy"] = 103.5  # Fallback
+            indicators["_status"]["dxy"] = "estimated"
+            print("DEBUG: Using estimated DXY")
         
         # Market Breadth - Estimate using SPY position relative to 50-day MA
-        spy_data = get_alpha_vantage_data("TIME_SERIES_DAILY", "SPY")
+        spy_data = get_alpha_vantage_data("SPY", "TIME_SERIES_DAILY")
         if spy_data and "Time Series (Daily)" in spy_data:
             time_series = spy_data["Time Series (Daily)"]
             if len(time_series) >= 50:
@@ -187,10 +231,14 @@ def get_market_indicators():
                     indicators["market_breadth"] = 50.0
                 else:
                     indicators["market_breadth"] = 35.0
+                indicators["_status"]["market_breadth"] = "calculated"
+                print(f"DEBUG: Calculated Market Breadth: {indicators['market_breadth']}%")
             else:
                 indicators["market_breadth"] = 50.0  # Neutral if not enough data
+                indicators["_status"]["market_breadth"] = "estimated"
         else:
             indicators["market_breadth"] = 50.0  # Fallback
+            indicators["_status"]["market_breadth"] = "estimated"
         
         # Advance/Decline Ratio - Estimate from SPY price action
         if spy_data and "Time Series (Daily)" in spy_data:
@@ -209,10 +257,13 @@ def get_market_indicators():
                     indicators["advance_decline"] = 0.9
                 else:
                     indicators["advance_decline"] = 0.7
+                indicators["_status"]["advance_decline"] = "calculated"
             else:
                 indicators["advance_decline"] = 1.0
+                indicators["_status"]["advance_decline"] = "estimated"
         else:
             indicators["advance_decline"] = 1.0  # Fallback
+            indicators["_status"]["advance_decline"] = "estimated"
         
         # Put/Call Ratio - Estimate from VIX (higher VIX = higher put/call)
         if indicators["vix"] > 25:
@@ -223,6 +274,7 @@ def get_market_indicators():
             indicators["put_call_ratio"] = 0.85
         else:
             indicators["put_call_ratio"] = 0.7  # Low fear = more calls
+        indicators["_status"]["put_call_ratio"] = "estimated"
         
         return indicators
     except Exception as e:
@@ -258,10 +310,11 @@ def get_sector_performance():
         }
         
         sector_data = {}
+        success_count = 0
         
         for sector, symbol in sector_etfs.items():
             try:
-                data = get_alpha_vantage_data("TIME_SERIES_DAILY", symbol)
+                data = get_alpha_vantage_data(symbol, "TIME_SERIES_DAILY")
                 if data and "Time Series (Daily)" in data:
                     time_series = data["Time Series (Daily)"]
                     if len(time_series) >= 2:
@@ -269,16 +322,21 @@ def get_sector_performance():
                         previous = float(list(time_series.values())[1]["4. close"])
                         change_pct = ((current - previous) / previous) * 100
                         sector_data[sector] = round(change_pct, 2)
+                        success_count += 1
+                        print(f"DEBUG: Got {sector} ({symbol}): {change_pct:.2f}%")
                     else:
                         sector_data[sector] = 0.0
                 else:
                     sector_data[sector] = 0.0
             except Exception as e:
-                print(f"Error getting {sector} data: {e}")
+                print(f"DEBUG: Error getting {sector} ({symbol}): {e}")
                 sector_data[sector] = 0.0
         
+        print(f"DEBUG: Successfully fetched {success_count}/10 sectors")
+        
         # If all failed, return mock data
-        if all(v == 0.0 for v in sector_data.values()):
+        if success_count == 0:
+            print("DEBUG: All sector fetches failed, using fallback data")
             return {
                 'Technology': 2.5,
                 'Healthcare': 1.8,
@@ -292,9 +350,16 @@ def get_sector_performance():
                 'Consumer Staples': 0.2
             }
         
+        # Fill missing sectors with 0.0
+        for sector in sector_etfs.keys():
+            if sector not in sector_data:
+                sector_data[sector] = 0.0
+        
         return sector_data
     except Exception as e:
-        print(f"Error getting sector performance: {e}")
+        print(f"DEBUG: Error getting sector performance: {e}")
+        import traceback
+        traceback.print_exc()
         # Return mock data on error
         return {
             'Technology': 2.5,
@@ -1996,14 +2061,24 @@ def display_market_analysis_section():
     # Key Market Indicators
     st.markdown("### 📈 Key Market Indicators")
     
+    # Status legend
+    with st.expander("ℹ️ Data Status Legend"):
+        st.markdown("""
+        - 🟢 **Real-time**: Data fetched from API
+        - 🟡 **Calculated**: Derived from real market data
+        - ⚪ **Estimated**: Approximate value (API unavailable)
+        """)
+    
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         vix = indicators.get("vix", 18.5)
         vix_status = "High" if vix > 30 else "Normal" if vix > 20 else "Low"
         vix_color = "#e74c3c" if vix > 30 else "#f39c12" if vix > 20 else "#27ae60"
+        vix_data_status = indicators.get("_status", {}).get("vix", "unknown")
+        status_icon = "🟢" if vix_data_status == "real" else "🟡" if vix_data_status == "calculated" else "⚪"
         st.metric(
-            "VIX (Volatility)",
+            f"VIX (Volatility) {status_icon}",
             f"{vix:.2f}",
             help="CBOE Volatility Index - measures market fear (Higher = More Fear)"
         )
@@ -2011,8 +2086,10 @@ def display_market_analysis_section():
     
     with col2:
         market_breadth = indicators.get("market_breadth", 72.0)
+        breadth_status = indicators.get("_status", {}).get("market_breadth", "unknown")
+        status_icon = "🟢" if breadth_status == "calculated" else "🟡" if breadth_status == "real" else "⚪"
         st.metric(
-            "Market Breadth",
+            f"Market Breadth {status_icon}",
             f"{market_breadth:.1f}%",
             help="Percentage of stocks trading above their 50-day moving average"
         )
@@ -2020,8 +2097,10 @@ def display_market_analysis_section():
     
     with col3:
         adv_dec = indicators.get("advance_decline", 1.25)
+        ad_status = indicators.get("_status", {}).get("advance_decline", "unknown")
+        status_icon = "🟢" if ad_status == "calculated" else "🟡" if ad_status == "real" else "⚪"
         st.metric(
-            "Advance/Decline",
+            f"Advance/Decline {status_icon}",
             f"{adv_dec:.2f}",
             help="Ratio of advancing to declining stocks (Above 1.0 = Bullish)"
         )
@@ -2029,8 +2108,10 @@ def display_market_analysis_section():
     
     with col4:
         put_call = indicators.get("put_call_ratio", 0.85)
+        pc_status = indicators.get("_status", {}).get("put_call_ratio", "unknown")
+        status_icon = "⚪"  # Always estimated
         st.metric(
-            "Put/Call Ratio",
+            f"Put/Call Ratio {status_icon}",
             f"{put_call:.2f}",
             help="Options sentiment (Lower = More Bullish, Higher = More Bearish)"
         )
@@ -2045,16 +2126,20 @@ def display_market_analysis_section():
     
     with col1:
         yield_10y = indicators.get("10y_yield", 4.2)
+        y10_status = indicators.get("_status", {}).get("10y_yield", "unknown")
+        status_icon = "🟢" if y10_status == "real" else "⚪"
         st.metric(
-            "10-Year Treasury",
+            f"10-Year Treasury {status_icon}",
             f"{yield_10y:.2f}%",
             help="10-Year US Treasury Yield - Risk-free rate benchmark"
         )
     
     with col2:
         yield_2y = indicators.get("2y_yield", 4.5)
+        y2_status = indicators.get("_status", {}).get("2y_yield", "unknown")
+        status_icon = "🟢" if y2_status == "real" else "⚪"
         st.metric(
-            "2-Year Treasury",
+            f"2-Year Treasury {status_icon}",
             f"{yield_2y:.2f}%",
             help="2-Year US Treasury Yield - Short-term rate indicator"
         )
@@ -2063,8 +2148,12 @@ def display_market_analysis_section():
         yield_curve = indicators.get("yield_curve", -0.3)
         curve_status = "Inverted" if yield_curve < 0 else "Normal"
         curve_color = "#e74c3c" if yield_curve < 0 else "#27ae60"
+        # Yield curve is calculated, so status depends on inputs
+        y10_status = indicators.get("_status", {}).get("10y_yield", "unknown")
+        y2_status = indicators.get("_status", {}).get("2y_yield", "unknown")
+        status_icon = "🟢" if (y10_status == "real" and y2_status == "real") else "🟡" if (y10_status == "real" or y2_status == "real") else "⚪"
         st.metric(
-            "Yield Curve",
+            f"Yield Curve {status_icon}",
             f"{yield_curve:+.2f}%",
             help="10Y - 2Y Spread (Negative = Inverted = Recession Signal)"
         )
@@ -2072,8 +2161,10 @@ def display_market_analysis_section():
     
     with col4:
         dxy = indicators.get("dxy", 103.5)
+        dxy_status = indicators.get("_status", {}).get("dxy", "unknown")
+        status_icon = "🟢" if dxy_status == "real" else "⚪"
         st.metric(
-            "Dollar Index (DXY)",
+            f"Dollar Index (DXY) {status_icon}",
             f"{dxy:.2f}",
             help="US Dollar Strength Index (Higher = Stronger Dollar)"
         )
@@ -2135,8 +2226,15 @@ def display_market_analysis_section():
     # Sector performance - Get real data
     st.markdown("### 🏭 Sector Performance")
     
-    with st.spinner("Loading sector performance..."):
+    with st.spinner("Loading sector performance from ETFs..."):
         sector_data = get_sector_performance()
+        
+        # Check if we got real data
+        real_sectors = sum(1 for v in sector_data.values() if v != 0.0)
+        if real_sectors == 0:
+            st.warning("⚠️ Using estimated sector data. Some API calls may have failed. Check console for details.")
+        elif real_sectors < 10:
+            st.info(f"ℹ️ Fetched {real_sectors}/10 sectors successfully. Some sectors may show estimated values.")
     
     df_sectors = pd.DataFrame(list(sector_data.items()), columns=['Sector', 'Change'])
     df_sectors['Color'] = df_sectors['Change'].apply(lambda x: '#27ae60' if x >= 0 else '#e74c3c')
