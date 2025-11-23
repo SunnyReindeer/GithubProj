@@ -1096,7 +1096,7 @@ def display_markets_section():
     # Asset type selector (moved here as requested)
     asset_type = st.selectbox(
         "Select Asset Type",
-        ["World Indices", "Commodities", "Currencies", "Bonds", "Crypto", "All Assets"],
+        ["World Indices", "Stocks", "Commodities", "Currencies", "Bonds", "Crypto", "All Assets"],
         index=0  # Default to World Indices
     )
     
@@ -1335,6 +1335,194 @@ def display_markets_section():
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
+        
+        # Stocks Section - using yfinance
+        if asset_type == "All Assets" or asset_type == "Stocks":
+            st.markdown("##### 📈 Stocks")
+            
+            # Popular stocks to display
+            stock_symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "JPM", "V", "JNJ"]
+            
+            with st.spinner("Loading stock data..."):
+                stocks_data = []
+                for symbol in stock_symbols:
+                    try:
+                        price_data = get_yfinance_price(symbol)
+                        if price_data:
+                            # Get historical data for sparkline
+                            hist_data = get_yfinance_data(symbol, period="5d")
+                            sparkline = []
+                            if hist_data and "history" in hist_data and not hist_data["history"].empty:
+                                sparkline = hist_data["history"]["Close"].tail(5).tolist()
+                            else:
+                                sparkline = [price_data["price"] * 0.98, price_data["price"] * 0.99, price_data["price"], price_data["price"] * 1.01, price_data["price"]]
+                            
+                            # Get company name
+                            ticker = yf.Ticker(symbol)
+                            info = ticker.info
+                            company_name = info.get("longName", symbol) or info.get("shortName", symbol) or symbol
+                            
+                            stocks_data.append({
+                                "Symbol": symbol,
+                                "Name": company_name,
+                                "Price": price_data["price"],
+                                "Change": price_data["change_percent"],
+                                "Sparkline": sparkline
+                            })
+                    except Exception as e:
+                        print(f"DEBUG: Error fetching {symbol}: {e}")
+                        continue
+                
+                if stocks_data:
+                    # Use horizontal scroll for stocks
+                    with st.container():
+                        cols = st.columns(min(len(stocks_data), 6))
+                        for i, (col, stock) in enumerate(zip(cols, stocks_data)):
+                            with col:
+                                color = "#27ae60" if stock["Change"] >= 0 else "#e74c3c"
+                                
+                                # Create sparkline chart
+                                fig_spark = go.Figure()
+                                fig_spark.add_trace(go.Scatter(
+                                    y=stock["Sparkline"],
+                                    mode='lines',
+                                    line=dict(color=color, width=2),
+                                    showlegend=False,
+                                    hoverinfo='skip'
+                                ))
+                                
+                                fig_spark.update_layout(
+                                    height=30,
+                                    margin=dict(l=0, r=0, t=0, b=0),
+                                    plot_bgcolor='rgba(0,0,0,0)',
+                                    paper_bgcolor='rgba(0,0,0,0)',
+                                    xaxis=dict(showgrid=False, showticklabels=False),
+                                    yaxis=dict(showgrid=False, showticklabels=False)
+                                )
+                                
+                                st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_stock_{i}")
+                                
+                                # Display stock data
+                                st.markdown(f"""
+                                <div style="
+                                    background: white;
+                                    padding: 0.5rem;
+                                    border-radius: 6px;
+                                    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+                                    margin-bottom: 0.3rem;
+                                    border-left: 2px solid {color};
+                                    font-size: 0.8rem;
+                                ">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                        <span style="font-weight: bold; color: #2c3e50;">{stock['Symbol']}</span>
+                                        <span style="font-size: 0.7rem; color: #7f8c8d;">Stock</span>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.9rem; font-weight: bold; color: #2c3e50;">
+                                            ${stock['Price']:.2f}
+                                        </div>
+                                        <div style="font-size: 0.8rem; font-weight: bold; color: {color};">
+                                            {stock['Change']:+.2f}%
+                                        </div>
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                else:
+                    st.warning("Unable to load stock data. Please try again later.")
+        
+        # Crypto Section - using yfinance
+        if asset_type == "All Assets" or asset_type == "Crypto":
+            st.markdown("##### 🪙 Cryptocurrencies")
+            
+            # Popular cryptocurrencies
+            crypto_symbols = ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD", "ADA-USD", "DOGE-USD", "DOT-USD", "MATIC-USD", "AVAX-USD"]
+            
+            with st.spinner("Loading cryptocurrency data..."):
+                crypto_data = []
+                for symbol in crypto_symbols:
+                    try:
+                        price_data = get_yfinance_price(symbol)
+                        if price_data:
+                            # Get historical data for sparkline
+                            hist_data = get_yfinance_data(symbol, period="5d")
+                            sparkline = []
+                            if hist_data and "history" in hist_data and not hist_data["history"].empty:
+                                sparkline = hist_data["history"]["Close"].tail(5).tolist()
+                            else:
+                                sparkline = [price_data["price"] * 0.98, price_data["price"] * 0.99, price_data["price"], price_data["price"] * 1.01, price_data["price"]]
+                            
+                            # Get crypto name
+                            ticker = yf.Ticker(symbol)
+                            info = ticker.info
+                            crypto_name = info.get("longName", symbol.replace("-USD", "")) or symbol.replace("-USD", "")
+                            
+                            crypto_data.append({
+                                "Symbol": symbol.replace("-USD", ""),
+                                "Name": crypto_name,
+                                "Price": price_data["price"],
+                                "Change": price_data["change_percent"],
+                                "Sparkline": sparkline
+                            })
+                    except Exception as e:
+                        print(f"DEBUG: Error fetching {symbol}: {e}")
+                        continue
+                
+                if crypto_data:
+                    # Use horizontal scroll for crypto
+                    with st.container():
+                        cols = st.columns(min(len(crypto_data), 6))
+                        for i, (col, crypto) in enumerate(zip(cols, crypto_data)):
+                            with col:
+                                color = "#27ae60" if crypto["Change"] >= 0 else "#e74c3c"
+                                
+                                # Create sparkline chart
+                                fig_spark = go.Figure()
+                                fig_spark.add_trace(go.Scatter(
+                                    y=crypto["Sparkline"],
+                                    mode='lines',
+                                    line=dict(color=color, width=2),
+                                    showlegend=False,
+                                    hoverinfo='skip'
+                                ))
+                                
+                                fig_spark.update_layout(
+                                    height=30,
+                                    margin=dict(l=0, r=0, t=0, b=0),
+                                    plot_bgcolor='rgba(0,0,0,0)',
+                                    paper_bgcolor='rgba(0,0,0,0)',
+                                    xaxis=dict(showgrid=False, showticklabels=False),
+                                    yaxis=dict(showgrid=False, showticklabels=False)
+                                )
+                                
+                                st.plotly_chart(fig_spark, use_container_width=True, key=f"spark_crypto_{i}")
+                                
+                                # Display crypto data
+                                st.markdown(f"""
+                                <div style="
+                                    background: white;
+                                    padding: 0.5rem;
+                                    border-radius: 6px;
+                                    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+                                    margin-bottom: 0.3rem;
+                                    border-left: 2px solid {color};
+                                    font-size: 0.8rem;
+                                ">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                        <span style="font-weight: bold; color: #2c3e50;">{crypto['Symbol']}</span>
+                                        <span style="font-size: 0.7rem; color: #7f8c8d;">Crypto</span>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.9rem; font-weight: bold; color: #2c3e50;">
+                                            ${crypto['Price']:,.2f}
+                                        </div>
+                                        <div style="font-size: 0.8rem; font-weight: bold; color: {color};">
+                                            {crypto['Change']:+.2f}%
+                                        </div>
+                                    </div>
+                                </div>
+                                """, unsafe_allow_html=True)
+                else:
+                    st.warning("Unable to load cryptocurrency data. Please try again later.")
     
     # Top Performers & Losers Section (Right Column - 1/3 width)
     with col_performers:
