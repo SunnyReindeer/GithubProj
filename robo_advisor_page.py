@@ -159,24 +159,39 @@ def display_risk_profile(profile: RiskProfile):
         for factor in profile.risk_factors:
             st.warning(f"• {factor}")
     
-    # Recommended asset allocation - Fixed to stocks only
+    # Recommended asset allocation - Fixed to stocks only, normalized to 100%
     st.markdown("### 💼 Recommended Stock Allocation")
-    st.markdown("Asset allocation focused on stock market investments.")
+    st.markdown("Asset allocation focused on stock market investments (normalized to 100%).")
     
     # Filter to only show stock-related allocations
     stock_categories = ['stocks', 'etfs', 'equities', 'stock']
-    allocation_data = []
+    stock_allocation_data = []
+    total_stock_allocation = 0.0
+    
     for category, percentage in profile.recommended_asset_allocation.items():
         # Only include stock-related categories
         if any(stock_cat in category.lower() for stock_cat in stock_categories):
-            allocation_data.append({
+            stock_allocation_data.append({
                 'Category': category.replace('_', ' ').title(),
-                'Percentage': percentage * 100
+                'Raw Percentage': percentage
             })
+            total_stock_allocation += percentage
     
-    # If no stock categories found, show a default stock allocation
-    if not allocation_data:
-        # Default stock allocation based on risk tolerance
+    # Normalize to 100% if we have stock allocations
+    if stock_allocation_data and total_stock_allocation > 0:
+        allocation_data = []
+        for item in stock_allocation_data:
+            # Normalize: (raw_percentage / total_stock_allocation) * 100
+            normalized_pct = (item['Raw Percentage'] / total_stock_allocation) * 100
+            allocation_data.append({
+                'Category': item['Category'],
+                'Percentage': normalized_pct
+            })
+        
+        # Show total stock allocation as info
+        st.info(f"📊 **Total Stock Allocation:** {total_stock_allocation:.1%} of your portfolio is allocated to stocks. The breakdown below shows how that stock allocation is distributed (normalized to 100%).")
+    else:
+        # If no stock categories found, show a default stock allocation that sums to 100%
         if profile.risk_tolerance == RiskTolerance.CONSERVATIVE:
             allocation_data = [
                 {'Category': 'Large Cap Stocks', 'Percentage': 40.0},
@@ -195,8 +210,15 @@ def display_risk_profile(profile: RiskProfile):
                 {'Category': 'Tech Stocks', 'Percentage': 30.0},
                 {'Category': 'Small Cap Stocks', 'Percentage': 20.0}
             ]
+        st.info("📊 Showing default stock allocation breakdown based on your risk profile.")
     
     df_allocation = pd.DataFrame(allocation_data)
+    
+    # Verify it sums to 100% (with small tolerance for rounding)
+    total_check = df_allocation['Percentage'].sum()
+    if abs(total_check - 100.0) > 0.1:  # Allow 0.1% tolerance
+        # Normalize again to ensure exactly 100%
+        df_allocation['Percentage'] = (df_allocation['Percentage'] / total_check) * 100
     
     # Create pie chart
     fig = px.pie(
