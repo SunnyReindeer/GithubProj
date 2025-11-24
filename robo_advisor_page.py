@@ -151,7 +151,7 @@ def display_risk_profile(profile: RiskProfile):
         height=400
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="risk_profile_radar")
     
     # Risk factors
     if profile.risk_factors:
@@ -159,15 +159,42 @@ def display_risk_profile(profile: RiskProfile):
         for factor in profile.risk_factors:
             st.warning(f"• {factor}")
     
-    # Recommended asset allocation
-    st.markdown("### 💼 Recommended Asset Allocation")
+    # Recommended asset allocation - Fixed to stocks only
+    st.markdown("### 💼 Recommended Stock Allocation")
+    st.markdown("Asset allocation focused on stock market investments.")
     
+    # Filter to only show stock-related allocations
+    stock_categories = ['stocks', 'etfs', 'equities', 'stock']
     allocation_data = []
     for category, percentage in profile.recommended_asset_allocation.items():
-        allocation_data.append({
-            'Category': category.replace('_', ' ').title(),
-            'Percentage': percentage * 100
-        })
+        # Only include stock-related categories
+        if any(stock_cat in category.lower() for stock_cat in stock_categories):
+            allocation_data.append({
+                'Category': category.replace('_', ' ').title(),
+                'Percentage': percentage * 100
+            })
+    
+    # If no stock categories found, show a default stock allocation
+    if not allocation_data:
+        # Default stock allocation based on risk tolerance
+        if profile.risk_tolerance == RiskTolerance.CONSERVATIVE:
+            allocation_data = [
+                {'Category': 'Large Cap Stocks', 'Percentage': 40.0},
+                {'Category': 'Dividend Stocks', 'Percentage': 30.0},
+                {'Category': 'Blue Chip Stocks', 'Percentage': 30.0}
+            ]
+        elif profile.risk_tolerance == RiskTolerance.MODERATE:
+            allocation_data = [
+                {'Category': 'Growth Stocks', 'Percentage': 40.0},
+                {'Category': 'Large Cap Stocks', 'Percentage': 35.0},
+                {'Category': 'Mid Cap Stocks', 'Percentage': 25.0}
+            ]
+        else:  # Aggressive or Very Aggressive
+            allocation_data = [
+                {'Category': 'Growth Stocks', 'Percentage': 50.0},
+                {'Category': 'Tech Stocks', 'Percentage': 30.0},
+                {'Category': 'Small Cap Stocks', 'Percentage': 20.0}
+            ]
     
     df_allocation = pd.DataFrame(allocation_data)
     
@@ -176,11 +203,11 @@ def display_risk_profile(profile: RiskProfile):
         df_allocation, 
         values='Percentage', 
         names='Category',
-        title="Recommended Portfolio Allocation",
+        title="Recommended Stock Portfolio Allocation",
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="risk_profile_stock_allocation")
     
     # Display allocation table
     st.dataframe(
@@ -280,7 +307,7 @@ def display_fund_portfolios(portfolios: List[FundPortfolio]):
                     }
                 ))
                 fig.update_layout(height=200)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key=f"portfolio_gauge_{i}")
             
             # Portfolio holdings with AI labels
             st.markdown("### 💎 Portfolio Holdings")
@@ -324,7 +351,7 @@ def display_fund_portfolios(portfolios: List[FundPortfolio]):
                 color_discrete_sequence=px.colors.qualitative.Set3
             )
             fig.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key=f"portfolio_allocation_{i}")
             
             # AI Labels breakdown
             st.markdown("#### 🤖 AI Labels Analysis")
@@ -349,7 +376,7 @@ def display_fund_portfolios(portfolios: List[FundPortfolio]):
                     color_continuous_scale='Blues'
                 )
                 fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key=f"portfolio_labels_{i}")
 
 def display_portfolio_details(profile: RiskProfile, portfolio: FundPortfolio):
     """Display detailed portfolio information with AI labels"""
@@ -448,7 +475,7 @@ def display_portfolio_details(profile: RiskProfile, portfolio: FundPortfolio):
             color='Allocation',
             color_continuous_scale='Blues'
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="portfolio_details_sector")
     
     if theme_allocations:
         st.markdown("#### 🎯 Theme Allocation")
@@ -465,7 +492,7 @@ def display_portfolio_details(profile: RiskProfile, portfolio: FundPortfolio):
             color='Allocation',
             color_continuous_scale='Greens'
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="portfolio_details_theme")
 
 def display_investment_plan(profile: RiskProfile, portfolios: List[FundPortfolio]):
     """Display comprehensive investment plan based on fund portfolios"""
