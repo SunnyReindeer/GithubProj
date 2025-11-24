@@ -1,5 +1,5 @@
 """
-Fund-Based Portfolio Manager (Like Syfe)
+Fund-Based Portfolio Manager
 Creates themed portfolios instead of strategy-based recommendations
 Uses AI labeling for sectors and themes
 """
@@ -14,7 +14,7 @@ import yfinance as yf
 from risk_assessment_engine import RiskProfile, RiskTolerance
 
 class PortfolioTheme(Enum):
-    """Portfolio themes (like Syfe's portfolios)"""
+    """Portfolio themes"""
     CORE = "Core Portfolio"  # Balanced, diversified
     GROWTH = "Growth Portfolio"  # Tech, growth stocks
     DIVIDEND = "Dividend Portfolio"  # Income-focused
@@ -81,7 +81,7 @@ class FundHolding:
 
 @dataclass
 class FundPortfolio:
-    """A fund portfolio (like Syfe's portfolios)"""
+    """A fund portfolio"""
     theme: PortfolioTheme
     name: str
     description: str
@@ -238,14 +238,14 @@ class AILabeler:
             return symbol
 
 class FundPortfolioManager:
-    """Manages fund-based portfolios (like Syfe)"""
+    """Manages fund-based portfolios"""
     
     def __init__(self):
         self.labeler = AILabeler()
         self.portfolios = self._initialize_portfolios()
     
     def _initialize_portfolios(self) -> List[FundPortfolio]:
-        """Initialize fund portfolios (like Syfe's offerings)"""
+        """Initialize fund portfolios"""
         return [
             # Core Portfolio - Balanced, diversified
             FundPortfolio(

@@ -1,7 +1,7 @@
 # Fund Portfolio Recommendation Logic Explanation
 
 ## Overview
-The fund portfolio recommendation system (like Syfe) matches pre-defined portfolios to users based on their risk profile from the questionnaire.
+The fund portfolio recommendation system matches pre-defined portfolios to users based on their risk profile from the questionnaire.
 
 ## Step-by-Step Process
 
@@ -119,7 +119,7 @@ Each holding has AI-generated labels:
 5. **Display** with holdings, AI labels, and allocation breakdown
 
 ## Why This Approach?
-- **Like Syfe**: Pre-defined portfolios are easier to understand and manage
+- **Pre-defined Portfolios**: Easier to understand and manage
 - **AI Labels**: Help users understand what they're investing in
 - **Risk Matching**: Ensures portfolios align with user's risk tolerance
 - **Diversification**: Each portfolio is already diversified

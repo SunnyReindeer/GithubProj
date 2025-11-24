@@ -1,5 +1,5 @@
 """
-Robo Advisor Page - Fund-Based Portfolio Recommendations (Like Syfe)
+Robo Advisor Page - Fund-Based Portfolio Recommendations
 Uses AI labeling for sectors and themes
 """
 import streamlit as st
@@ -269,9 +269,9 @@ def display_risk_profile(profile: RiskProfile):
     )
 
 def display_fund_portfolios(portfolios: List[FundPortfolio]):
-    """Display recommended fund portfolios (like Syfe)"""
+    """Display recommended fund portfolios"""
     st.markdown("## 💼 Recommended Fund Portfolios")
-    st.markdown("These are diversified portfolios designed to match your risk profile, similar to Syfe's approach.")
+    st.markdown("These are diversified portfolios designed to match your risk profile.")
     
     if not portfolios:
         st.warning("No suitable portfolios found for your risk profile.")
@@ -709,7 +709,7 @@ def main():
     )
     
     st.markdown("# 🤖 AI Robo Advisor")
-    st.markdown("Get personalized fund portfolio recommendations (like Syfe) with AI-labeled investments based on your risk profile.")
+    st.markdown("Get personalized fund portfolio recommendations with AI-labeled investments based on your risk profile.")
     
     # Show tutorial hints
     show_tutorial_hints()
@@ -754,7 +754,7 @@ def main():
     
     with tab2:
         st.markdown("### Step 2: Fund Portfolio Recommendations")
-        st.markdown("Get recommended fund portfolios (like Syfe) that match your risk profile. Each portfolio includes AI-labeled investments.")
+        st.markdown("Get recommended fund portfolios that match your risk profile. Each portfolio includes AI-labeled investments.")
         
         if st.session_state.risk_profile:
             profile = st.session_state.risk_profile
@@ -814,7 +814,7 @@ def main():
     with st.sidebar:
         st.markdown("## ℹ️ About Robo Advisor")
         st.markdown("""
-        Our AI-powered robo advisor (like Syfe) creates personalized fund portfolios based on your risk profile.
+        Our AI-powered robo advisor creates personalized fund portfolios based on your risk profile.
         
         **Features:**
         - 🎯 Risk assessment questionnaire
