@@ -2203,71 +2203,248 @@ def get_financial_news():
         ]
 
 def display_news_section():
-    """Display financial news and market updates with real-time data"""
+    """Display financial news and market updates with improved design"""
     
-    st.markdown("#### 📰 News")
+    # Enhanced CSS for news section
+    st.markdown("""
+    <style>
+    .news-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    .news-card-modern {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border-left: 5px solid #667eea;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .news-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 5px;
+        height: 100%;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    }
+    .news-card-modern:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+    .news-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0 0 0.8rem 0;
+        line-height: 1.4;
+    }
+    .news-title a {
+        color: #2c3e50;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    .news-title a:hover {
+        color: #667eea;
+    }
+    .news-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        color: #7f8c8d;
+    }
+    .news-source {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .news-summary {
+        color: #34495e;
+        line-height: 1.7;
+        margin: 1rem 0;
+        font-size: 1rem;
+    }
+    .news-read-btn {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.7rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    .news-read-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    .news-stats {
+        background: rgba(102, 126, 234, 0.1);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Header
+    st.markdown("""
+    <div class="news-header">
+        <h1 style="margin: 0; font-size: 2.5rem; font-weight: 800;">📰 Financial News</h1>
+        <p style="margin: 0.5rem 0 0 0; font-size: 1.1rem; opacity: 0.9;">Stay informed with the latest market updates and financial insights</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Get news data
-    with st.spinner("Loading latest financial news..."):
+    with st.spinner("🔄 Loading latest financial news..."):
         news_items = get_financial_news()
     
     if not news_items:
-        st.warning("Unable to load news. Please try again later.")
+        st.warning("⚠️ Unable to load news. Please try again later.")
         return
     
-    # Filter options - only by source, no sentiment
-    source_filter = st.selectbox("Filter by Source", ["All"] + list(set([item.get("source", "Unknown") for item in news_items])), key="news_source_filter")
+    # Filter and search controls
+    col1, col2, col3 = st.columns([2, 1, 1])
     
-    # Apply filters
+    with col1:
+        search_query = st.text_input("🔍 Search News", placeholder="Search by title or content...", key="news_search")
+    
+    with col2:
+        source_filter = st.selectbox(
+            "📰 Source", 
+            ["All"] + sorted(list(set([item.get("source", "Unknown") for item in news_items]))),
+            key="news_source_filter"
+        )
+    
+    with col3:
+        sort_option = st.selectbox(
+            "🔄 Sort By",
+            ["Latest First", "Oldest First", "Source A-Z"],
+            key="news_sort"
+        )
+    
+    # Apply filters and search
     filtered_news = news_items.copy()
     
+    # Search filter
+    if search_query:
+        search_lower = search_query.lower()
+        filtered_news = [
+            item for item in filtered_news 
+            if search_lower in item.get('title', '').lower() or 
+               search_lower in item.get('summary', '').lower()
+        ]
+    
+    # Source filter
     if source_filter != "All":
         filtered_news = [item for item in filtered_news if item.get("source") == source_filter]
     
-    # Display summary
-    if filtered_news:
-        col1, col2 = st.columns(2)
-        with col1:
-            total_count = len(filtered_news)
-            st.metric("Total Articles", total_count)
-        with col2:
-            today_count = len([item for item in filtered_news if item.get("published_date") == datetime.now().strftime("%Y-%m-%d")])
-            st.metric("Today's News", today_count)
+    # Sort
+    if sort_option == "Latest First":
+        filtered_news.sort(key=lambda x: x.get("published_date", ""), reverse=True)
+    elif sort_option == "Oldest First":
+        filtered_news.sort(key=lambda x: x.get("published_date", ""))
+    elif sort_option == "Source A-Z":
+        filtered_news.sort(key=lambda x: x.get("source", ""))
     
-    # Display news articles
-    st.markdown("### 📋 Latest Financial News")
-    
+    # Display summary stats
     if filtered_news:
+        today = datetime.now().strftime("%Y-%m-%d")
+        today_count = len([item for item in filtered_news if item.get("published_date") == today])
+        week_count = len([
+            item for item in filtered_news 
+            if item.get("published_date") and 
+            (datetime.now() - datetime.strptime(item.get("published_date"), "%Y-%m-%d")).days <= 7
+        ])
+        
+        st.markdown(f"""
+        <div class="news-stats">
+            <div style="display: flex; justify-content: space-around; align-items: center;">
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #667eea;">{len(filtered_news)}</div>
+                    <div style="color: #7f8c8d; font-size: 0.9rem;">Total Articles</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #27ae60;">{today_count}</div>
+                    <div style="color: #7f8c8d; font-size: 0.9rem;">Today</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #3498db;">{week_count}</div>
+                    <div style="color: #7f8c8d; font-size: 0.9rem;">This Week</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Display news articles in a modern card layout
+    if filtered_news:
+        st.markdown("### 📋 Latest Articles")
+        
         for idx, article in enumerate(filtered_news):
-            # Format date
+            # Format date with relative time
             try:
                 pub_date = datetime.strptime(article.get("published_date", ""), "%Y-%m-%d")
                 date_display = pub_date.strftime("%B %d, %Y")
+                days_ago = (datetime.now() - pub_date).days
+                if days_ago == 0:
+                    relative_time = "Today"
+                elif days_ago == 1:
+                    relative_time = "Yesterday"
+                elif days_ago < 7:
+                    relative_time = f"{days_ago} days ago"
+                else:
+                    relative_time = date_display
             except:
                 date_display = article.get("published_date", "Unknown")
+                relative_time = date_display
             
             # Get article URL
             article_url = article.get('url', '#')
+            source = article.get('source', 'Unknown Source')
+            title = article.get('title', 'No Title')
+            summary = article.get('summary', 'No summary available.')
             
-            # Build HTML without JavaScript (Streamlit doesn't support JS)
-            html_parts = [
-                '<div style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 1.5rem; border-left: 4px solid #3498db;">',
-                '<div style="margin-bottom: 0.5rem;">',
-                '<h3 style="margin: 0 0 0.5rem 0; color: #2c3e50;">',
-                '<a href="' + article_url + '" target="_blank" rel="noopener noreferrer" style="color: #2c3e50; text-decoration: none;">',
-                article.get('title', 'No Title'),
-                '</a>',
-                '</h3>',
-                '<p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">📅 ' + date_display + ' | 📰 ' + article.get('source', 'Unknown Source') + '</p>',
-                '</div>',
-                '<p style="margin: 0.5rem 0 1rem 0; color: #34495e; line-height: 1.6;">' + article.get('summary', 'No summary available.') + '</p>',
-                '<a href="' + article_url + '" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #3498db; color: white; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">🔗 Read Full Article →</a>',
-                '</div>'
-            ]
+            # Truncate summary if too long
+            if len(summary) > 200:
+                summary = summary[:200] + "..."
             
-            st.markdown(''.join(html_parts), unsafe_allow_html=True)
+            # Build modern HTML card
+            html_card = f"""
+            <div class="news-card-modern">
+                <h3 class="news-title">
+                    <a href="{article_url}" target="_blank" rel="noopener noreferrer">{title}</a>
+                </h3>
+                <div class="news-meta">
+                    <span class="news-source">{source}</span>
+                    <span>📅 {relative_time}</span>
+                    <span>•</span>
+                    <span>{date_display}</span>
+                </div>
+                <p class="news-summary">{summary}</p>
+                <a href="{article_url}" target="_blank" rel="noopener noreferrer" class="news-read-btn">
+                    Read Full Article →
+                </a>
+            </div>
+            """
+            
+            st.markdown(html_card, unsafe_allow_html=True)
     else:
-        st.info("No news articles found matching your criteria.")
+        st.info("🔍 No news articles found matching your criteria. Try adjusting your filters or search terms.")
 
 def display_market_analysis_section():
     """Display market analysis and insights with real-time data"""
