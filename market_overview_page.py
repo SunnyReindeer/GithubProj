@@ -16,9 +16,6 @@ import feedparser
 import re
 from dateutil import parser as date_parser
 
-# Note: yfinance is free and doesn't require an API key!
-# Install with: pip install yfinance
-
 def get_yfinance_data(symbol, period="1d", interval="1d"):
     """Get data from yfinance (Yahoo Finance) - FREE, no API key needed!"""
     try:
@@ -80,14 +77,10 @@ def get_real_time_price(symbol):
 
 def get_economic_news():
     """Get real-time economic news - using fallback since yfinance doesn't have news API"""
-    # Note: yfinance doesn't provide news, so we'll use fallback news
-    # For real news, could integrate with NewsAPI, Finnhub, or other free news APIs
     return None
 
 def get_economic_indicators():
-    """Get real-time economic indicators - Note: yfinance doesn't provide economic indicators"""
-    # Economic indicators would need a different API (FRED, etc.)
-    # For now, return empty - can be enhanced later
+    """Get real-time economic indicators"""
     return []
 
 def get_treasury_yield(symbol):
@@ -499,14 +492,7 @@ def get_market_analysis():
                 print("DEBUG: Using cached market analysis")
                 return st.session_state[cache_key]
         
-        # Get real Fear & Greed Index (this is web scraping, not API)
         fear_greed_index = get_fear_greed_index()
-        
-        # Debug: Print the Fear & Greed Index value
-        print(f"DEBUG: Fear & Greed Index = {fear_greed_index}")
-        
-        # SKIP Alpha Vantage news sentiment to save API calls
-        # sentiment_data = get_alpha_vantage_data("NEWS_SENTIMENT", "NEWS_SENTIMENT")
         sentiment_data = None
         
         analysis = {

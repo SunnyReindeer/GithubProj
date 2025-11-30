@@ -218,7 +218,6 @@ class AILabeler:
                     labels.append(theme_map[theme])
         
         # Add risk labels based on volatility (would need real data)
-        # For now, use heuristics
         if asset_class == "Crypto":
             labels.append(AILabel.HIGH_RISK)
         elif asset_class == "Bond":

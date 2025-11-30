@@ -467,49 +467,31 @@ def display_market_overview():
 
 def display_price_charts(symbols: List[str]):
     """Display price charts for selected symbols"""
-    # Import contextual tutorial
-    # Tutorial system removed - will be rewritten later
-    
-    # Show tutorial for price charts
-    # Tutorial system removed - will be rewritten later
-    
     if not symbols:
         st.info("Please select symbols to view charts")
         return
     
     st.markdown("## 📊 Price Charts")
     
-    # Add container for charts header
-    # Tutorial containers removed
-    
     # Chart display options
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
-        # Tutorial containers removed
         chart_type = st.radio(
             "Chart Type",
             ["📊 Standard", "📈 TradingView Widget"],
             help="Standard: Basic candlestick charts | TradingView Widget: Real TradingView embedded widget"
         )
-        # Tutorial containers removed
     
     with col2:
         if chart_type == "📊 Standard":
-            # Tutorial containers removed
             timeframe = st.selectbox(
                 "Time Period",
                 ["1mo", "3mo", "6mo", "1y", "2y", "5y"],
                 index=3,  # Default to 1y
                 help="Select data period for standard charts"
             )
-            # Tutorial containers removed
         else:
             timeframe = "1h"  # Default for TradingView widget
-    
-    # Tutorial containers removed
-    
-    # Add container for chart display
-    # Tutorial containers removed
     
     # Always use multi-asset data provider (unified platform)
     for symbol in symbols[:4]:  # Limit to 4 charts for performance
@@ -570,7 +552,6 @@ def display_price_charts(symbols: List[str]):
                     # Map symbol to TradingView format
                     tv_symbol = map_symbol_to_tradingview(symbol)
                     
-                    # Debug: Show what symbol is being passed
                     st.markdown(f"### {symbol} - TradingView Chart")
                     st.info(f"Displaying: {symbol} → {tv_symbol}")
                     
@@ -587,20 +568,10 @@ def display_price_charts(symbols: List[str]):
 
 def create_trading_panel(symbols: List[str]):
     """Create trading panel for placing orders"""
-    # Import contextual tutorial
-    # Tutorial system removed - will be rewritten later
-    
-    # Show tutorial for trading
-    # Tutorial system removed - will be rewritten later
-    
     st.markdown("## 💼 Trading Panel")
-    
-    # Add container for trading header
-    # Tutorial containers removed
     
     if not symbols:
         st.warning("Please select symbols to trade")
-        # Tutorial containers removed
         return
     
     col1, col2 = st.columns([1, 2])
@@ -608,22 +579,12 @@ def create_trading_panel(symbols: List[str]):
     with col1:
         st.markdown("### 📝 Place Order")
         
-        # Symbol selection
-        # Tutorial containers removed
         selected_symbol = st.selectbox("Select Symbol", options=symbols)
-        # Tutorial containers removed
         
-        # Order details
-        # Tutorial containers removed
         order_side = st.radio("Order Side", ["Buy", "Sell"])
-        # Tutorial containers removed
         
-        # Tutorial containers removed
         order_type = st.selectbox("Order Type", ["Market", "Limit"])
-        # Tutorial containers removed
         
-        # Quantity input
-        # Tutorial containers removed
         quantity = st.number_input(
             "Quantity",
             min_value=0.001,
@@ -632,9 +593,7 @@ def create_trading_panel(symbols: List[str]):
             step=0.001,
             format="%.3f"
         )
-        # Tutorial containers removed
         
-        # Price input for limit orders
         if order_type == "Limit":
             current_prices = get_current_prices([selected_symbol])
             current_price = current_prices.get(selected_symbol, 100)
@@ -891,8 +850,6 @@ def main():
     """Main unified trading platform"""
     # Initialize components
     initialize_portfolio()
-    
-    # Tutorial system removed - will be rewritten later
     
     # Header
     st.markdown('<h1 class="main-header">🌍 Unified Trading Platform</h1>', unsafe_allow_html=True)

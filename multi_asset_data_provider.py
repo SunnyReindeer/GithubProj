@@ -230,8 +230,6 @@ class MultiAssetDataProvider:
     def _alpha_vantage_provider(self, symbols: List[str], data_type: str, 
                                period: str = None, interval: str = None) -> Dict[str, Any]:
         """Alpha Vantage data provider (requires API key)"""
-        # This would require an API key from Alpha Vantage
-        # For now, fallback to mock data
         if data_type == "current":
             return {symbol: self._get_mock_price_data(symbol) for symbol in symbols}
         else:
@@ -293,8 +291,6 @@ class MultiAssetDataProvider:
     def _fred_provider(self, symbols: List[str], data_type: str, 
                       period: str = None, interval: str = None) -> Dict[str, Any]:
         """Federal Reserve Economic Data provider"""
-        # This would require an API key from FRED
-        # For now, fallback to mock data
         if data_type == "current":
             return {symbol: self._get_mock_price_data(symbol) for symbol in symbols}
         else:

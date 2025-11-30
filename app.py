@@ -33,7 +33,6 @@ def show_navigation():
     if 'seen_introduction' not in st.session_state:
         st.session_state.seen_introduction = False
     
-    # Tutorial system removed - will be rewritten later
     
     # Show welcome message for first-time users
     if not st.session_state.seen_introduction:
