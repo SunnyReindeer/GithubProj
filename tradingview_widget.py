@@ -101,46 +101,60 @@ def create_tradingview_widget(symbol: str, timeframe: str = "1h", height: int = 
 def create_tradingview_advanced_chart(symbol: str, timeframe: str = "1h", height: int = 600, container_id: str = None):
     """Create an advanced TradingView chart with more features"""
     
+    # Map symbols to TradingView format
+    symbol_mapping = {
+        "BTCUSDT": "BINANCE:BTCUSDT",
+        "ETHUSDT": "BINANCE:ETHUSDT",
+        "BNBUSDT": "BINANCE:BNBUSDT",
+        "ADAUSDT": "BINANCE:ADAUSDT",
+        "SOLUSDT": "BINANCE:SOLUSDT",
+        "XRPUSDT": "BINANCE:XRPUSDT",
+        "DOTUSDT": "BINANCE:DOTUSDT",
+        "DOGEUSDT": "BINANCE:DOGEUSDT",
+        "AVAXUSDT": "BINANCE:AVAXUSDT",
+        "MATICUSDT": "BINANCE:MATICUSDT",
+        "AAPL": "NASDAQ:AAPL",
+        "GOOGL": "NASDAQ:GOOGL",
+        "MSFT": "NASDAQ:MSFT",
+        "TSLA": "NASDAQ:TSLA",
+        "AMZN": "NASDAQ:AMZN",
+        "META": "NASDAQ:META",
+        "NVDA": "NASDAQ:NVDA",
+        "NFLX": "NASDAQ:NFLX",
+        "SPY": "SPDR:SPY",
+        "QQQ": "NASDAQ:QQQ",
+        "EURUSD": "FX:EURUSD",
+        "GBPUSD": "FX:GBPUSD",
+        "USDJPY": "FX:USDJPY",
+        "USDCHF": "FX:USDCHF",
+        "AUDUSD": "FX:AUDUSD",
+        "USDCAD": "FX:USDCAD",
+        "NZDUSD": "FX:NZDUSD",
+        "GOLD": "TVC:GOLD",
+        "SILVER": "TVC:SILVER",
+        "OIL": "TVC:CRUDE",
+        "COPPER": "TVC:COPPER",
+        "NATURAL_GAS": "TVC:NATURALGAS"
+    }
+    
     # Use the symbol directly if it's already in TradingView format
     if ":" in symbol:
         tv_symbol = symbol
     else:
-        # Map symbols to TradingView format
-        symbol_mapping = {
-            "BTCUSDT": "BINANCE:BTCUSDT",
-            "ETHUSDT": "BINANCE:ETHUSDT",
-            "BNBUSDT": "BINANCE:BNBUSDT",
-            "ADAUSDT": "BINANCE:ADAUSDT",
-            "SOLUSDT": "BINANCE:SOLUSDT",
-            "XRPUSDT": "BINANCE:XRPUSDT",
-            "DOTUSDT": "BINANCE:DOTUSDT",
-            "DOGEUSDT": "BINANCE:DOGEUSDT",
-            "AVAXUSDT": "BINANCE:AVAXUSDT",
-            "MATICUSDT": "BINANCE:MATICUSDT",
-            "AAPL": "NASDAQ:AAPL",
-            "GOOGL": "NASDAQ:GOOGL",
-            "MSFT": "NASDAQ:MSFT",
-            "TSLA": "NASDAQ:TSLA",
-            "AMZN": "NASDAQ:AMZN",
-            "META": "NASDAQ:META",
-            "NVDA": "NASDAQ:NVDA",
-            "NFLX": "NASDAQ:NFLX",
-            "SPY": "SPDR:SPY",
-            "QQQ": "NASDAQ:QQQ",
-            "EURUSD": "FX:EURUSD",
-            "GBPUSD": "FX:GBPUSD",
-            "USDJPY": "FX:USDJPY",
-            "USDCHF": "FX:USDCHF",
-            "AUDUSD": "FX:AUDUSD",
-            "USDCAD": "FX:USDCAD",
-            "NZDUSD": "FX:NZDUSD",
-            "GOLD": "TVC:GOLD",
-            "SILVER": "TVC:SILVER",
-            "OIL": "TVC:CRUDE",
-            "COPPER": "TVC:COPPER",
-            "NATURAL_GAS": "TVC:NATURALGAS"
-        }
-        tv_symbol = symbol_mapping.get(symbol, f"BINANCE:{symbol}")
+        # Try to infer exchange for unknown stocks (default to NYSE)
+        if symbol not in symbol_mapping:
+            # Check if it looks like a stock symbol (3-5 uppercase letters, no numbers)
+            if symbol.isalpha() and symbol.isupper() and 2 <= len(symbol) <= 5:
+                # Default to NYSE for unknown stocks
+                tv_symbol = f"NYSE:{symbol}"
+            elif symbol.endswith("USDT") or any(crypto in symbol.upper() for crypto in ["BTC", "ETH", "BNB", "ADA", "SOL"]):
+                # Crypto symbol
+                tv_symbol = f"BINANCE:{symbol}"
+            else:
+                # Default fallback
+                tv_symbol = f"NYSE:{symbol}"
+        else:
+            tv_symbol = symbol_mapping.get(symbol, f"NYSE:{symbol}")
     
     timeframe_mapping = {
         "1m": "1",
@@ -154,7 +168,6 @@ def create_tradingview_advanced_chart(symbol: str, timeframe: str = "1h", height
         "1M": "1M"
     }
     
-    tv_symbol = symbol_mapping.get(symbol, "BINANCE:BTCUSDT")
     tv_timeframe = timeframe_mapping.get(timeframe, "60")
     
     # Use provided container_id or generate unique one

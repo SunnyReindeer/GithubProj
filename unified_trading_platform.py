@@ -134,8 +134,17 @@ def map_symbol_to_tradingview(symbol: str) -> str:
     elif symbol in commodity_mapping:
         return commodity_mapping[symbol]
     else:
-        # Default to crypto if not found
-        return f"BINANCE:{symbol}"
+        # Try to infer exchange for unknown symbols
+        # Check if it looks like a stock symbol (3-5 uppercase letters, no numbers)
+        if symbol.isalpha() and symbol.isupper() and 2 <= len(symbol) <= 5:
+            # Default to NYSE for unknown stocks
+            return f"NYSE:{symbol}"
+        elif symbol.endswith("USDT") or any(crypto in symbol.upper() for crypto in ["BTC", "ETH", "BNB", "ADA", "SOL"]):
+            # Crypto symbol
+            return f"BINANCE:{symbol}"
+        else:
+            # Default fallback to NYSE for stocks
+            return f"NYSE:{symbol}"
 
 def initialize_portfolio():
     """Initialize portfolio if not already done"""
