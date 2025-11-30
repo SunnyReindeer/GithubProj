@@ -317,8 +317,9 @@ class MultiAssetPortfolio:
         # P&L = Current Total Value - Initial Balance
         # This way, when you buy at market price, P&L = 0 initially
         # P&L only changes when prices move
-        total_pnl = total_value - self.initial_balance
-        total_pnl_percent = (total_pnl / self.initial_balance) * 100 if self.initial_balance > 0 else 0
+        total_cost_basis = self.get_total_cost_basis()  # This is just initial_balance
+        total_pnl = total_value - total_cost_basis
+        total_pnl_percent = (total_pnl / total_cost_basis) * 100 if total_cost_basis > 0 else 0
         
         # Calculate asset class allocation
         asset_class_allocation = {}
