@@ -305,27 +305,20 @@ class MultiAssetPortfolio:
         return total_value
     
     def get_total_cost_basis(self) -> float:
-        """Calculate total cost basis"""
-        total_cost = 0.0
-        
-        # Add initial cash
-        total_cost += self.initial_balance
-        
-        # Add position cost basis
-        for position in self.positions.values():
-            if position.currency == self.base_currency:
-                total_cost += position.cost_basis
-            else:
-                total_cost += position.cost_basis * 1.0  # Assume 1:1 for demo
-        
-        return total_cost
+        """Calculate total cost basis (initial investment)"""
+        # Cost basis is the initial balance - this is what we started with
+        # When we buy positions, cash decreases but cost basis stays the same
+        # P&L = Current Value - Initial Balance
+        return self.initial_balance
     
     def get_portfolio_metrics(self, current_prices: Dict[str, PriceData]) -> PortfolioMetrics:
         """Calculate comprehensive portfolio metrics"""
         total_value = self.get_total_value(current_prices)
-        total_cost_basis = self.get_total_cost_basis()
-        total_pnl = total_value - total_cost_basis
-        total_pnl_percent = (total_pnl / total_cost_basis) * 100 if total_cost_basis > 0 else 0
+        # P&L = Current Total Value - Initial Balance
+        # This way, when you buy at market price, P&L = 0 initially
+        # P&L only changes when prices move
+        total_pnl = total_value - self.initial_balance
+        total_pnl_percent = (total_pnl / self.initial_balance) * 100 if self.initial_balance > 0 else 0
         
         # Calculate asset class allocation
         asset_class_allocation = {}
