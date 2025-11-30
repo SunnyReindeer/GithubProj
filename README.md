@@ -16,23 +16,25 @@ A comprehensive multi-asset trading simulation application built with Streamlit,
 
 ### AI Robo Advisor Features
 - **🎯 Risk Assessment**: Comprehensive questionnaire to evaluate your risk preferences
-- **🤖 AI Strategy Recommendations**: Personalized trading strategies based on your risk profile
-- **🎯 Portfolio Optimization**: Advanced portfolio optimization using multiple methods
-- **📋 Trading Plans**: Complete personalized trading plans with implementation guidance
-- **📊 Risk Analysis**: Detailed risk metrics and portfolio analysis
-- **💾 Export Functionality**: Download your risk profile and trading plan
+- **💼 Fund Portfolio Recommendations**: Pre-defined fund portfolios (Core, Growth, Dividend, ESG, REITs, Defensive) matched to your risk profile
+- **🤖 AI Labeling**: Automatic labeling of investments with sectors, themes, geography, and risk characteristics
+- **📊 Portfolio Details**: Real-time price data, allocation charts, and AI label breakdowns
+- **📋 Investment Plans**: Complete personalized investment plans with implementation guidance
+- **📈 Portfolio Allocation**: Full portfolio allocation and detailed stock allocation breakdown
+- **💾 Export Functionality**: Download your risk profile and investment plan
 
-### Multi-Asset Features
-- **📊 Asset Class Management**: Support for 9 different asset classes
-- **🌎 Global Market Coverage**: Assets from US, Europe, Asia, and emerging markets
-- **🏭 Sector Analysis**: Technology, healthcare, financial, energy, and other sectors
-- **⚖️ Risk-Based Allocation**: Conservative, moderate, aggressive, and very aggressive profiles
-- **🤖 Asset-Specific Strategies**: Tailored trading strategies for each asset class
-- **📈 Market Overview**: Real-time overview of all asset classes and markets
+### Market Overview Features
+- **🌍 Global Market Indices**: Interactive world map showing market performance by region
+- **📊 Market Details**: Real-time data for major indices (S&P 500, NASDAQ, Dow Jones, etc.)
+- **🏆 Top Performers & Losers**: Best and worst performing markets and assets
+- **📅 Economic Events**: Calendar of upcoming economic events and indicators (90-day view)
+- **📰 News**: Real-time financial news with direct article links
+- **📈 Market Analysis**: Fear & Greed Index, key market indicators, bond yields, sector performance
+- **💼 Overview of Assets**: Real-time data for stocks and cryptocurrencies with sparkline charts
 
 ## Supported Assets
 
-### 🌍 Multi-Asset Classes
+### 🌍 Trading Platform Assets
 - **📈 Stocks**: Apple, Microsoft, Google, Amazon, Tesla, and 50+ more
 - **🏦 Bonds**: Treasury bonds, corporate bonds, high-yield bonds
 - **🥇 Commodities**: Gold, silver, oil, natural gas, agriculture
@@ -42,11 +44,11 @@ A comprehensive multi-asset trading simulation application built with Streamlit,
 - **📊 ETFs**: S&P 500, NASDAQ, sector ETFs, and index funds
 - **📈 Indices**: S&P 500, Dow Jones, NASDAQ, VIX
 
-### 🌎 Global Coverage
-- **🇺🇸 US Markets**: NYSE, NASDAQ stocks and ETFs
-- **🇪🇺 European Markets**: European stocks and indices
-- **🇦🇸 Asian Markets**: Asian stocks and emerging markets
-- **🌍 Global Markets**: International ETFs and global indices
+### 🌎 Market Overview Coverage
+- **🇺🇸 US Markets**: S&P 500, NASDAQ, Dow Jones, Russell 2000
+- **🇪🇺 European Markets**: FTSE 100, DAX, CAC 40, Euro Stoxx 50
+- **🇦🇸 Asian Markets**: Nikkei 225, Hang Seng, Shanghai Composite, Taiwan Weighted
+- **🌍 Global Markets**: MSCI World, Emerging Markets, South American indices (Brazil, Argentina, Chile)
 
 ## Installation
 
@@ -71,10 +73,18 @@ streamlit run app.py
 ### Starting the App
 1. Run `streamlit run app.py` in your terminal
 2. The app will open in your browser at `http://localhost:8501`
-3. Wait for the WebSocket connection to establish (you'll see "Connecting to market data...")
+3. Navigate between pages using the sidebar navigation
 
-### Using the Multi-Asset Trading Platform
-1. Navigate to the "🌍 Multi-Asset Trading" tab in the sidebar
+### Using the Market Overview
+1. Navigate to the "📊 Market Overview" tab in the sidebar
+2. View global market indices on an interactive world map
+3. Check economic events calendar (90-day view)
+4. Read real-time financial news
+5. Analyze market sentiment with Fear & Greed Index
+6. Review sector performance and key market indicators
+
+### Using the Trading Platform
+1. Navigate to the "🌍 Trading Platform" tab in the sidebar
 2. Select an asset class (stocks, bonds, commodities, forex, crypto, etc.)
 3. Choose specific symbols to trade
 4. View real-time market data and charts
@@ -84,10 +94,11 @@ streamlit run app.py
 ### Using the AI Robo Advisor
 1. Navigate to the "🎯 AI Robo Advisor" tab in the sidebar
 2. Complete the risk assessment questionnaire (10 questions)
-3. Review your personalized risk profile
-4. Get AI-powered strategy recommendations
-5. Optimize your portfolio allocation
-6. Download your complete trading plan
+3. Review your personalized risk profile and recommended asset allocation
+4. Get fund portfolio recommendations (Core, Growth, Dividend, ESG, REITs, Defensive)
+5. View detailed portfolio holdings with AI labels and real-time prices
+6. Review your personalized investment plan
+7. Download your risk profile and investment plan
 
 ### Demo the Multi-Asset Platform
 Run the demo script to see the multi-asset platform in action:
@@ -130,36 +141,42 @@ Edit `config.py` to customize:
 
 ### Architecture
 - **Frontend**: Streamlit for interactive web interface
-- **Data Source**: Binance WebSocket API for real-time data
+- **Data Sources**: 
+  - Yahoo Finance (yfinance) for stocks, ETFs, indices, and market data
+  - Fear & Greed Index API for market sentiment
+  - Real-time economic events and news
 - **Backend**: Python with pandas for data processing
-- **Charts**: Plotly for interactive visualizations
+- **Charts**: Plotly for interactive visualizations (maps, charts, sparklines)
 
 ### Key Components
+- `app.py`: Main Streamlit application with navigation
+- `market_overview_page.py`: Market overview, economic events, news, and analysis
+- `unified_trading_platform.py`: Multi-asset trading interface
+- `robo_advisor_page.py`: AI robo advisor interface
 - `data_fetcher.py`: WebSocket connection and data management
 - `trading_engine.py`: Portfolio and order management system
-- `app.py`: Main Streamlit application
 - `config.py`: Configuration settings
 
 ### AI Robo Advisor Components
 - `risk_assessment_engine.py`: Risk profiling and questionnaire system
-- `strategy_recommender.py`: AI strategy matching and recommendations
-- `portfolio_optimizer.py`: Advanced portfolio optimization algorithms
+- `fund_portfolio_manager.py`: Fund-based portfolio management with AI labeling
 - `robo_advisor_page.py`: User interface for the robo advisor
 - `robo_advisor_demo.py`: Demo script showcasing all features
 
-### Multi-Asset Components
-- `multi_asset_config.py`: Multi-asset configuration and asset database
-- `multi_asset_data_provider.py`: Data providers for all asset classes
-- `multi_asset_portfolio.py`: Multi-asset portfolio management system
-- `multi_asset_strategies.py`: Asset-specific trading strategies
-- `multi_asset_app.py`: Multi-asset trading interface
-- `multi_asset_demo.py`: Demo script for multi-asset features
+### Market Overview Components
+- `market_overview_page.py`: Market overview, economic events, news, and market analysis
+
+### Trading Platform Components
+- `unified_trading_platform.py`: Unified trading interface for all asset classes
+- `trading_engine.py`: Portfolio and order management
+- `data_fetcher.py`: Real-time data fetching
+- `tradingview_widget.py`: TradingView chart integration
 
 ### Data Flow
-1. WebSocket connects to Binance API
-2. Real-time price data flows to the trading engine
+1. Market data fetched from Yahoo Finance (yfinance) for stocks, ETFs, indices
+2. Real-time price data flows to trading engine and market overview
 3. Streamlit UI updates automatically with new data
-4. User interactions trigger portfolio updates
+4. User interactions trigger portfolio updates and recommendations
 
 ## Deployment on Streamlit Cloud
 
@@ -177,9 +194,10 @@ Create a `.env` file for any API keys or configuration:
 ## Troubleshooting
 
 ### Common Issues
-1. **No price data**: Check internet connection and Binance API status
-2. **WebSocket connection failed**: Try refreshing the page
+1. **No price data**: Check internet connection and Yahoo Finance API status
+2. **Market data not loading**: Try refreshing the page or check API rate limits
 3. **Orders not executing**: Ensure sufficient balance for buy orders or sufficient position for sell orders
+4. **Fear & Greed Index showing 0**: This is a fallback value; the system will retry fetching real data
 
 ### Performance Tips
 - The app auto-refreshes every second for real-time updates

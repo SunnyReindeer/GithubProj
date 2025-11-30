@@ -119,7 +119,7 @@ Each holding has AI-generated labels:
 5. **Display** with holdings, AI labels, and allocation breakdown
 
 ## Why This Approach?
-- **Pre-defined Portfolios**: Easier to understand and manage
+    - **Pre-defined Portfolios**: Easier to understand and manage
 - **AI Labels**: Help users understand what they're investing in
 - **Risk Matching**: Ensures portfolios align with user's risk tolerance
 - **Diversification**: Each portfolio is already diversified
