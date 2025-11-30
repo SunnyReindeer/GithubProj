@@ -137,21 +137,49 @@ class MultiAssetDataProvider:
         prices = {}
         
         try:
-            # Create ticker objects
-            tickers = yf.Tickers(" ".join(symbols))
+            # Convert crypto symbols from USDT format to -USD format for Yahoo Finance
+            converted_symbols = []
+            symbol_mapping = {}  # Maps Yahoo symbol -> original symbol
             
             for symbol in symbols:
+                # Check if it's a crypto symbol in USDT format (e.g., BTCUSDT)
+                if symbol.endswith("USDT") and len(symbol) > 4:
+                    # Convert BTCUSDT -> BTC-USD
+                    yahoo_symbol = symbol[:-4] + "-USD"
+                    converted_symbols.append(yahoo_symbol)
+                    symbol_mapping[yahoo_symbol] = symbol
+                else:
+                    converted_symbols.append(symbol)
+                    symbol_mapping[symbol] = symbol
+            
+            # Create ticker objects
+            tickers = yf.Tickers(" ".join(converted_symbols))
+            
+            for yahoo_symbol in converted_symbols:
+                original_symbol = symbol_mapping[yahoo_symbol]
                 try:
-                    ticker = tickers.tickers[symbol]
+                    ticker = tickers.tickers.get(yahoo_symbol)
+                    if not ticker:
+                        # Try direct lookup if batch failed
+                        ticker = yf.Ticker(yahoo_symbol)
+                    
                     info = ticker.info
                     
                     current_price = info.get('currentPrice', info.get('regularMarketPrice', 0))
+                    if current_price == 0:
+                        # Try fast_info as fallback
+                        try:
+                            fast_info = ticker.fast_info
+                            current_price = fast_info.get('lastPrice', 0)
+                        except:
+                            pass
+                    
                     previous_close = info.get('previousClose', current_price)
                     change = current_price - previous_close
                     change_percent = (change / previous_close) * 100 if previous_close > 0 else 0
                     
-                    prices[symbol] = PriceData(
-                        symbol=symbol,
+                    prices[original_symbol] = PriceData(
+                        symbol=original_symbol,
                         price=current_price,
                         change=change,
                         change_percent=change_percent,
@@ -162,8 +190,8 @@ class MultiAssetDataProvider:
                         open_24h=info.get('open', current_price)
                     )
                 except Exception as e:
-                    print(f"Error fetching {symbol}: {e}")
-                    prices[symbol] = self._get_mock_price_data(symbol)
+                    print(f"Error fetching {original_symbol} (Yahoo: {yahoo_symbol}): {e}")
+                    prices[original_symbol] = self._get_mock_price_data(original_symbol)
         
         except Exception as e:
             print(f"Yahoo Finance error: {e}")

@@ -66,7 +66,7 @@ if 'portfolio_initialized' not in st.session_state:
     st.session_state.portfolio_initialized = False
     st.session_state.current_prices = {}
     st.session_state.last_update = None
-    st.session_state.selected_asset_class = AssetClass.CRYPTO
+    st.session_state.selected_asset_class = AssetClass.STOCKS
     st.session_state.selected_symbols = []
     st.session_state.use_multi_asset = True
 
@@ -164,7 +164,7 @@ def create_asset_class_selector():
     
     # Find the index of the currently selected asset class
     try:
-        selected_index = asset_classes.index(st.session_state.get('selected_asset_class', AssetClass.CRYPTO))
+        selected_index = asset_classes.index(st.session_state.get('selected_asset_class', AssetClass.STOCKS))
     except (ValueError, AttributeError):
         selected_index = 0  # Default to first option if not found
     
@@ -216,18 +216,30 @@ def create_symbol_selector(asset_class: AssetClass):
         
         return symbols
     else:
-        # Use original crypto symbols
-        # Get current session state symbols and filter to only include valid crypto options
+        # Use multi-asset config crypto symbols
+        assets = multi_asset_config.get_assets_by_class(AssetClass.CRYPTO)
+        
+        if not assets:
+            st.sidebar.warning("No crypto assets available")
+            return []
+        
+        # Create symbol options
+        symbol_options = [f"{asset.symbol} - {asset.name}" for asset in assets[:20]]  # Limit to 20 for performance
+        
+        # Get current session state symbols and filter to only include valid options
         current_selected = st.session_state.get('selected_symbols', [])
-        valid_defaults = [symbol for symbol in current_selected if symbol in SUPPORTED_CRYPTOS]
+        valid_defaults = [option for option in symbol_options if any(symbol in option for symbol in current_selected)]
         
         selected_symbols = st.sidebar.multiselect(
             "Select Cryptocurrencies",
-            options=SUPPORTED_CRYPTOS,
+            options=symbol_options,
             default=valid_defaults
         )
-        st.session_state.selected_symbols = selected_symbols
-        return selected_symbols
+        
+        # Extract symbols from selected options
+        symbols = [option.split(' - ')[0] for option in selected_symbols]
+        st.session_state.selected_symbols = symbols
+        return symbols
 
 def display_market_overview():
     """Display comprehensive market overview dashboard"""
@@ -927,7 +939,6 @@ def main():
         
         if portfolio_symbols:
             # Get current prices
-            from unified_trading_platform import get_current_prices
             portfolio_prices = get_current_prices(portfolio_symbols)
             
             if portfolio_prices:
