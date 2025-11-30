@@ -8,3 +8,5 @@ python-dotenv>=1.0.0
 scipy>=1.11.0
 yfinance>=0.2.18
 fear-and-greed>=0.4
+feedparser>=6.0.10
+python-dateutil>=2.8.2
