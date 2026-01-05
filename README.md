@@ -1,41 +1,62 @@
 # Multi-Asset Trading Platform with AI Robo Advisor 🌍📈🤖
 
-A comprehensive multi-asset trading simulation application built with Streamlit, featuring live market data, portfolio management, interactive trading interface, and an AI-powered robo advisor for personalized trading strategies across stocks, bonds, commodities, forex, crypto, and other investment assets.
+A comprehensive multi-asset trading simulation application built with Streamlit, featuring live market data, portfolio management, interactive trading interface, and an AI-powered robo advisor for personalized fund portfolio recommendations across stocks, bonds, commodities, forex, crypto, and other investment assets.
 
 ## Features
 
-### Core Trading Features
-- **🌍 Multi-Asset Support**: Trade stocks, bonds, commodities, forex, crypto, REITs, ETFs, and indices
-- **Real-time Market Data**: Live prices via Yahoo Finance, Binance, and other data providers
-- **Trading Simulation**: Place buy/sell orders with realistic trading fees for each asset class
-- **Portfolio Management**: Track positions, P&L, and portfolio performance across all asset classes
-- **Interactive Charts**: Candlestick charts with historical price data for all assets
-- **Order Management**: Market, limit, stop, and stop-limit orders with order history
-- **Performance Analytics**: Real-time portfolio metrics and performance tracking
-- **Multi-Currency Support**: Handle different currencies and exchange rates
-
-### AI Robo Advisor Features
-- **🎯 Risk Assessment**: Comprehensive questionnaire to evaluate your risk preferences
-- **💼 Fund Portfolio Recommendations**: Pre-defined fund portfolios (Core, Growth, Dividend, ESG, REITs, Defensive) matched to your risk profile
-- **🤖 AI Labeling**: Automatic labeling of investments with sectors, themes, geography, and risk characteristics
-- **📊 Portfolio Details**: Real-time price data, allocation charts, and AI label breakdowns
-- **📋 Investment Plans**: Complete personalized investment plans with implementation guidance
-- **📈 Portfolio Allocation**: Full portfolio allocation and detailed stock allocation breakdown
-- **💾 Export Functionality**: Download your risk profile and investment plan
-
-### Market Overview Features
-- **🌍 Global Market Indices**: Interactive world map showing market performance by region
-- **📊 Market Details**: Real-time data for major indices (S&P 500, NASDAQ, Dow Jones, etc.)
+### 📊 Market Overview
+- **🌍 Global Market Indices**: Interactive world map showing market performance by region with real-time data
+- **📈 Market Details**: Real-time data for major indices (S&P 500, NASDAQ, Dow Jones, FTSE 100, DAX, Nikkei 225, etc.)
 - **🏆 Top Performers & Losers**: Best and worst performing markets and assets
 - **📅 Economic Events**: Calendar of upcoming economic events and indicators (90-day view)
-- **📰 News**: Real-time financial news with direct article links
-- **📈 Market Analysis**: Fear & Greed Index, key market indicators, bond yields, sector performance
+- **📰 Financial News**: Real-time financial news from major sources (Reuters, CNBC, Bloomberg, MarketWatch, Yahoo Finance, Investing.com) with search, filtering, and pagination
+- **📊 Market Analysis**: 
+  - Fear & Greed Index for market sentiment
+  - VIX (Volatility Index)
+  - Treasury yields (10-year, 2-year)
+  - DXY (US Dollar Index)
+  - Market breadth and advance/decline ratio
+  - Sector performance analysis
 - **💼 Overview of Assets**: Real-time data for stocks and cryptocurrencies with sparkline charts
+
+### 🌍 Trading Platform
+- **Multi-Asset Support**: Trade stocks, bonds, commodities, forex, crypto, REITs, ETFs, and indices
+- **Real-time Market Data**: Live prices via Yahoo Finance for all asset classes
+- **Trading Simulation**: Place buy/sell orders with realistic trading fees for each asset class
+- **Portfolio Management**: Track positions, P&L, and portfolio performance across all asset classes
+- **Interactive Charts**: 
+  - Standard candlestick charts with historical price data
+  - TradingView embedded widgets for professional charting
+- **Order Management**: Market and limit orders with order history
+- **Performance Analytics**: Real-time portfolio metrics including total value, cash balance, P&L, and P&L percentage
+
+### 🎯 AI Robo Advisor
+- **Risk Assessment**: Comprehensive 10-question questionnaire to evaluate your risk preferences, investment goals, time horizon, and financial situation
+- **Personalized Risk Profile**: Get your risk score (0-100) and risk tolerance category (Conservative, Moderate, Aggressive, Very Aggressive)
+- **Fund Portfolio Recommendations**: Pre-defined fund portfolios matched to your risk profile:
+  - **Core Portfolio**: Balanced, diversified mix
+  - **Growth Portfolio**: Tech and growth companies
+  - **Dividend Portfolio**: Income-focused investments
+  - **ESG Portfolio**: Sustainable investing
+  - **REITs Portfolio**: Real estate exposure
+  - **Defensive Portfolio**: Low-risk, capital preservation
+- **AI Labeling**: Automatic labeling of investments with:
+  - Sectors (Technology, Healthcare, Financial, Energy, etc.)
+  - Themes (Growth Stock, Value Stock, Dividend Stock, Blue Chip)
+  - Geography (US Market, Emerging Market, Developed Market, Asia Pacific, Europe)
+  - Risk Level (Low, Medium, High)
+  - Style (ESG Compliant, Sustainable, Income Focused, Defensive)
+- **Portfolio Details**: View holdings with real-time price data, allocation charts, and AI label breakdowns
+- **Investment Plans**: Complete personalized investment plans with implementation guidance
+- **Portfolio Allocation**: 
+  - Full portfolio allocation across asset classes
+  - Detailed stock allocation breakdown (normalized to 100%)
+- **Export Functionality**: Download your risk profile and investment plan as JSON
 
 ## Supported Assets
 
-### 🌍 Trading Platform Assets
-- **📈 Stocks**: Apple, Microsoft, Google, Amazon, Tesla, and 50+ more
+### Trading Platform Assets
+- **📈 Stocks**: Apple, Microsoft, Google, Amazon, Tesla, JPMorgan, and 50+ more
 - **🏦 Bonds**: Treasury bonds, corporate bonds, high-yield bonds
 - **🥇 Commodities**: Gold, silver, oil, natural gas, agriculture
 - **💱 Forex**: EUR/USD, GBP/USD, USD/JPY, and major currency pairs
@@ -44,7 +65,7 @@ A comprehensive multi-asset trading simulation application built with Streamlit,
 - **📊 ETFs**: S&P 500, NASDAQ, sector ETFs, and index funds
 - **📈 Indices**: S&P 500, Dow Jones, NASDAQ, VIX
 
-### 🌎 Market Overview Coverage
+### Market Overview Coverage
 - **🇺🇸 US Markets**: S&P 500, NASDAQ, Dow Jones, Russell 2000
 - **🇪🇺 European Markets**: FTSE 100, DAX, CAC 40, Euro Stoxx 50
 - **🇦🇸 Asian Markets**: Nikkei 225, Hang Seng, Shanghai Composite, Taiwan Weighted
@@ -55,7 +76,7 @@ A comprehensive multi-asset trading simulation application built with Streamlit,
 1. Clone the repository:
 ```bash
 git clone <your-repo-url>
-cd crypto-trading-simulator
+cd GithubProj
 ```
 
 2. Install dependencies:
@@ -68,6 +89,8 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
+The app will open in your browser at `http://localhost:8501`
+
 ## Usage
 
 ### Starting the App
@@ -77,65 +100,59 @@ streamlit run app.py
 
 ### Using the Market Overview
 1. Navigate to the "📊 Market Overview" tab in the sidebar
-2. View global market indices on an interactive world map
-3. Check economic events calendar (90-day view)
-4. Read real-time financial news
-5. Analyze market sentiment with Fear & Greed Index
-6. Review sector performance and key market indicators
+2. **Global Markets**: View market indices on an interactive world map with color-coded performance
+3. **Economic Events**: Check the calendar for upcoming economic events (90-day view)
+4. **News**: 
+   - Browse real-time financial news from major sources
+   - Use search to find specific topics
+   - Filter by source (Reuters, CNBC, Bloomberg, etc.)
+   - Navigate through pages of articles
+5. **Market Analysis**: 
+   - View Fear & Greed Index for market sentiment
+   - Check VIX, Treasury yields, DXY, and other key indicators
+   - Review sector performance
+6. **Overview of Assets**: See real-time data for stocks and cryptocurrencies with sparkline charts
 
 ### Using the Trading Platform
 1. Navigate to the "🌍 Trading Platform" tab in the sidebar
-2. Select an asset class (stocks, bonds, commodities, forex, crypto, etc.)
-3. Choose specific symbols to trade
-4. View real-time market data and charts
-5. Place orders with appropriate order types
-6. Monitor your multi-asset portfolio performance
+2. **Select Asset Class**: Choose from stocks, bonds, commodities, forex, crypto, REITs, ETFs, or indices
+3. **Choose Symbols**: Select specific symbols to trade from the available list
+4. **View Market Data**: 
+   - See real-time prices and market information
+   - View interactive charts (standard or TradingView widgets)
+   - Select different time periods for historical data
+5. **Place Orders**: 
+   - Select Buy or Sell
+   - Choose Market or Limit order type
+   - Enter quantity
+   - For limit orders, set your desired price
+6. **Monitor Portfolio**: 
+   - View total portfolio value, cash balance, and P&L
+   - Check all open positions with unrealized P&L
+   - Review trade history and order history
 
 ### Using the AI Robo Advisor
 1. Navigate to the "🎯 AI Robo Advisor" tab in the sidebar
-2. Complete the risk assessment questionnaire (10 questions)
-3. Review your personalized risk profile and recommended asset allocation
-4. Get fund portfolio recommendations (Core, Growth, Dividend, ESG, REITs, Defensive)
-5. View detailed portfolio holdings with AI labels and real-time prices
-6. Review your personalized investment plan
-7. Download your risk profile and investment plan
-
-### Demo the Multi-Asset Platform
-Run the demo script to see the multi-asset platform in action:
-```bash
-python multi_asset_demo.py
-```
-
-### Demo the Robo Advisor
-Run the demo script to see the robo advisor in action:
-```bash
-python robo_advisor_demo.py
-```
-
-### Trading
-1. **Select a Cryptocurrency**: Choose from the dropdown in the sidebar
-2. **Place Orders**: 
-   - Select Buy/Sell
-   - Choose Market or Limit order
-   - Enter quantity
-   - For limit orders, set your desired price
-3. **Monitor Portfolio**: View your positions, P&L, and performance metrics
-
-### Features Overview
-- **Real-time Prices**: Live price updates every second
-- **Portfolio Tracking**: Monitor your total value, cash balance, and P&L
-- **Position Management**: View all open positions with unrealized P&L
-- **Trade History**: Complete record of all executed trades
-- **Order History**: Track all placed orders and their status
-- **Performance Charts**: Visual representation of portfolio performance
-
-## Configuration
-
-Edit `config.py` to customize:
-- Initial balance (default: $10,000)
-- Trading fees (default: 0.1%)
-- Supported cryptocurrencies
-- API endpoints
+2. **Complete Risk Assessment**: 
+   - Answer 10 questions about your investment goals, time horizon, risk tolerance, and financial situation
+   - Questions cover: investment goals, time horizon, loss tolerance, investment experience, income stability, liquidity needs, financial knowledge, investment preferences, and risk attitude
+3. **Review Risk Profile**: 
+   - See your calculated risk score (0-100)
+   - View your risk tolerance category
+   - Check recommended asset allocation across stocks, bonds, cash, and other assets
+   - View detailed stock allocation breakdown
+4. **Get Fund Portfolio Recommendations**: 
+   - Review up to 3 recommended fund portfolios matched to your risk profile
+   - Each portfolio shows suitability score, risk level, expected return, and volatility
+   - View portfolio themes and rebalancing frequency
+5. **Explore Portfolio Details**: 
+   - View all holdings with real-time prices
+   - See allocation charts and AI label breakdowns
+   - Understand sectors, themes, geography, and risk characteristics
+6. **Review Investment Plan**: 
+   - Get personalized investment plan with implementation steps
+   - View portfolio summary and recommendations
+7. **Export Data**: Download your risk profile and investment plan as JSON
 
 ## Technical Details
 
@@ -144,52 +161,53 @@ Edit `config.py` to customize:
 - **Data Sources**: 
   - Yahoo Finance (yfinance) for stocks, ETFs, indices, and market data
   - Fear & Greed Index API for market sentiment
-  - Real-time economic events and news
+  - RSS feeds for financial news (Reuters, CNBC, Bloomberg, MarketWatch, Yahoo Finance, Investing.com)
 - **Backend**: Python with pandas for data processing
 - **Charts**: Plotly for interactive visualizations (maps, charts, sparklines)
+- **TradingView**: Embedded TradingView widgets for professional charting
 
 ### Key Components
-- `app.py`: Main Streamlit application with navigation
-- `market_overview_page.py`: Market overview, economic events, news, and analysis
+- `app.py`: Main Streamlit application with navigation and routing
+- `market_overview_page.py`: Market overview, economic events, news, and market analysis
 - `unified_trading_platform.py`: Multi-asset trading interface
 - `robo_advisor_page.py`: AI robo advisor interface
-- `data_fetcher.py`: WebSocket connection and data management
 - `trading_engine.py`: Portfolio and order management system
+- `multi_asset_portfolio.py`: Multi-asset portfolio management
+- `multi_asset_data_provider.py`: Data fetching for all asset classes
+- `multi_asset_config.py`: Asset configuration and definitions
+- `fund_portfolio_manager.py`: Fund-based portfolio management with AI labeling
+- `risk_assessment_engine.py`: Risk profiling and questionnaire system
+- `tradingview_widget.py`: TradingView chart integration
 - `config.py`: Configuration settings
 
-### AI Robo Advisor Components
-- `risk_assessment_engine.py`: Risk profiling and questionnaire system
-- `fund_portfolio_manager.py`: Fund-based portfolio management with AI labeling
-- `robo_advisor_page.py`: User interface for the robo advisor
-- `robo_advisor_demo.py`: Demo script showcasing all features
-
-### Market Overview Components
-- `market_overview_page.py`: Market overview, economic events, news, and market analysis
-
-### Trading Platform Components
-- `unified_trading_platform.py`: Unified trading interface for all asset classes
-- `trading_engine.py`: Portfolio and order management
-- `data_fetcher.py`: Real-time data fetching
-- `tradingview_widget.py`: TradingView chart integration
-
 ### Data Flow
-1. Market data fetched from Yahoo Finance (yfinance) for stocks, ETFs, indices
-2. Real-time price data flows to trading engine and market overview
-3. Streamlit UI updates automatically with new data
-4. User interactions trigger portfolio updates and recommendations
+1. Market data fetched from Yahoo Finance (yfinance) for stocks, ETFs, indices, and other assets
+2. News articles fetched from RSS feeds of major financial websites
+3. Real-time price data flows to trading engine and market overview
+4. Streamlit UI updates automatically with new data
+5. User interactions trigger portfolio updates and recommendations
+6. Risk assessment results are used to match fund portfolios
 
-## Deployment on Streamlit Cloud
+## Configuration
 
-1. Push your code to GitHub
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your GitHub repository
-4. Deploy the app
+Edit `config.py` to customize:
+- Initial balance (default: $100,000)
+- Trading fees (varies by asset class)
+- Supported assets and symbols
+- Page title and icon
 
-### Environment Variables (if needed)
-Create a `.env` file for any API keys or configuration:
-```
-# Add any environment variables here
-```
+## Dependencies
+
+Key Python packages:
+- `streamlit`: Web application framework
+- `yfinance`: Yahoo Finance data
+- `pandas`: Data processing
+- `plotly`: Interactive visualizations
+- `fear-and-greed`: Fear & Greed Index
+- `feedparser`: RSS feed parsing
+- `python-dateutil`: Date parsing utilities
+
+See `requirements.txt` for complete list.
 
 ## Troubleshooting
 
@@ -198,23 +216,37 @@ Create a `.env` file for any API keys or configuration:
 2. **Market data not loading**: Try refreshing the page or check API rate limits
 3. **Orders not executing**: Ensure sufficient balance for buy orders or sufficient position for sell orders
 4. **Fear & Greed Index showing 0**: This is a fallback value; the system will retry fetching real data
+5. **News not loading**: Check internet connection and RSS feed availability
 
 ### Performance Tips
-- The app auto-refreshes every second for real-time updates
+- The app auto-refreshes for real-time updates
 - Large portfolios may take longer to load
 - Close unused browser tabs to improve performance
+- News articles are cached to reduce API calls
 
-## Contributing
+## Project Structure
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+```
+GithubProj/
+├── app.py                          # Main application entry point
+├── config.py                       # Configuration settings
+├── market_overview_page.py         # Market overview and analysis
+├── unified_trading_platform.py     # Multi-asset trading interface
+├── robo_advisor_page.py            # AI robo advisor interface
+├── trading_engine.py                # Portfolio and order management
+├── multi_asset_portfolio.py        # Multi-asset portfolio management
+├── multi_asset_data_provider.py    # Data fetching for all assets
+├── multi_asset_config.py           # Asset configuration
+├── fund_portfolio_manager.py       # Fund portfolio management
+├── risk_assessment_engine.py       # Risk profiling system
+├── tradingview_widget.py            # TradingView integration
+├── requirements.txt                # Python dependencies
+└── README.md                       # This file
+```
 
 ## License
 
-This project is for educational purposes. Please ensure compliance with Binance API terms of service when using real market data.
+This project is for educational purposes only.
 
 ## Disclaimer
 
