@@ -347,6 +347,36 @@ See `requirements.txt` for complete list.
 - Close unused browser tabs to improve performance
 - News articles are cached to reduce API calls
 
+## User Design Flow
+
+The application follows a clear user flow with three main sections. See `USER_FLOW.md` for detailed Mermaid flowcharts.
+
+### Simplified Flow
+
+```mermaid
+flowchart LR
+    Start([🚀 Start]) --> Nav{🧭 Navigation}
+    Nav -->|📊| MO[Market Overview<br/>4 Tabs]
+    Nav -->|🌍| TP[Trading Platform<br/>3 Tabs]
+    Nav -->|🎯| RA[AI Robo Advisor<br/>4 Tabs]
+    
+    MO --> MO1[📈 Markets]
+    MO --> MO2[📅 Economic Events]
+    MO --> MO3[📰 News]
+    MO --> MO4[📊 Market Analysis]
+    
+    TP --> TP1[💼 Portfolio]
+    TP --> TP2[📈 Charts]
+    TP --> TP3[🔄 Trading]
+    
+    RA --> RA1[🎯 Risk Assessment]
+    RA --> RA2[💼 Fund Portfolios]
+    RA --> RA3[📊 Portfolio Details]
+    RA --> RA4[📋 Investment Plan]
+```
+
+For the complete detailed flowchart with all user interactions, decision points, and feature flows, see `USER_FLOW.md`.
+
 ## Project Structure
 
 ```
@@ -364,7 +394,8 @@ GithubProj/
 ├── risk_assessment_engine.py       # Risk profiling system
 ├── tradingview_widget.py            # TradingView integration
 ├── requirements.txt                # Python dependencies
-└── README.md                       # This file
+├── README.md                       # This file
+└── USER_FLOW.md                    # Detailed user flow charts
 ```
 
 ## License
