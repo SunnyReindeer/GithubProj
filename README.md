@@ -200,18 +200,41 @@ The app will open in your browser at `http://localhost:8501`
 
 ### Using the Market Overview
 1. Navigate to the "📊 Market Overview" tab in the sidebar
-2. **Global Markets**: View market indices on an interactive world map with color-coded performance
-3. **Economic Events**: Check the calendar for upcoming economic events (90-day view)
-4. **News**: 
-   - Browse real-time financial news from major sources
-   - Use search to find specific topics
-   - Filter by source (Reuters, CNBC, Bloomberg, etc.)
-   - Navigate through pages of articles
-5. **Market Analysis**: 
-   - View Fear & Greed Index for market sentiment
-   - Check VIX, Treasury yields, DXY, and other key indicators
-   - Review sector performance
-6. **Overview of Assets**: See real-time data for stocks and cryptocurrencies with sparkline charts
+2. **Markets Tab**:
+   - View the interactive world map showing global market performance by region
+   - Use the refresh button to update real-time data
+   - Select different asset types (World Indices, Stocks, Commodities, Currencies, Bonds, Crypto, or All Assets)
+   - Browse through different regions and view detailed market data with sparkline charts
+   - Check Top Performers & Losers to see best and worst performing assets
+   - View the global market heatmap for visual performance comparison
+   - Review market summary statistics
+3. **Economic Events Tab**:
+   - Browse the 90-day economic events calendar
+   - Filter events by importance level (High, Medium, Low)
+   - View upcoming central bank meetings, economic data releases, earnings announcements, and policy updates
+   - See event details including date, time, description, and impact level
+4. **News Tab**:
+   - Browse real-time financial news from major sources (Reuters, CNBC, Bloomberg, MarketWatch, Yahoo Finance, Investing.com)
+   - Use the search bar to find articles by keywords
+   - Filter news by specific source using the source selector
+   - Navigate through multiple pages of articles using pagination controls
+   - Click on article titles to read full articles on original websites
+   - View article summaries, publication dates, and relative timestamps
+5. **Market Analysis Tab**:
+   - **Key Market Indicators**: 
+     - Check VIX (Volatility Index) with status indicators and volatility levels
+     - View Market Breadth and Advance/Decline Ratio for market sentiment
+     - Monitor DXY (US Dollar Index) strength
+   - **Bond & Yield Analysis**:
+     - Review 10-year and 2-year Treasury yields
+     - Analyze yield curve (Normal, Inverted, or Flat)
+   - **Fear & Greed Index**:
+     - View current market sentiment (0-100 scale)
+     - See category (Extreme Fear, Fear, Neutral, Greed, Extreme Greed)
+   - **Sector Performance**:
+     - Review real-time performance for all major sectors (Technology, Healthcare, Financial, Energy, etc.)
+     - View percentage changes and visual charts
+   - Check data status indicators (🟢 Real-time, 🟡 Calculated, ⚪ Estimated) to understand data sources
 
 ### Using the Trading Platform
 1. Navigate to the "🌍 Trading Platform" tab in the sidebar
