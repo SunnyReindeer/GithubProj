@@ -5,19 +5,119 @@ A comprehensive multi-asset trading simulation application built with Streamlit,
 ## Features
 
 ### 📊 Market Overview
-- **🌍 Global Market Indices**: Interactive world map showing market performance by region with real-time data
-- **📈 Market Details**: Real-time data for major indices (S&P 500, NASDAQ, Dow Jones, FTSE 100, DAX, Nikkei 225, etc.)
-- **🏆 Top Performers & Losers**: Best and worst performing markets and assets
-- **📅 Economic Events**: Calendar of upcoming economic events and indicators (90-day view)
-- **📰 Financial News**: Real-time financial news from major sources (Reuters, CNBC, Bloomberg, MarketWatch, Yahoo Finance, Investing.com) with search, filtering, and pagination
-- **📊 Market Analysis**: 
-  - Fear & Greed Index for market sentiment
-  - VIX (Volatility Index)
-  - Treasury yields (10-year, 2-year)
-  - DXY (US Dollar Index)
-  - Market breadth and advance/decline ratio
-  - Sector performance analysis
-- **💼 Overview of Assets**: Real-time data for stocks and cryptocurrencies with sparkline charts
+
+The Market Overview section provides comprehensive real-time market data, analysis, and insights across four main tabs:
+
+#### 📈 Markets Tab
+- **🌍 Global Markets Overview**: 
+  - Interactive world map with color-coded market performance by region
+  - Real-time data refresh controls with last updated timestamps
+  - Regional market breakdown (US, Europe, Asia, Global)
+  
+- **🌍 Global Market Indices - Interactive World Map**:
+  - Visual representation of market performance across different countries
+  - Color-coded indicators (green for gains, red for losses)
+  - Click to view detailed market information by region
+  
+- **📊 Overview of Assets**:
+  - **Asset Type Selector**: Filter by World Indices, Stocks, Commodities, Currencies, Bonds, Crypto, or view All Assets
+  - **World Indices**: Real-time data for major global indices (S&P 500, NASDAQ, Dow Jones, FTSE 100, DAX, CAC 40, Nikkei 225, Hang Seng, Shanghai Composite, etc.) with sparkline charts showing price trends
+  - **Stocks**: Real-time prices, changes, and percentage changes for major stocks (Apple, Microsoft, Google, Amazon, Tesla, JPMorgan, etc.) with sparkline charts
+  - **Commodities**: Gold, silver, oil, natural gas prices with real-time updates
+  - **Currencies**: Major forex pairs (EUR/USD, GBP/USD, USD/JPY, etc.) with exchange rates
+  - **Bonds**: US Treasury bond yields (10-year, 2-year, etc.)
+  - **Cryptocurrencies**: Bitcoin, Ethereum, and other major cryptocurrencies with real-time prices and sparkline charts
+  
+- **🏆 Top Performers & Losers**:
+  - Top gainers across all asset classes
+  - Top losers across all asset classes
+  - Quick view of best and worst performing assets
+  
+- **🌡️ Global Market Heatmap**:
+  - Visual heatmap showing relative performance across different markets and asset classes
+  
+- **📊 Market Summary**:
+  - Overall market statistics and trends
+  - Summary metrics across different asset classes
+
+#### 📅 Economic Events Tab
+- **📅 Economic Events Calendar**:
+  - 90-day view of upcoming economic events and indicators
+  - Events organized by date with importance indicators
+  - Includes:
+    - Central bank meetings and announcements
+    - Economic data releases (GDP, inflation, employment, etc.)
+    - Earnings announcements
+    - Government policy announcements
+    - International economic events
+  - Filter by importance level (High, Medium, Low)
+  - Events displayed with date, time, description, and impact level
+
+#### 📰 News Tab
+- **📰 Financial News**:
+  - Real-time financial news aggregated from major sources:
+    - Reuters
+    - CNBC
+    - Bloomberg
+    - MarketWatch
+    - Yahoo Finance
+    - Investing.com
+  - **Search Functionality**: Search news articles by keywords
+  - **Source Filtering**: Filter news by specific source
+  - **Pagination**: Navigate through multiple pages of articles (up to 100 articles)
+  - **Article Cards**: Each article displays:
+    - Title with clickable hyperlinks to original articles
+    - Source and publication date
+    - Summary/description
+    - Relative time display (e.g., "2 hours ago")
+  - **Deduplication**: Automatically removes duplicate articles
+  - **Metrics**: Shows total articles found and current page information
+  - **Working Links**: All article links are verified and functional
+
+#### 📊 Market Analysis Tab
+- **📈 Key Market Indicators**:
+  - **VIX (Volatility Index)**: CBOE Volatility Index measuring market fear (Higher = More Fear)
+    - Status indicators: Real-time, Calculated, or Estimated
+    - Color-coded volatility levels (High/Normal/Low)
+  - **Market Breadth**: Percentage of advancing vs declining stocks
+    - Bullish/Bearish indicators
+  - **Advance/Decline Ratio**: Ratio of advancing to declining stocks
+    - Positive/Negative market sentiment indicators
+  - **DXY (US Dollar Index)**: Strength of US dollar against major currencies
+  
+- **💰 Bond & Yield Analysis**:
+  - **10-Year Treasury Yield**: Long-term bond yield
+  - **2-Year Treasury Yield**: Short-term bond yield
+  - **Yield Curve Analysis**: Comparison of short-term vs long-term yields
+    - Normal, Inverted, or Flat yield curve indicators
+    - Color-coded status (green for normal, red for inverted)
+  
+- **😨😊 Fear & Greed Index**:
+  - Market sentiment indicator (0-100 scale)
+  - Categories: Extreme Fear, Fear, Neutral, Greed, Extreme Greed
+  - Color-coded visualization
+  - Real-time data from CNN Fear & Greed Index
+  
+- **🏭 Sector Performance**:
+  - Real-time performance data for major sectors:
+    - Technology
+    - Healthcare
+    - Financial
+    - Energy
+    - Consumer Discretionary
+    - Consumer Staples
+    - Industrial
+    - Materials
+    - Utilities
+    - Real Estate
+  - Percentage change for each sector
+  - Visual charts showing sector performance
+  - Success rate indicator showing how many sectors were successfully fetched
+
+- **Data Status Legend**:
+  - 🟢 **Real-time**: Data fetched directly from API
+  - 🟡 **Calculated**: Derived from real market data
+  - ⚪ **Estimated**: Approximate value when API is unavailable
 
 ### 🌍 Trading Platform
 - **Multi-Asset Support**: Trade stocks, bonds, commodities, forex, crypto, REITs, ETFs, and indices
