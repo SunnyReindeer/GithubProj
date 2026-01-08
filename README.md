@@ -377,6 +377,13 @@ flowchart LR
 
 For the complete detailed flowchart with all user interactions, decision points, and feature flows, see `USER_FLOW.md`.
 
+## System Diagrams
+
+For comprehensive system documentation, see:
+- **USER_FLOW.md**: Complete user interaction flowcharts
+- **SYSTEM_DIAGRAMS.md**: System architecture, data flow, process flows, and component interactions
+- **AI_ROBO_ADVISOR_LOGIC.md**: Detailed explanation of AI Robo Advisor algorithms, risk assessment, and portfolio matching logic
+
 ## Project Structure
 
 ```
@@ -395,7 +402,9 @@ GithubProj/
 ├── tradingview_widget.py            # TradingView integration
 ├── requirements.txt                # Python dependencies
 ├── README.md                       # This file
-└── USER_FLOW.md                    # Detailed user flow charts
+├── USER_FLOW.md                    # Detailed user flow charts
+├── SYSTEM_DIAGRAMS.md              # System architecture and process flows
+└── AI_ROBO_ADVISOR_LOGIC.md        # AI Robo Advisor logic and algorithms
 ```
 
 ## License
