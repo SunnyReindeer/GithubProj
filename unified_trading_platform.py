@@ -69,10 +69,18 @@ if 'portfolio_initialized' not in st.session_state:
     st.session_state.selected_asset_class = AssetClass.STOCKS
     st.session_state.selected_symbols = []
     st.session_state.use_multi_asset = True
+    st.session_state.auto_refresh_enabled = True
+    st.session_state.refresh_interval = 30  # Default: 30 seconds
 
 # Ensure use_multi_asset is always initialized
 if 'use_multi_asset' not in st.session_state:
     st.session_state.use_multi_asset = True
+
+# Initialize auto-refresh settings
+if 'auto_refresh_enabled' not in st.session_state:
+    st.session_state.auto_refresh_enabled = True
+if 'refresh_interval' not in st.session_state:
+    st.session_state.refresh_interval = 30
 
 def map_symbol_to_tradingview(symbol: str) -> str:
     """Map our symbols to TradingView format"""
@@ -864,6 +872,47 @@ def main():
     with st.sidebar:
         st.markdown("## 🎛️ Control Panel")
         
+        # Auto-refresh settings
+        st.markdown("### ⚙️ Auto-Refresh Settings")
+        auto_refresh = st.checkbox(
+            "Enable Auto-Refresh",
+            value=st.session_state.auto_refresh_enabled,
+            help="Automatically refresh data at specified intervals"
+        )
+        st.session_state.auto_refresh_enabled = auto_refresh
+        
+        if auto_refresh:
+            refresh_interval = st.number_input(
+                "Refresh Interval (seconds)",
+                min_value=5,
+                max_value=300,
+                value=st.session_state.refresh_interval,
+                step=5,
+                help="How often to automatically refresh data (5-300 seconds)"
+            )
+            st.session_state.refresh_interval = refresh_interval
+            
+            # Calculate time until next refresh
+            current_time = time.time()
+            if st.session_state.last_update is None:
+                time_until_refresh = refresh_interval
+            else:
+                elapsed = current_time - st.session_state.last_update
+                time_until_refresh = max(0, refresh_interval - elapsed)
+            
+            # Display countdown
+            if time_until_refresh > 0:
+                minutes = int(time_until_refresh // 60)
+                seconds = int(time_until_refresh % 60)
+                if minutes > 0:
+                    st.info(f"⏱️ Next refresh in {minutes}m {seconds}s")
+                else:
+                    st.info(f"⏱️ Next refresh in {seconds}s")
+            else:
+                st.info("🔄 Refreshing now...")
+        
+        st.markdown("---")
+        
         # Asset class selection
         selected_asset_class = create_asset_class_selector()
         
@@ -977,9 +1026,46 @@ def main():
         with col2:
             display_trades()
     
-    # Auto-refresh button
-    if st.button("🔄 Refresh Data"):
-        st.rerun()
+    # Auto-refresh logic
+    current_time = time.time()
+    
+    # Initialize last_update if not set
+    if st.session_state.last_update is None:
+        st.session_state.last_update = current_time
+    
+    # Check if auto-refresh is enabled and time has elapsed
+    if st.session_state.auto_refresh_enabled:
+        elapsed = current_time - st.session_state.last_update
+        if elapsed >= st.session_state.refresh_interval:
+            # Time to refresh - update timestamp and rerun
+            st.session_state.last_update = current_time
+            # Use a small delay to prevent rapid reruns
+            time.sleep(0.1)
+            st.rerun()
+    
+    # Manual refresh button and status
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        if st.button("🔄 Refresh Data Now"):
+            st.session_state.last_update = current_time
+            st.rerun()
+    
+    # Display last update time and next refresh countdown
+    if st.session_state.last_update:
+        last_update_dt = datetime.fromtimestamp(st.session_state.last_update)
+        with col2:
+            if st.session_state.auto_refresh_enabled:
+                elapsed = current_time - st.session_state.last_update
+                time_until_refresh = max(0, st.session_state.refresh_interval - elapsed)
+                minutes = int(time_until_refresh // 60)
+                seconds = int(time_until_refresh % 60)
+                if minutes > 0:
+                    countdown = f"{minutes}m {seconds}s"
+                else:
+                    countdown = f"{seconds}s"
+                st.caption(f"Last updated: {last_update_dt.strftime('%H:%M:%S')} | Next refresh in: {countdown}")
+            else:
+                st.caption(f"Last updated: {last_update_dt.strftime('%H:%M:%S')} | Auto-refresh disabled")
 
 if __name__ == "__main__":
     main()
