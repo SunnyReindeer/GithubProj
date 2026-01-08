@@ -596,11 +596,17 @@ def create_trading_panel(symbols: List[str]):
         
         if order_type == "Limit":
             current_prices = get_current_prices([selected_symbol])
-            current_price = current_prices.get(selected_symbol, 100)
+            raw_price = current_prices.get(selected_symbol, 100)
+            # Streamlit requires pure numeric types for number_input defaults
+            current_price = raw_price.price if hasattr(raw_price, "price") else raw_price
+            try:
+                price_value = float(current_price)
+            except (TypeError, ValueError):
+                price_value = 100.0
             limit_price = st.number_input(
                 "Limit Price",
                 min_value=0.01,
-                value=current_price,
+                value=price_value,
                 step=0.01,
                 format="%.2f"
             )
