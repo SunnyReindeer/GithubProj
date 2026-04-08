@@ -1,2 +1,4 @@
+# Local secrets — never commit
 .env
-.streamlit/secrets.toml
+.env.local
+.env.*.local

@@ -1,8 +1,5 @@
 import os
 import streamlit as st
-from dotenv import load_dotenv
-
-load_dotenv()
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -19,6 +16,9 @@ import fear_and_greed
 import feedparser
 import re
 from dateutil import parser as date_parser
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_yfinance_data(symbol, period="1d", interval="1d"):
     """Get data from yfinance (Yahoo Finance) - FREE, no API key needed!"""
@@ -1692,24 +1692,9 @@ def _fetch_faireconomy_calendar_json():
         return []
 
 
-def _get_finnhub_api_key() -> str:
-    """Env var FINNHUB_API_KEY, or Streamlit Cloud secrets FINNHUB_API_KEY."""
-    key = (os.getenv("FINNHUB_API_KEY") or "").strip()
-    if key:
-        return key
-    try:
-        sec = getattr(st, "secrets", None)
-        if sec is not None:
-            v = sec.get("FINNHUB_API_KEY", "")
-            return (str(v).strip() if v else "") or ""
-    except Exception:
-        pass
-    return ""
-
-
 def _fetch_finnhub_economic_calendar() -> List[dict]:
-    """Optional: Finnhub economic calendar (needs FINNHUB_API_KEY in environment or secrets)."""
-    token = _get_finnhub_api_key()
+    """Optional: Finnhub economic calendar (needs FINNHUB_API_KEY in environment)."""
+    token = (os.getenv("FINNHUB_API_KEY") or "").strip()
     if not token:
         return []
     now = datetime.now()
@@ -1810,7 +1795,7 @@ def display_economic_events_section():
     st.markdown("#### 📅 Economic Events")
     st.caption(
         "**Data source:** Real macro releases from a public Forex Factory–style feed "
-        "(nfs.faireconomy.media). If you set **FINNHUB_API_KEY** in `.env`, the OS environment, or Streamlit secrets, "
+        "(nfs.faireconomy.media). If you set **FINNHUB_API_KEY** in the environment, "
         "the app uses [Finnhub](https://finnhub.io/)’s economic calendar for the next ~14 days instead. "
         "Coverage is typically about one week on the free feed—not 90 days of fabricated events."
     )
