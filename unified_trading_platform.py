@@ -643,10 +643,10 @@ def display_price_charts(symbols: List[str]):
 
 def create_trading_panel(symbols: List[str]):
     """Create trading panel for placing orders"""
-    st.markdown("## 💼 Trading Panel")
+    st.markdown("### 📝 Order entry")
     
     if not symbols:
-        st.warning("Please select symbols to trade")
+        st.warning("Select symbols in the sidebar to place an order.")
         return
     
     col1, col2 = st.columns([1, 2])
@@ -1050,13 +1050,18 @@ def main():
         display_price_charts(selected_symbols)
     
     with tab3:
+        st.markdown("### 💰 Portfolio (this session)")
+        try:
+            _render_multi_asset_equity_metrics(show_session_caption=False)
+        except Exception as e:
+            st.error(str(e))
+        st.markdown("---")
         create_trading_panel(selected_symbols)
-        
+        st.markdown("---")
+        st.markdown("### 📑 Positions & trade history")
         col1, col2 = st.columns(2)
-        
         with col1:
             display_positions()
-        
         with col2:
             display_trades()
     

@@ -442,8 +442,11 @@ class MultiAssetConfig:
         return self.assets.get(symbol)
     
     def get_supported_asset_classes(self) -> List[AssetClass]:
-        """Get all supported asset classes"""
-        return list(AssetClass)
+        """Asset classes that have at least one symbol (hides empty classes like unused futures)."""
+        present = set()
+        for asset in self.assets.values():
+            present.add(asset.asset_class)
+        return [ac for ac in AssetClass if ac in present]
     
     def get_asset_allocation(self, risk_profile: str) -> Dict[str, float]:
         """Get recommended asset allocation for a risk profile"""
