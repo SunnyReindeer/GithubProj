@@ -1735,7 +1735,7 @@ def display_economic_events_section():
     st.caption(
         "**Data:** Public macro calendar from [Fair Economy](https://nfs.faireconomy.media/) "
         "(Forex Factory–style JSON, typically **about this week**). No API key. "
-        "Time filters match that short horizon—not multi‑month ranges."
+        "Filter by **Past** / **Today** / **Upcoming** uses each event’s date and time vs now."
     )
 
     # Get economic events
@@ -1746,37 +1746,33 @@ def display_economic_events_section():
         st.warning("Unable to load economic events. Please try again later.")
         return
     
-    # Filter options — public feed is ~one week; keep windows short
     col1, col2 = st.columns(2)
     with col1:
         time_filter = st.selectbox(
             "Filter by Time",
             [
                 "All (loaded)",
+                "Past",
                 "Today",
-                "Next 3 days",
-                "Next 7 days",
+                "Upcoming",
             ],
             key="time_filter",
-            help="“All (loaded)” is everything in the feed (~this week). Other options limit to upcoming dates from today.",
+            help="Past = before now; Today = calendar date is today; Upcoming = at or after now.",
         )
     with col2:
         importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"], key="importance_filter")
     
     # Apply filters
-    current_date = datetime.now()
-    today = current_date.strftime("%Y-%m-%d")
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
     filtered_events = economic_events.copy()
     
-    # Time filter: short windows aligned with ~weekly public feed
-    if time_filter == "Today":
+    if time_filter == "Past":
+        filtered_events = [e for e in filtered_events if e["datetime"] < now]
+    elif time_filter == "Today":
         filtered_events = [e for e in filtered_events if e["date"] == today]
-    elif time_filter == "Next 3 days":
-        end_3 = (current_date + timedelta(days=2)).strftime("%Y-%m-%d")
-        filtered_events = [e for e in filtered_events if today <= e["date"] <= end_3]
-    elif time_filter == "Next 7 days":
-        end_7 = (current_date + timedelta(days=6)).strftime("%Y-%m-%d")
-        filtered_events = [e for e in filtered_events if today <= e["date"] <= end_7]
+    elif time_filter == "Upcoming":
+        filtered_events = [e for e in filtered_events if e["datetime"] >= now]
     # "All (loaded)" = full list from the feed
     
     # Importance filter
@@ -1797,7 +1793,7 @@ def display_economic_events_section():
             st.metric("Events Today", upcoming_today)
     
     # Display events
-    st.markdown("### 📋 Upcoming Events")
+    st.markdown("### 📋 Events")
     
     if filtered_events:
         # Group events by date
@@ -1828,9 +1824,8 @@ def display_economic_events_section():
                     "Low": "#27ae60"
                 }.get(event["importance"], "#7f8c8d")
                 
-                # Determine if event is upcoming or past
-                event_datetime_str = f"{event['date']} {event['time']}"
-                is_upcoming = event["date"] >= today
+                # Past vs upcoming relative to now (same clock as filters)
+                is_upcoming = event["datetime"] >= now
                 
                 # Build status badge HTML
                 status_badge_color = "#3498db" if is_upcoming else "#95a5a6"
