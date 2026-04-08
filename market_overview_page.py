@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -1671,25 +1671,25 @@ def _impact_to_importance(impact: str) -> str:
     return "Low"
 
 
-def _ensure_naive_local_datetime(dt: datetime) -> datetime:
-    """Strip tzinfo after converting to local, so we can compare with datetime.now() (naive)."""
-    if dt.tzinfo is not None:
-        return dt.astimezone().replace(tzinfo=None)
-    return dt
+# Economic calendar: show and compare in fixed UTC+08:00 (e.g. SG/HK), not server local time.
+UTC_PLUS_8 = timezone(timedelta(hours=8))
 
 
-def _event_instant_naive(event: dict) -> datetime:
-    """Comparable instant for Past/Upcoming filters (handles tz-aware parsed dates)."""
-    d = event.get("datetime")
-    if isinstance(d, datetime):
-        return _ensure_naive_local_datetime(d)
-    try:
-        p = date_parser.parse(f"{event.get('date', '')} {event.get('time', '00:00')}")
-        if isinstance(p, datetime):
-            return _ensure_naive_local_datetime(p)
-    except Exception:
-        pass
-    return datetime.min.replace(year=2000, month=1, day=1)
+def _parse_item_date_to_utc8(item: dict) -> datetime:
+    """Parse feed `date` to an aware datetime in UTC+8.
+
+    Timezone-naive strings from the feed are treated as **UTC** instants, then shifted to UTC+8 for display.
+    Strings with an offset are normalized to UTC first.
+    """
+    raw = item.get("date")
+    if not raw:
+        raise ValueError("missing date")
+    dt = date_parser.parse(str(raw))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt.astimezone(UTC_PLUS_8)
 
 
 @st.cache_data(ttl=1800)
@@ -1722,8 +1722,7 @@ def get_economic_calendar() -> List[dict]:
                 title = item.get("title") or "Event"
                 ccy = (item.get("country") or "All").strip()
                 name, flag, _ = _CCY_TO_REGION.get(ccy, (ccy, "🌐", ccy))
-                dt = date_parser.parse(item["date"])
-                dt = _ensure_naive_local_datetime(dt)
+                dt = _parse_item_date_to_utc8(item)
                 date_str = dt.strftime("%Y-%m-%d")
                 time_str = dt.strftime("%H:%M")
                 imp = _impact_to_importance(item.get("impact", "Low"))
@@ -1757,7 +1756,7 @@ def display_economic_events_section():
     st.caption(
         "**Data:** Public macro calendar from [Fair Economy](https://nfs.faireconomy.media/) "
         "(Forex Factory–style JSON, typically **about this week**). No API key. "
-        "Filter by **Past** / **Today** / **Upcoming** uses each event’s date and time vs now."
+        "Filters use **UTC+8** (same zone as the clock below). **Past** / **Today** / **Upcoming** compare to “now” in UTC+8."
     )
 
     # Get economic events
@@ -1779,22 +1778,22 @@ def display_economic_events_section():
                 "Upcoming",
             ],
             key="time_filter",
-            help="Past = before now; Today = calendar date is today; Upcoming = at or after now.",
+            help="Clock is UTC+8. Past / Today / Upcoming use the current time in UTC+8.",
         )
     with col2:
         importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"], key="importance_filter")
     
-    # Apply filters
-    now = datetime.now()
+    # Apply filters (now / “today” = UTC+8)
+    now = datetime.now(UTC_PLUS_8)
     today = now.strftime("%Y-%m-%d")
     filtered_events = economic_events.copy()
     
     if time_filter == "Past":
-        filtered_events = [e for e in filtered_events if _event_instant_naive(e) < now]
+        filtered_events = [e for e in filtered_events if e["datetime"] < now]
     elif time_filter == "Today":
         filtered_events = [e for e in filtered_events if e["date"] == today]
     elif time_filter == "Upcoming":
-        filtered_events = [e for e in filtered_events if _event_instant_naive(e) >= now]
+        filtered_events = [e for e in filtered_events if e["datetime"] >= now]
     # "All (loaded)" = full list from the feed
     
     # Importance filter
@@ -1846,8 +1845,8 @@ def display_economic_events_section():
                     "Low": "#27ae60"
                 }.get(event["importance"], "#7f8c8d")
                 
-                # Past vs upcoming relative to now (same clock as filters; naive vs aware safe)
-                is_upcoming = _event_instant_naive(event) >= now
+                # Past vs upcoming vs now (UTC+8)
+                is_upcoming = event["datetime"] >= now
                 
                 # Build status badge HTML
                 status_badge_color = "#3498db" if is_upcoming else "#95a5a6"
@@ -1862,7 +1861,7 @@ def display_economic_events_section():
                     '<span style="font-size: 1.2rem;">' + event.get('country_flag', '🌍') + '</span>',
                     '<h4 style="margin: 0; color: #2c3e50;">' + event['event'] + '</h4>',
                     '</div>',
-                    '<p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">⏰ ' + event['time'] + ' | 📍 ' + event['country'] + ' | 📊 ' + event.get('category', 'Economic') + '</p>',
+                    '<p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">⏰ ' + event['time'] + ' UTC+8 | 📍 ' + event['country'] + ' | 📊 ' + event.get('category', 'Economic') + '</p>',
                     '<div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; align-items: center;">',
                     '<span style="background: ' + importance_color + '; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">' + event['importance'] + ' Priority</span>',
                     '<span style="background: ' + status_badge_color + '; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">' + status_badge_text + '</span>',
