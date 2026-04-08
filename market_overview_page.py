@@ -1978,11 +1978,11 @@ def display_economic_events_section():
         )
         with st.expander("Finnhub key & Streamlit secrets format"):
             st.markdown(
-                "- **`.streamlit/secrets.toml`** (local) or **Streamlit Cloud → Secrets**: valid TOML, e.g.  \n"
-                '  `FINNHUB_API_KEY = "paste_your_key_here"`  \n'
-                "- **`.env`** (with `load_dotenv`): `FINNHUB_API_KEY=paste_your_key_here` (no quotes needed).  \n"
-                "- Optional nested TOML: `[api]` + `FINNHUB_API_KEY = "..."` is also supported.  \n"
-                "- If the key value accidentally includes extra **quotes**, they are stripped automatically."
+                """- **`.streamlit/secrets.toml`** (local) or **Streamlit Cloud → Secrets**: valid TOML, e.g.
+  `FINNHUB_API_KEY = "paste_your_key_here"`
+- **`.env`** (with `load_dotenv`): `FINNHUB_API_KEY=paste_your_key_here` (no quotes needed).
+- Optional nested TOML: section `[api]` with `FINNHUB_API_KEY` inside is also supported.
+- If the key value accidentally includes extra **quotes**, they are stripped automatically."""
             )
     else:
         st.info(
