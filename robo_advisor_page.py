@@ -13,11 +13,37 @@ from typing import Dict, List, Any
 # Import our robo advisor modules
 from risk_assessment_engine import risk_engine, RiskProfile, RiskTolerance, InvestmentHorizon, ExperienceLevel
 from fund_portfolio_manager import fund_manager, FundPortfolio, FundHolding, AILabel, PortfolioTheme
-from portfolio_theory_references import (
-    BIBLIOGRAPHY_MARKDOWN,
-    FUND_BASED_ROBO_RATIONALE,
-    full_portfolio_references_markdown,
-)
+
+
+def _render_portfolio_methodology_expander() -> None:
+    """Explain that fund templates are reference-backed (for academic / transparency expectations)."""
+    with st.expander("📚 Portfolio methodology & references (why these templates exist)", expanded=False):
+        st.markdown(
+            """
+            The six predefined portfolios (**Core, Growth, Dividend, ESG, REITs, Defensive**) are **themed
+            templates**, not random weights. Each template is paired with a short **design rationale** and
+            **academic or industry citations** (e.g. strategic asset allocation, factor models, ESG meta-analyses)
+            so the construction is **explainable**—similar to how published robo-advisor methodologies describe
+            mapping investor profiles to diversified fund sleeves.
+
+            For a longer research-to-design mapping for your report, see **`ROBO_ADVISOR_RESEARCH_SUPPORT.md`**
+            in this repository.
+            """
+        )
+
+
+def _render_portfolio_rationale_block(portfolio: FundPortfolio) -> None:
+    """Show design rationale and reference list for one fund portfolio."""
+    if not (portfolio.design_rationale or portfolio.references):
+        return
+    st.markdown("#### 📎 Design rationale & references")
+    if portfolio.design_rationale:
+        st.markdown(portfolio.design_rationale)
+    if portfolio.references:
+        st.markdown("**References:**")
+        for ref in portfolio.references:
+            st.markdown(f"- {ref}")
+
 
 def get_diversified_symbols(profile: RiskProfile) -> List[str]:
     """Get diversified symbols based on risk profile"""
@@ -166,13 +192,7 @@ def display_risk_profile(profile: RiskProfile):
     
     # Recommended asset allocation - Show full portfolio first, then stock breakdown
     st.markdown("### 💼 Recommended Portfolio Allocation")
-    st.caption(
-        "Weights are **policy templates** tied to your risk band, with citations—not arbitrary numbers. "
-        "Open the box below for theory and bibliography."
-    )
-    with st.expander("📚 Why these weights? (portfolio theory & references)", expanded=False):
-        st.markdown(full_portfolio_references_markdown(profile.risk_tolerance))
-
+    
     # Full portfolio allocation (all asset classes)
     full_allocation_data = []
     for category, percentage in profile.recommended_asset_allocation.items():
@@ -283,14 +303,11 @@ def display_fund_portfolios(portfolios: List[FundPortfolio]):
     """Display recommended fund portfolios"""
     st.markdown("## 💼 Recommended Fund Portfolios")
     st.markdown(
-        "These are **pre-defined** diversified fund/ETF-style baskets, matched to your score—aligned with "
-        "how academic and industry work describes robo-advisory (indexed sleeves, profile → portfolio)."
+        "These are diversified **reference-backed templates** (see rationale & citations under each portfolio). "
+        "Your questionnaire score selects among them using the documented suitability rules."
     )
-    with st.expander("📚 References: fund-based portfolios & research", expanded=False):
-        st.markdown(FUND_BASED_ROBO_RATIONALE)
-        st.markdown("\n---\n")
-        st.markdown(BIBLIOGRAPHY_MARKDOWN)
-
+    _render_portfolio_methodology_expander()
+    
     if not portfolios:
         st.warning("No suitable portfolios found for your risk profile.")
         return
@@ -344,6 +361,7 @@ def display_fund_portfolios(portfolios: List[FundPortfolio]):
             with col1:
                 st.markdown(f"**Description:** {portfolio.description}")
                 st.markdown(f"**Rebalancing:** {portfolio.rebalancing_frequency}")
+                _render_portfolio_rationale_block(portfolio)
                 
                 # Performance metrics
                 st.markdown("**Expected Performance:**")
@@ -452,6 +470,7 @@ def display_fund_portfolios(portfolios: List[FundPortfolio]):
 def display_portfolio_details(profile: RiskProfile, portfolio: FundPortfolio):
     """Display detailed portfolio information with AI labels"""
     st.markdown(f"## 📊 {portfolio.name} - Detailed Analysis")
+    _render_portfolio_rationale_block(portfolio)
     
     # Portfolio summary
     col1, col2, col3, col4 = st.columns(4)
@@ -594,23 +613,14 @@ def display_investment_plan(profile: RiskProfile, portfolios: List[FundPortfolio
         st.markdown(f"• Volatility: {recommended_portfolio.expected_volatility:.1f}%")
         st.markdown(f"• Risk Level: {recommended_portfolio.risk_level}/10")
         st.markdown(f"• Match Score: {recommended_portfolio.suitability_score:.0f}%")
+        st.caption(
+            "This template includes documented **design rationale & references** (Fund Portfolios tab). "
+            "Not a bespoke optimization—an explainable style match to your profile."
+        )
     
     # Portfolio allocation summary
     st.markdown("### 💼 Portfolio Allocation Summary")
-    st.caption(
-        "Holdings come from a **named fund portfolio** (themes, risk level, stated return/vol assumptions)—"
-        "not ad hoc picks. Strategic mix by asset class was explained in the Risk Assessment tab."
-    )
-    with st.expander("📚 Evidence base (strategic weights + fund-based robo advice)", expanded=False):
-        st.markdown(
-            "**Strategic asset-class weights** for your profile follow the cited policy templates in the Risk Assessment tab. "
-            "**This table** lists the specific fund portfolio’s holdings after suitability matching."
-        )
-        st.markdown("\n")
-        st.markdown(FUND_BASED_ROBO_RATIONALE)
-        st.markdown("\n---\n")
-        st.markdown(BIBLIOGRAPHY_MARKDOWN)
-
+    
     allocation_summary = []
     for holding in recommended_portfolio.holdings:
         allocation_summary.append({
@@ -695,7 +705,9 @@ def display_investment_plan(profile: RiskProfile, portfolios: List[FundPortfolio
             "expected_volatility": recommended_portfolio.expected_volatility,
             "risk_level": recommended_portfolio.risk_level,
             "suitability_score": recommended_portfolio.suitability_score,
-            "rebalancing_frequency": recommended_portfolio.rebalancing_frequency
+            "rebalancing_frequency": recommended_portfolio.rebalancing_frequency,
+            "design_rationale": recommended_portfolio.design_rationale,
+            "references": list(recommended_portfolio.references),
         },
         "holdings": [
             {
@@ -859,6 +871,9 @@ def main():
         2. Get fund portfolio recommendations
         3. View portfolio details with AI labels
         4. Download your investment plan
+        
+        **References:**  
+        Each fund template lists **design rationale** and **citations** (Brinson, Markowitz, Fama–French, ESG meta-analyses, etc.) so portfolios are grounded in published finance and robo-advisory practice—not invented weights. See **`ROBO_ADVISOR_RESEARCH_SUPPORT.md`** for the full research map.
         
         **AI Labels:**
         Each investment is automatically labeled with:

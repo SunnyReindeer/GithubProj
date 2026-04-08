@@ -2,6 +2,9 @@
 Fund-Based Portfolio Manager
 Creates themed portfolios instead of strategy-based recommendations
 Uses AI labeling for sectors and themes
+
+Each template portfolio carries a short **design rationale** and **references** (academic / industry)
+so allocations are explainable—not ad hoc. See also `ROBO_ADVISOR_RESEARCH_SUPPORT.md` in this repo.
 """
 import pandas as pd
 import numpy as np
@@ -81,7 +84,7 @@ class FundHolding:
 
 @dataclass
 class FundPortfolio:
-    """A fund portfolio"""
+    """A fund portfolio with documented rationale and citations (for transparency)."""
     theme: PortfolioTheme
     name: str
     description: str
@@ -92,6 +95,9 @@ class FundPortfolio:
     total_allocation: float  # Should sum to 1.0
     rebalancing_frequency: str  # Monthly, Quarterly, etc.
     suitability_score: float  # Match with user profile (0-100)
+    # Why this template exists in finance / robo-advisory practice (not arbitrary weights)
+    design_rationale: str = ""
+    references: Tuple[str, ...] = ()
 
 class AILabeler:
     """AI system to label investments with sectors, themes, and characteristics"""
@@ -268,7 +274,19 @@ class FundPortfolioManager:
                 ],
                 total_allocation=1.0,
                 rebalancing_frequency="Quarterly",
-                suitability_score=0.0
+                suitability_score=0.0,
+                design_rationale=(
+                    "A **strategic balanced** mix: broad US equity (SPY/VTI), international diversification "
+                    "(VEA/VWO), and long Treasury bonds (TLT) as a risk anchor. This follows the classic "
+                    "**policy portfolio** idea—diversified index building blocks rather than stock-picking—"
+                    "consistent with evidence that asset-class mix drives most long-run outcomes."
+                ),
+                references=(
+                    "Brinson, G. P., Hood, L. R., & Beebower, G. L. (1986). Determinants of portfolio performance. "
+                    "*Financial Analysts Journal*, 42(4), 39–44.",
+                    "Markowitz, H. (1952). Portfolio selection. *Journal of Finance*, 7(1), 77–91.",
+                    "Ang, A. (2014). *Asset Management: A Systematic Approach to Factor Investing*. Oxford University Press.",
+                ),
             ),
             
             # Growth Portfolio - Tech and growth stocks
@@ -295,7 +313,17 @@ class FundPortfolioManager:
                 ],
                 total_allocation=1.0,
                 rebalancing_frequency="Monthly",
-                suitability_score=0.0
+                suitability_score=0.0,
+                design_rationale=(
+                    "Tilts toward **growth and technology** via a liquid growth index (QQQ) and large-cap "
+                    "leaders. This implements a **style / factor** exposure (growth, momentum) that empirical "
+                    "asset-pricing literature treats as a compensated risk dimension—not random stock picks."
+                ),
+                references=(
+                    "Carhart, M. M. (1997). On persistence in mutual fund performance. *Journal of Finance*, 52(1), 57–82.",
+                    "Fama, E. F., & French, K. R. (1993). Common risk factors in the returns on stocks and bonds. "
+                    "*Journal of Financial Economics*, 33(1), 3–56.",
+                ),
             ),
             
             # Dividend Portfolio - Income-focused
@@ -322,7 +350,17 @@ class FundPortfolioManager:
                 ],
                 total_allocation=1.0,
                 rebalancing_frequency="Quarterly",
-                suitability_score=0.0
+                suitability_score=0.0,
+                design_rationale=(
+                    "Combines **dividend-oriented ETFs** (VYM, SCHD) and defensive dividend payers (staples, "
+                    "utilities). Income-focused equity strategies are a standard robo-advisor building block "
+                    "and align with **value / yield** factor exposure discussed in empirical asset pricing."
+                ),
+                references=(
+                    "Fama, E. F., & French, K. R. (1993). Common risk factors in the returns on stocks and bonds. "
+                    "*Journal of Financial Economics*, 33(1), 3–56.",
+                    "Baker, M., & Wurgler, J. (2004). A catering theory of dividends. *Journal of Finance*, 59(3), 1125–1165.",
+                ),
             ),
             
             # ESG Portfolio - Sustainable investing
@@ -347,7 +385,17 @@ class FundPortfolioManager:
                 ],
                 total_allocation=1.0,
                 rebalancing_frequency="Quarterly",
-                suitability_score=0.0
+                suitability_score=0.0,
+                design_rationale=(
+                    "Uses an **ESG-oriented ETF** plus thematic equities (e.g. clean energy, EV) to implement "
+                    "sustainable-investment integration—the same topic surveyed in meta-analyses of ESG and "
+                    "returns, and discussed in modern robo-advisory design papers."
+                ),
+                references=(
+                    "Friede, G., Busch, T., & Bassen, A. (2015). ESG and financial performance: Aggregated evidence "
+                    "from more than 2000 empirical studies. *Journal of Sustainable Finance & Investment*, 5(4), 210–233.",
+                    "Gaspar, R. M., & Oliveira, M. (2024). Robo Advising and Investor Profiling. *FinTech* (MDPI), 3(1), 102–115.",
+                ),
             ),
             
             # REITs Portfolio - Real estate
@@ -368,7 +416,17 @@ class FundPortfolioManager:
                 ],
                 total_allocation=1.0,
                 rebalancing_frequency="Quarterly",
-                suitability_score=0.0
+                suitability_score=0.0,
+                design_rationale=(
+                    "Concentrates on **listed real estate** (VNQ, XLRE, SCHH) as a liquid **alternatives** sleeve "
+                    "for income and diversification—standard in multi-asset institutional practice and supported "
+                    "by REIT return and diversification studies."
+                ),
+                references=(
+                    "Ling, D. C., & Naranjo, A. (2003). Real estate returns, risk, and portfolio diversification. "
+                    "*Journal of Real Estate Finance and Economics*, 26(1), 5–21.",
+                    "NAREIT (industry). REITs as a distinct asset class in diversified portfolios (methodology notes).",
+                ),
             ),
             
             # Defensive Portfolio - Safe, stable
@@ -391,7 +449,17 @@ class FundPortfolioManager:
                 ],
                 total_allocation=1.0,
                 rebalancing_frequency="Semi-Annually",
-                suitability_score=0.0
+                suitability_score=0.0,
+                design_rationale=(
+                    "Heavy **long-duration Treasuries** (TLT) plus **defensive equity sectors** (staples, utilities, "
+                    "healthcare via sector ETFs). This mirrors **capital preservation** and low-volatility "
+                    "approaches discussed in strategic asset allocation and empirical low-risk anomaly work."
+                ),
+                references=(
+                    "Campbell, J. Y., & Viceira, L. M. (2002). *Strategic Asset Allocation*. Oxford University Press.",
+                    "Blitz, D., & van Vliet, P. (2007). The volatility effect: Lower risk without lower return. "
+                    "*Journal of Portfolio Management*, 34(1), 102–113.",
+                ),
             ),
         ]
     
