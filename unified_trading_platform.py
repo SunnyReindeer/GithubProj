@@ -912,6 +912,20 @@ def main():
 
     # Initialize components
     initialize_portfolio()
+
+    # Single timed rerun (streamlit-autorefresh). Must run once per script, stable position.
+    # Default debounce=True clears/resets the JS timer on every Streamlit rerun, so the interval often never
+    # completes after the first refresh. debounce=False keeps the browser timer across reruns.
+    autorefresh_tick = 0
+    if st.session_state.get("auto_refresh_enabled", True) and st_autorefresh is not None:
+        _rs = int(st.session_state.get("refresh_interval", 30))
+        _interval_ms = int(max(5, min(_rs, 3600)) * 1000)
+        autorefresh_tick = st_autorefresh(
+            interval=_interval_ms,
+            limit=None,
+            debounce=False,
+            key="utp_autorefresh",
+        )
     
     # Header
     st.markdown('<h1 class="main-header">🌍 Unified Trading Platform</h1>', unsafe_allow_html=True)
@@ -936,22 +950,15 @@ def main():
                 max_value=300,
                 value=st.session_state.get("refresh_interval", 30),
                 step=5,
-                help="How often to automatically reload the page (5-300 seconds)"
+                help="How often to automatically reload the page (5-300 seconds). Takes effect on the next run."
             )
             st.session_state.refresh_interval = refresh_interval
 
-            # Timed reload must run before the countdown so we get a new `cycle` after each reload (remount = fresh timer).
             refresh_sec = int(refresh_interval)
-            interval_ms = max(5000, min(refresh_sec * 1000, 3_600_000))
-            autorefresh_tick = 0
-            if st_autorefresh is not None:
-                autorefresh_tick = st_autorefresh(
-                    interval=interval_ms,
-                    limit=None,
-                    key="unified_trading_autorefresh",
-                )
-
-            st.caption("Full page reload on the interval below reloads prices and charts. Timer resets after each reload.")
+            st.caption(
+                "Full page reload on the interval reloads prices and charts. "
+                "The next run picks up a new interval if you change it."
+            )
             _render_live_refresh_countdown(refresh_sec, cycle=autorefresh_tick)
         
         st.markdown("---")
