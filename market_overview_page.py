@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import time
 import requests
 from bs4 import BeautifulSoup
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from collections import Counter
 import yfinance as yf
 import fear_and_greed
@@ -19,6 +19,20 @@ from dateutil import parser as date_parser
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+def _resolve_finnhub_api_key() -> str:
+    """Env var FINNHUB_API_KEY, or Streamlit Cloud secrets."""
+    k = (os.getenv("FINNHUB_API_KEY") or "").strip()
+    if k:
+        return k
+    try:
+        if hasattr(st, "secrets") and st.secrets and "FINNHUB_API_KEY" in st.secrets:
+            return str(st.secrets["FINNHUB_API_KEY"]).strip()
+    except Exception:
+        pass
+    return ""
+
 
 def get_yfinance_data(symbol, period="1d", interval="1d"):
     """Get data from yfinance (Yahoo Finance) - FREE, no API key needed!"""
@@ -1693,8 +1707,8 @@ def _fetch_faireconomy_calendar_json():
 
 
 def _fetch_finnhub_economic_calendar() -> List[dict]:
-    """Optional: Finnhub economic calendar (needs FINNHUB_API_KEY in environment)."""
-    token = (os.getenv("FINNHUB_API_KEY") or "").strip()
+    """Optional: Finnhub economic calendar (needs FINNHUB_API_KEY in env or Streamlit secrets)."""
+    token = _resolve_finnhub_api_key()
     if not token:
         return []
     now = datetime.now()
@@ -1744,17 +1758,32 @@ def _fetch_finnhub_economic_calendar() -> List[dict]:
     return out
 
 
-def get_economic_calendar():
-    """Economic calendar: real data from a public feed (and optionally Finnhub if FINNHUB_API_KEY is set)."""
+def get_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
+    """Economic calendar: Finnhub (~14d) when key + data exist; else public Forex Factory–style JSON (~this week).
+
+    Returns (events, meta) where meta includes source flags for the UI.
+    """
+    key_configured = bool(_resolve_finnhub_api_key())
     try:
         finnhub_events = _fetch_finnhub_economic_calendar()
         if finnhub_events:
             finnhub_events.sort(key=lambda x: (x["datetime"], x["time"]))
-            return finnhub_events
+            return finnhub_events, {
+                "using_finnhub": True,
+                "finnhub_key_configured": key_configured,
+                "source_label": "Finnhub API",
+                "approx_window_days": 14,
+            }
 
         raw = _fetch_faireconomy_calendar_json()
         if not raw:
-            return []
+            return [], {
+                "using_finnhub": False,
+                "finnhub_key_configured": key_configured,
+                "source_label": "—",
+                "approx_window_days": 0,
+                "finnhub_fallback": key_configured,
+            }
 
         events = []
         for item in raw:
@@ -1784,37 +1813,74 @@ def get_economic_calendar():
                 continue
 
         events.sort(key=lambda x: (x["datetime"], x["time"]))
-        return events
+        return events, {
+            "using_finnhub": False,
+            "finnhub_key_configured": key_configured,
+            "source_label": "Fair Economy (public feed)",
+            "approx_window_days": 7,
+            "finnhub_fallback": key_configured,
+        }
     except Exception as e:
         print(f"Error getting economic calendar: {e}")
-        return []
+        return [], {
+            "using_finnhub": False,
+            "finnhub_key_configured": key_configured,
+            "source_label": "—",
+            "approx_window_days": 0,
+            "error": str(e),
+        }
 
 def display_economic_events_section():
     """Display economic events and calendar with real-time data"""
     
     st.markdown("#### 📅 Economic Events")
     st.caption(
-        "**Data source:** Real macro releases from a public Forex Factory–style feed "
-        "(nfs.faireconomy.media). If you set **FINNHUB_API_KEY** in the environment, "
-        "the app uses [Finnhub](https://finnhub.io/)’s economic calendar for the next ~14 days instead. "
-        "Coverage is typically about one week on the free feed—not 90 days of fabricated events."
+        "**With vs without Finnhub:** The free public feed (no key) loads roughly **this week’s** macro "
+        "calendar from nfs.faireconomy.media. **With a Finnhub API key** (env or Streamlit secrets), the app "
+        "requests **[Finnhub](https://finnhub.io/)’s economic calendar** for about the **next 14 days**—often "
+        "broader coverage and structured fields. Filters below match what each source actually loads (not 90 days)."
     )
 
     # Get economic events
     with st.spinner("Loading economic events..."):
-        economic_events = get_economic_calendar()
+        economic_events, cal_meta = get_economic_calendar()
     
     if not economic_events:
         st.warning("Unable to load economic events. Please try again later.")
         return
+
+    # Visible source status (Finnhub vs public feed)
+    if cal_meta.get("using_finnhub"):
+        st.success(
+            "**Economic calendar: Finnhub API** — you are using your key. "
+            f"Loaded window ≈ **{cal_meta.get('approx_window_days', 14)} days** from today."
+        )
+    elif cal_meta.get("finnhub_fallback"):
+        st.info(
+            "**Finnhub key is set**, but the app is showing the **public feed** "
+            "(Finnhub returned no rows in range or the request failed). "
+            "Events below ≈ **one week**."
+        )
+    else:
+        st.info(
+            "**Economic calendar: public feed** (no Finnhub data). "
+            "Set **FINNHUB_API_KEY** for ~14 days from [Finnhub](https://finnhub.io/). "
+            "Below ≈ **one week** of releases."
+        )
     
-    # Filter options
+    # Filter options — aligned with ~7d public feed vs ~14d Finnhub (not month/quarter)
     col1, col2 = st.columns(2)
     with col1:
         time_filter = st.selectbox(
             "Filter by Time",
-            ["All (loaded)", "Today", "This Week", "This Month", "Next 3 Months"],
+            [
+                "All (loaded)",
+                "Today",
+                "Next 7 days",
+                "Next 14 days",
+            ],
             key="time_filter",
+            help="“All (loaded)” is everything returned by the API. Public feed ≈1 week; Finnhub ≈14 days.",
         )
     with col2:
         importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"], key="importance_filter")
@@ -1824,19 +1890,16 @@ def display_economic_events_section():
     today = current_date.strftime("%Y-%m-%d")
     filtered_events = economic_events.copy()
     
-    # Time filter logic
+    # Time filter: windows that match actual backend coverage
     if time_filter == "Today":
         filtered_events = [e for e in filtered_events if e["date"] == today]
-    elif time_filter == "This Week":
-        week_end = (current_date + timedelta(days=7)).strftime("%Y-%m-%d")
-        filtered_events = [e for e in filtered_events if e["date"] <= week_end and e["date"] >= today]
-    elif time_filter == "This Month":
-        month_end = (current_date + timedelta(days=30)).strftime("%Y-%m-%d")
-        filtered_events = [e for e in filtered_events if e["date"] <= month_end and e["date"] >= today]
-    elif time_filter == "Next 3 Months":
-        three_months_end = (current_date + timedelta(days=90)).strftime("%Y-%m-%d")
-        filtered_events = [e for e in filtered_events if e["date"] <= three_months_end and e["date"] >= today]
-    # "All (loaded)" = every event returned by the calendar API (typically ~1 week on free feed, or ~14 days with Finnhub)
+    elif time_filter == "Next 7 days":
+        end_7 = (current_date + timedelta(days=6)).strftime("%Y-%m-%d")
+        filtered_events = [e for e in filtered_events if today <= e["date"] <= end_7]
+    elif time_filter == "Next 14 days":
+        end_14 = (current_date + timedelta(days=13)).strftime("%Y-%m-%d")
+        filtered_events = [e for e in filtered_events if today <= e["date"] <= end_14]
+    # "All (loaded)" = full list from the active source
     
     # Importance filter
     if importance_filter != "All":
