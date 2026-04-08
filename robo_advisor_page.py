@@ -15,34 +15,39 @@ from risk_assessment_engine import risk_engine, RiskProfile, RiskTolerance, Inve
 from fund_portfolio_manager import fund_manager, FundPortfolio, FundHolding, AILabel, PortfolioTheme
 
 
-def _render_portfolio_methodology_expander() -> None:
-    """Explain that fund templates are reference-backed (for academic / transparency expectations)."""
-    with st.expander("📚 Portfolio methodology & references (why these templates exist)", expanded=False):
+def render_portfolio_methodology_expander() -> None:
+    """Explain where portfolios come from and cite research (professor-friendly transparency)."""
+    with st.expander("📚 References & methodology — where the portfolios come from", expanded=False):
         st.markdown(
             """
-            The six predefined portfolios (**Core, Growth, Dividend, ESG, REITs, Defensive**) are **themed
-            templates**, not random weights. Each template is paired with a short **design rationale** and
-            **academic or industry citations** (e.g. strategic asset allocation, factor models, ESG meta-analyses)
-            so the construction is **explainable**—similar to how published robo-advisor methodologies describe
-            mapping investor profiles to diversified fund sleeves.
+**What you are seeing**
 
-            For a longer research-to-design mapping for your report, see **`ROBO_ADVISOR_RESEARCH_SUPPORT.md`**
-            in this repository.
-            """
+Recommendations are **not** generated ad hoc for each click. The app selects from **six fixed model portfolios**
+(Core, Growth, Dividend, ESG, REITs, Defensive) defined in `fund_portfolio_manager.py` with explicit risk levels,
+illustrative return/volatility, and fund/ETF-style holdings. That mirrors common robo-advisor practice:
+**questionnaire → risk score → map to model portfolios** (see `AI_ROBO_ADVISOR_RULES.md` for exact rules).
+
+**How matching works**
+
+Your answers produce a **0–100 risk score**. Each model portfolio gets a **suitability score** vs. your profile;
+portfolios below **60%** fit are dropped; the **top three** remain. Formulas and thresholds are fully written down
+in the repo (not hidden in the UI).
+
+**Selected academic & industry references**
+
+- Gaspar, R. M., & Oliveira, M. (2024). *Robo Advising and Investor Profiling.* MDPI *FinTech* 3(1):102–115.  
+  https://www.mdpi.com/2674-1032/3/1/7
+- *The Promises and Pitfalls of Robo-Advising* (*Review of Financial Studies*) — behavioral biases and diversification in automated advice.
+- *The diversification and welfare effects of robo-advising* (*Journal of Financial Economics*) — shifts toward diversified, lower-fee portfolios.
+- *How Risk Profiles of Investors Affect Robo-Advised Portfolios* (Frontiers / PMC) — platform algorithms map **risk profile → allocations**.
+
+**More reading (full list)**
+
+See **`ROBO_ADVISOR_RESEARCH_SUPPORT.md`** in the project for the complete bibliography and how each design choice maps to sources.
+
+*Educational demo only — not regulated financial advice.*
+"""
         )
-
-
-def _render_portfolio_rationale_block(portfolio: FundPortfolio) -> None:
-    """Show design rationale and reference list for one fund portfolio."""
-    if not (portfolio.design_rationale or portfolio.references):
-        return
-    st.markdown("#### 📎 Design rationale & references")
-    if portfolio.design_rationale:
-        st.markdown(portfolio.design_rationale)
-    if portfolio.references:
-        st.markdown("**References:**")
-        for ref in portfolio.references:
-            st.markdown(f"- {ref}")
 
 
 def get_diversified_symbols(profile: RiskProfile) -> List[str]:
@@ -302,11 +307,8 @@ def display_risk_profile(profile: RiskProfile):
 def display_fund_portfolios(portfolios: List[FundPortfolio]):
     """Display recommended fund portfolios"""
     st.markdown("## 💼 Recommended Fund Portfolios")
-    st.markdown(
-        "These are diversified **reference-backed templates** (see rationale & citations under each portfolio). "
-        "Your questionnaire score selects among them using the documented suitability rules."
-    )
-    _render_portfolio_methodology_expander()
+    st.markdown("These are **documented model portfolios** from the codebase, ranked for your risk profile—not invented per session.")
+    st.caption("Open **References & methodology** at the top of this page for sources and matching rules.")
     
     if not portfolios:
         st.warning("No suitable portfolios found for your risk profile.")
@@ -361,7 +363,6 @@ def display_fund_portfolios(portfolios: List[FundPortfolio]):
             with col1:
                 st.markdown(f"**Description:** {portfolio.description}")
                 st.markdown(f"**Rebalancing:** {portfolio.rebalancing_frequency}")
-                _render_portfolio_rationale_block(portfolio)
                 
                 # Performance metrics
                 st.markdown("**Expected Performance:**")
@@ -470,7 +471,6 @@ def display_fund_portfolios(portfolios: List[FundPortfolio]):
 def display_portfolio_details(profile: RiskProfile, portfolio: FundPortfolio):
     """Display detailed portfolio information with AI labels"""
     st.markdown(f"## 📊 {portfolio.name} - Detailed Analysis")
-    _render_portfolio_rationale_block(portfolio)
     
     # Portfolio summary
     col1, col2, col3, col4 = st.columns(4)
@@ -613,10 +613,6 @@ def display_investment_plan(profile: RiskProfile, portfolios: List[FundPortfolio
         st.markdown(f"• Volatility: {recommended_portfolio.expected_volatility:.1f}%")
         st.markdown(f"• Risk Level: {recommended_portfolio.risk_level}/10")
         st.markdown(f"• Match Score: {recommended_portfolio.suitability_score:.0f}%")
-        st.caption(
-            "This template includes documented **design rationale & references** (Fund Portfolios tab). "
-            "Not a bespoke optimization—an explainable style match to your profile."
-        )
     
     # Portfolio allocation summary
     st.markdown("### 💼 Portfolio Allocation Summary")
@@ -705,9 +701,7 @@ def display_investment_plan(profile: RiskProfile, portfolios: List[FundPortfolio
             "expected_volatility": recommended_portfolio.expected_volatility,
             "risk_level": recommended_portfolio.risk_level,
             "suitability_score": recommended_portfolio.suitability_score,
-            "rebalancing_frequency": recommended_portfolio.rebalancing_frequency,
-            "design_rationale": recommended_portfolio.design_rationale,
-            "references": list(recommended_portfolio.references),
+            "rebalancing_frequency": recommended_portfolio.rebalancing_frequency
         },
         "holdings": [
             {
@@ -753,7 +747,11 @@ def main():
     
     st.markdown("# 🤖 AI Robo Advisor")
     st.markdown("Get personalized fund portfolio recommendations with AI-labeled investments based on your risk profile.")
-    
+    st.caption(
+        "Portfolios are **pre-defined templates** matched to your risk score; see References below for academic sources and methodology."
+    )
+    render_portfolio_methodology_expander()
+
     # Show tutorial hints
     show_tutorial_hints()
     
@@ -798,6 +796,7 @@ def main():
     with tab2:
         st.markdown("### Step 2: Fund Portfolio Recommendations")
         st.markdown("Get recommended fund portfolios that match your risk profile. Each portfolio includes AI-labeled investments.")
+        st.caption("Recommendations come from **six model portfolios** in the code; matching uses documented suitability scoring (≥60, top 3).")
         
         if st.session_state.risk_profile:
             profile = st.session_state.risk_profile
@@ -879,6 +878,10 @@ def main():
         - Geographic regions
         - Risk levels
         - Investment styles
+        
+        **Portfolio methodology:**
+        - Fund portfolios are **fixed model portfolios** (Core, Growth, Dividend, ESG, REITs, Defensive), not random picks.
+        - **References & full bibliography:** see `ROBO_ADVISOR_RESEARCH_SUPPORT.md` in the repo; in-app: expand *References & methodology* on the main Robo Advisor page.
         """)
         
         if st.session_state.risk_profile:

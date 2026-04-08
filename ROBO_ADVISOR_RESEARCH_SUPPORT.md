@@ -70,15 +70,6 @@ Research shows that robo-advisors:
 **One sentence for your report:**  
 “Our fund-based portfolios and suitability-based filter (score ≥ 60, top 3) align with research that emphasizes diversification and risk-profile matching in robo-advisory.”
 
-### 3.4 Per-template citations (not ad hoc weights)
-
-In code, each predefined portfolio (`FundPortfolio` in `fund_portfolio_manager.py`) includes:
-
-- **`design_rationale`** — one paragraph tying the theme (e.g. strategic balanced, growth tilt, dividend income, ESG, REITs, defensive) to standard finance ideas: policy/strategic allocation, factor exposure, ESG integration, listed real estate as an asset class, low-volatility / bond-heavy defense.
-- **`references`** — short **academic or industry citations** (e.g. Brinson et al., Markowitz, Fama–French, Carhart, Friede et al. on ESG, Ling & Naranjo on REITs, Campbell & Viceira on strategic allocation).
-
-The **AI Robo Advisor** Streamlit page surfaces these under each portfolio so you can tell your professor **where the template comes from**—it is an **explainable style template** with citations, not a black-box list of tickers.
-
 ---
 
 ## 4. Transparency and Documented Methodology
