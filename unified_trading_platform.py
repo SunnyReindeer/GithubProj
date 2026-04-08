@@ -24,7 +24,7 @@ from tradingview_widget import create_tradingview_widget, create_tradingview_adv
 # Import multi-asset modules
 from multi_asset_config import multi_asset_config, AssetClass, AssetRegion, AssetSector
 from multi_asset_data_provider import multi_asset_data_provider, PriceData
-from multi_asset_portfolio import multi_asset_portfolio, OrderSide as MAOrderSide, OrderType as MAOrderType, OrderStatus as MAOrderStatus
+from multi_asset_portfolio import MultiAssetPortfolio, OrderSide as MAOrderSide, OrderType as MAOrderType, OrderStatus as MAOrderStatus
 
 # Page configuration
 st.set_page_config(
@@ -67,9 +67,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state
-if 'portfolio_initialized' not in st.session_state:
-    st.session_state.portfolio_initialized = False
+# Initialize session state (first run only)
+if "session_state_bootstrapped" not in st.session_state:
+    st.session_state.session_state_bootstrapped = True
     st.session_state.current_prices = {}
     st.session_state.last_update = None
     st.session_state.selected_asset_class = AssetClass.STOCKS
@@ -193,11 +193,39 @@ def map_symbol_to_tradingview(symbol: str) -> str:
             # Default fallback to NYSE for stocks
             return f"NYSE:{symbol}"
 
-def initialize_portfolio():
-    """Initialize portfolio if not already done"""
-    if not st.session_state.portfolio_initialized:
-        multi_asset_portfolio.__init__(INITIAL_BALANCE)
-        st.session_state.portfolio_initialized = True
+def get_portfolio() -> MultiAssetPortfolio:
+    """One portfolio simulation per Streamlit session (survives reruns & refresh in this tab)."""
+    if "sim_portfolio" not in st.session_state:
+        st.session_state.sim_portfolio = MultiAssetPortfolio(initial_balance=float(INITIAL_BALANCE))
+    return st.session_state.sim_portfolio
+
+
+def reset_portfolio_simulation() -> None:
+    """Clear positions and restore starting cash for this session."""
+    st.session_state.sim_portfolio = MultiAssetPortfolio(initial_balance=float(INITIAL_BALANCE))
+
+
+def _render_multi_asset_equity_metrics(*, show_session_caption: bool = True) -> None:
+    """Cash available, mark-to-market position value, total equity, and P&L."""
+    p = get_portfolio()
+    syms = list(p.positions.keys())
+    prices = get_current_prices(syms) if syms else {}
+    cash = p.get_cash_balance_base()
+    pos_mv = p.get_positions_market_value(prices)
+    metrics = p.get_portfolio_metrics(prices)
+    if show_session_caption:
+        st.caption(
+            "Simulation persists for this browser session (reruns & page refresh). "
+            "Use **Reset to initial** in the sidebar to restore starting cash and clear trades."
+        )
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Cash (available)", f"${cash:,.2f}")
+    c2.metric("Positions value", f"${pos_mv:,.2f}")
+    c3.metric("Total equity", f"${metrics.total_value:,.2f}")
+    c4.metric("Total P&L", f"${metrics.total_pnl:,.2f}")
+    pnl_color = "normal" if metrics.total_pnl >= 0 else "inverse"
+    c5.metric("P&L %", f"{metrics.total_pnl_percent:.2f}%", delta_color=pnl_color)
+
 
 def get_current_prices(symbols: List[str]) -> Dict[str, Any]:
     """Get current prices for symbols using appropriate data provider"""
@@ -668,7 +696,7 @@ def create_trading_panel(symbols: List[str]):
                     side = MAOrderSide.BUY if order_side == "Buy" else MAOrderSide.SELL
                     order_type_enum = MAOrderType.MARKET if order_type == "Market" else MAOrderType.LIMIT
                     
-                    order = multi_asset_portfolio.create_order(
+                    order = get_portfolio().create_order(
                         symbol=selected_symbol,
                         side=side,
                         order_type=order_type_enum,
@@ -682,7 +710,7 @@ def create_trading_panel(symbols: List[str]):
                         current_price = current_prices.get(selected_symbol)
                         if current_price:
                             price_value = current_price.price if hasattr(current_price, 'price') else current_price
-                            success = multi_asset_portfolio.execute_order(order, price_value)
+                            success = get_portfolio().execute_order(order, price_value)
                             if success:
                                 st.success("✅ Order executed successfully!")
                             else:
@@ -761,35 +789,15 @@ def display_portfolio_summary():
     st.markdown("## 💰 Portfolio Summary")
     
     if st.session_state.get('use_multi_asset', True):
-        # Get current prices for all positions
-        symbols = list(multi_asset_portfolio.positions.keys())
+        _render_multi_asset_equity_metrics(show_session_caption=True)
+        p = get_portfolio()
+        symbols = list(p.positions.keys())
         if symbols:
             current_prices = get_current_prices(symbols)
         else:
             current_prices = {}
         
-        # Calculate portfolio metrics
-        metrics = multi_asset_portfolio.get_portfolio_metrics(current_prices)
-        
-        # Display key metrics
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric("Total Value", f"${metrics.total_value:,.2f}")
-        
-        with col2:
-            st.metric("Total P&L", f"${metrics.total_pnl:,.2f}")
-        
-        with col3:
-            pnl_color = "normal" if metrics.total_pnl >= 0 else "inverse"
-            st.metric(
-                "P&L %",
-                f"{metrics.total_pnl_percent:.2f}%",
-                delta_color=pnl_color
-            )
-        
-        with col4:
-            st.metric("Positions", len(multi_asset_portfolio.positions))
+        metrics = p.get_portfolio_metrics(current_prices)
         
         # Asset class allocation
         if metrics.asset_class_allocation:
@@ -848,12 +856,12 @@ def display_positions():
     
     if st.session_state.get('use_multi_asset', True):
         # Get current prices
-        symbols = list(multi_asset_portfolio.positions.keys())
+        symbols = list(get_portfolio().positions.keys())
         if symbols:
             try:
                 current_prices = get_current_prices(symbols)
                 if current_prices:  # Check if we got valid price data
-                    positions_df = multi_asset_portfolio.get_positions_dataframe(current_prices)
+                    positions_df = get_portfolio().get_positions_dataframe(current_prices)
                     
                     if not positions_df.empty:
                         st.dataframe(positions_df, use_container_width=True)
@@ -882,7 +890,7 @@ def display_trades():
     st.markdown("## 📋 Recent Trades")
     
     if st.session_state.get('use_multi_asset', True):
-        trades_df = multi_asset_portfolio.get_trades_dataframe()
+        trades_df = get_portfolio().get_trades_dataframe()
         if not trades_df.empty:
             # Show last 10 trades
             recent_trades = trades_df.tail(10)
@@ -908,10 +916,9 @@ def main():
     st.session_state.setdefault("selected_asset_class", AssetClass.STOCKS)
     st.session_state.setdefault("selected_symbols", [])
     st.session_state.setdefault("use_multi_asset", True)
-    st.session_state.setdefault("portfolio_initialized", False)
 
     # Initialize components
-    initialize_portfolio()
+    get_portfolio()
 
     # Single timed rerun (streamlit-autorefresh). Must run once per script, stable position.
     # Default debounce=True clears/resets the JS timer on every Streamlit rerun, so the interval often never
@@ -933,6 +940,12 @@ def main():
     # Sidebar
     with st.sidebar:
         st.markdown("## 🎛️ Control Panel")
+
+        st.markdown("### 🧪 Simulation")
+        st.caption(f"Starting cash **${INITIAL_BALANCE:,.0f}**. Portfolio & trades persist for this session.")
+        if st.button("🔁 Reset to initial", key="utp_reset_portfolio_sim", help="Clear positions and restore starting cash"):
+            reset_portfolio_simulation()
+            st.rerun()
         
         # Auto-refresh settings
         st.markdown("### ⚙️ Auto-Refresh Settings")
@@ -969,29 +982,12 @@ def main():
         # Symbol selection
         selected_symbols = create_symbol_selector(selected_asset_class)
         
-    # Portfolio summary
+    # Portfolio summary (cash + holdings + equity)
     st.markdown("## 💰 Portfolio Summary")
-    symbols = list(multi_asset_portfolio.positions.keys())
-    if symbols:
-        try:
-            current_prices = get_current_prices(symbols)
-            if current_prices:  # Check if we got valid price data
-                metrics = multi_asset_portfolio.get_portfolio_metrics(current_prices)
-                
-                st.metric("Total Value", f"${metrics.total_value:,.2f}")
-                st.metric("Total P&L", f"${metrics.total_pnl:,.2f}")
-                pnl_color = "normal" if metrics.total_pnl >= 0 else "inverse"
-                st.metric(
-                    "P&L %",
-                    f"{metrics.total_pnl_percent:.2f}%",
-                    delta_color=pnl_color
-                )
-            else:
-                st.warning("Unable to fetch current prices")
-        except Exception as e:
-            st.error(f"Error calculating portfolio metrics: {e}")
-    else:
-        st.info("No positions to display")
+    try:
+        _render_multi_asset_equity_metrics(show_session_caption=True)
+    except Exception as e:
+        st.error(f"Error calculating portfolio metrics: {e}")
     
     # Main content
     # Create tabs
@@ -1004,63 +1000,37 @@ def main():
     with tab1:
         # Portfolio Summary
         st.markdown("## 💼 Portfolio Summary")
-        
-        # Get portfolio data
-        portfolio_symbols = list(multi_asset_portfolio.positions.keys())
-        
-        if portfolio_symbols:
-            # Get current prices
-            portfolio_prices = get_current_prices(portfolio_symbols)
-            
-            if portfolio_prices:
-                try:
-                    portfolio_metrics = multi_asset_portfolio.get_portfolio_metrics(portfolio_prices)
-                    
-                    # Display key metrics
-                    col1, col2, col3, col4 = st.columns(4)
-                    
-                    with col1:
-                        st.metric("Total Value", f"${portfolio_metrics.total_value:,.2f}")
-                    
-                    with col2:
-                        st.metric("Total P&L", f"${portfolio_metrics.total_pnl:,.2f}")
-                    
-                    with col3:
-                        st.metric("P&L %", f"{portfolio_metrics.total_pnl_percent:.2f}%")
-                    
-                    with col4:
-                        st.metric("Positions", len(portfolio_symbols))
-                    
-                    # Portfolio breakdown
-                    st.markdown("### 📊 Portfolio Breakdown")
-                    
+        try:
+            _render_multi_asset_equity_metrics(show_session_caption=False)
+            p = get_portfolio()
+            portfolio_symbols = list(p.positions.keys())
+            if portfolio_symbols:
+                portfolio_prices = get_current_prices(portfolio_symbols)
+                if portfolio_prices:
+                    st.markdown("### 📊 Open positions")
                     portfolio_data = []
                     for symbol in portfolio_symbols:
                         if symbol in portfolio_prices:
                             price_obj = portfolio_prices[symbol]
-                            price = price_obj.price if hasattr(price_obj, 'price') else price_obj
-                            change = price_obj.change_percent if hasattr(price_obj, 'change_percent') else 0
-                            
-                            position = multi_asset_portfolio.positions[symbol]
+                            price = price_obj.price if hasattr(price_obj, "price") else price_obj
+                            change = price_obj.change_percent if hasattr(price_obj, "change_percent") else 0
+                            position = p.positions[symbol]
                             value = position.quantity * price
-                            
                             portfolio_data.append({
-                                'Symbol': symbol,
-                                'Quantity': position.quantity,
-                                'Price': price,
-                                'Value': value,
-                                'Change': change
+                                "Symbol": symbol,
+                                "Quantity": position.quantity,
+                                "Price": price,
+                                "Value": value,
+                                "Change": change,
                             })
-                    
                     if portfolio_data:
-                        df_portfolio = pd.DataFrame(portfolio_data)
-                        st.dataframe(df_portfolio, use_container_width=True)
-                except Exception as e:
-                    st.error(f"Error calculating portfolio metrics: {str(e)}")
+                        st.dataframe(pd.DataFrame(portfolio_data), use_container_width=True)
+                else:
+                    st.warning("Unable to load current prices for open positions.")
             else:
-                st.info("Unable to load current prices for portfolio calculation")
-        else:
-            st.info("No positions in portfolio. Start trading to build your portfolio!")
+                st.info("No open positions yet — only **cash** is shown above. Place a trade in the **Trading** tab.")
+        except Exception as e:
+            st.error(f"Error calculating portfolio metrics: {str(e)}")
     
     with tab2:
         display_price_charts(selected_symbols)

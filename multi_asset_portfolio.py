@@ -276,6 +276,24 @@ class MultiAssetPortfolio:
         
         return False
     
+    def get_cash_balance_base(self) -> float:
+        """Spendable cash in base currency (available for new buys)."""
+        return float(self.cash_balances.get(self.base_currency, 0.0))
+
+    def get_positions_market_value(self, current_prices: Dict[str, PriceData]) -> float:
+        """Total mark-to-market value of open positions only (excludes cash)."""
+        total = 0.0
+        for symbol, position in self.positions.items():
+            if symbol in current_prices:
+                price_data = current_prices[symbol]
+                position.current_price = price_data.price
+                position.market_value = position.quantity * price_data.price
+                position.unrealized_pnl = position.market_value - position.cost_basis
+                total += position.market_value
+            else:
+                total += float(getattr(position, "market_value", 0.0) or 0.0)
+        return total
+
     def get_total_value(self, current_prices: Dict[str, PriceData]) -> float:
         """Calculate total portfolio value in base currency"""
         total_value = 0.0
