@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -1650,308 +1651,136 @@ def display_markets_section():
             st.metric("Average Change", "+0.45%", "0.12%")
     
 
-def get_economic_calendar():
-    """Get economic calendar events - enhanced with real data where possible"""
+_CCY_TO_REGION = {
+    "USD": ("United States", "🇺🇸", "US"),
+    "EUR": ("Eurozone", "🇪🇺", "EU"),
+    "GBP": ("United Kingdom", "🇬🇧", "UK"),
+    "JPY": ("Japan", "🇯🇵", "JP"),
+    "AUD": ("Australia", "🇦🇺", "AU"),
+    "NZD": ("New Zealand", "🇳🇿", "NZ"),
+    "CAD": ("Canada", "🇨🇦", "CA"),
+    "CHF": ("Switzerland", "🇨🇭", "CH"),
+    "CNY": ("China", "🇨🇳", "CN"),
+    "All": ("Global", "🌍", "GL"),
+}
+
+
+def _impact_to_importance(impact: str) -> str:
+    imp = (impact or "").strip()
+    if imp in ("High", "Medium", "Low"):
+        return imp
+    return "Low"
+
+
+@st.cache_data(ttl=1800)
+def _fetch_faireconomy_calendar_json():
+    """Live economic calendar (Forex Factory–style JSON). No API key."""
+    url = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
     try:
-        # Try to get real economic indicators
-        indicators = get_economic_indicators()
-        
-        # Build comprehensive economic events list
-        current_date = datetime.now()
+        r = requests.get(
+            url,
+            timeout=25,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; EconomicCalendar/1.0)"},
+        )
+        r.raise_for_status()
+        data = r.json()
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _fetch_finnhub_economic_calendar() -> List[dict]:
+    """Optional: Finnhub economic calendar (needs FINNHUB_API_KEY in environment)."""
+    token = (os.getenv("FINNHUB_API_KEY") or "").strip()
+    if not token:
+        return []
+    now = datetime.now()
+    from_s = now.strftime("%Y-%m-%d")
+    to_s = (now + timedelta(days=14)).strftime("%Y-%m-%d")
+    try:
+        r = requests.get(
+            "https://finnhub.io/api/v1/calendar/economic",
+            params={"from": from_s, "to": to_s, "token": token},
+            timeout=20,
+        )
+        if r.status_code != 200:
+            return []
+        rows = (r.json() or {}).get("economic") or []
+    except Exception:
+        return []
+
+    out = []
+    for row in rows:
+        try:
+            t = row.get("time") or ""
+            dt = date_parser.parse(t) if t else now
+            cty = (row.get("country") or "US").strip()
+            if cty in _CCY_TO_REGION:
+                name, flag, _ = _CCY_TO_REGION[cty]
+            else:
+                name, flag = cty, "🌐"
+            imp_raw = row.get("impact")
+            if isinstance(imp_raw, (int, float)):
+                importance = "High" if imp_raw >= 3 else "Medium" if imp_raw >= 2 else "Low"
+            else:
+                importance = _impact_to_importance(str(imp_raw or "low"))
+            out.append({
+                "date": dt.strftime("%Y-%m-%d"),
+                "datetime": dt,
+                "time": dt.strftime("%H:%M"),
+                "event": row.get("event") or "Economic release",
+                "country": name,
+                "country_flag": flag,
+                "importance": importance,
+                "forecast": (row.get("estimate") or row.get("forecast") or "") or "—",
+                "previous": (row.get("prev") or row.get("previous") or "") or "—",
+                "category": "Economic",
+            })
+        except Exception:
+            continue
+    return out
+
+
+def get_economic_calendar():
+    """Economic calendar: real data from a public feed (and optionally Finnhub if FINNHUB_API_KEY is set)."""
+    try:
+        finnhub_events = _fetch_finnhub_economic_calendar()
+        if finnhub_events:
+            finnhub_events.sort(key=lambda x: (x["datetime"], x["time"]))
+            return finnhub_events
+
+        raw = _fetch_faireconomy_calendar_json()
+        if not raw:
+            return []
+
         events = []
-        
-        # Generate events for the next 90 days
-        for day_offset in range(90):
-            event_date = current_date + timedelta(days=day_offset)
-            date_str = event_date.strftime("%Y-%m-%d")
-            day_name = event_date.strftime("%A")
-            
-            # US Economic Events
-            if day_offset == 0:  # Today
-                events.extend([
-                    {
-                        "date": date_str,
-                        "datetime": event_date,
-                        "time": "08:30 EST",
-                        "event": "Consumer Price Index (CPI)",
-                        "country": "US",
-                        "country_flag": "🇺🇸",
-                        "importance": "High",
-                        "forecast": "3.2%",
-                        "previous": "3.1%",
-                        "category": "Inflation"
-                    },
-                    {
-                        "date": date_str,
-                        "datetime": event_date,
-                        "time": "10:00 EST",
-                        "event": "Federal Reserve Chair Speech",
-                        "country": "US",
-                        "country_flag": "🇺🇸",
-                        "importance": "High",
-                        "forecast": "N/A",
-                        "previous": "N/A",
-                        "category": "Central Bank"
-                    }
-                ])
-            elif day_offset == 1:  # Tomorrow
-                events.extend([
-                    {
-                        "date": date_str,
-                        "datetime": event_date,
-                        "time": "09:15 EST",
-                        "event": "Industrial Production",
-                        "country": "US",
-                        "country_flag": "🇺🇸",
-                        "importance": "Medium",
-                        "forecast": "0.3%",
-                        "previous": "0.2%",
-                        "category": "Production"
-                    },
-                    {
-                        "date": date_str,
-                        "datetime": event_date,
-                        "time": "14:00 EST",
-                        "event": "Bank of Canada Interest Rate Decision",
-                        "country": "Canada",
-                        "country_flag": "🇨🇦",
-                        "importance": "High",
-                        "forecast": "5.00%",
-                        "previous": "5.00%",
-                        "category": "Interest Rates"
-                    }
-                ])
-            elif day_offset == 2:  # Day after tomorrow
-                events.extend([
-                    {
-                        "date": date_str,
-                        "datetime": event_date,
-                        "time": "08:30 EST",
-                        "event": "Housing Starts",
-                        "country": "US",
-                        "country_flag": "🇺🇸",
-                        "importance": "Medium",
-                        "forecast": "1.45M",
-                        "previous": "1.42M",
-                        "category": "Housing"
-                    },
-                    {
-                        "date": date_str,
-                        "datetime": event_date,
-                        "time": "10:00 EST",
-                        "event": "Retail Sales",
-                        "country": "US",
-                        "country_flag": "🇺🇸",
-                        "importance": "High",
-                        "forecast": "0.4%",
-                        "previous": "0.3%",
-                        "category": "Consumption"
-                    }
-                ])
-            elif day_offset == 3:
+        for item in raw:
+            try:
+                title = item.get("title") or "Event"
+                ccy = (item.get("country") or "All").strip()
+                name, flag, _ = _CCY_TO_REGION.get(ccy, (ccy, "🌐", ccy))
+                dt = date_parser.parse(item["date"])
+                date_str = dt.strftime("%Y-%m-%d")
+                time_str = dt.strftime("%H:%M")
+                imp = _impact_to_importance(item.get("impact", "Low"))
+                fc = (item.get("forecast") or "").strip() or "—"
+                prev = (item.get("previous") or "").strip() or "—"
                 events.append({
                     "date": date_str,
-                    "datetime": event_date,
-                    "time": "08:30 EST",
-                    "event": "Initial Jobless Claims",
-                    "country": "US",
-                    "country_flag": "🇺🇸",
-                    "importance": "Medium",
-                    "forecast": "220K",
-                    "previous": "218K",
-                    "category": "Employment"
+                    "datetime": dt,
+                    "time": time_str,
+                    "event": title,
+                    "country": name,
+                    "country_flag": flag,
+                    "importance": imp,
+                    "forecast": fc,
+                    "previous": prev,
+                    "category": "Economic",
                 })
-            elif day_offset == 4:
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "10:00 EST",
-                    "event": "University of Michigan Consumer Sentiment",
-                    "country": "US",
-                    "country_flag": "🇺🇸",
-                    "importance": "Medium",
-                    "forecast": "72.5",
-                    "previous": "71.8",
-                    "category": "Sentiment"
-                })
-            elif day_offset == 7:  # Next week
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "08:30 EST",
-                    "event": "Producer Price Index (PPI)",
-                    "country": "US",
-                    "country_flag": "🇺🇸",
-                    "importance": "High",
-                    "forecast": "2.8%",
-                    "previous": "2.7%",
-                    "category": "Inflation"
-                })
-            elif day_offset == 14:  # Two weeks
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "14:00 EST",
-                    "event": "FOMC Meeting Minutes",
-                    "country": "US",
-                    "country_flag": "🇺🇸",
-                    "importance": "High",
-                    "forecast": "N/A",
-                    "previous": "N/A",
-                    "category": "Central Bank"
-                })
-            elif day_offset == 21:  # Three weeks
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "08:30 EST",
-                    "event": "GDP Growth Rate (Q4)",
-                    "country": "US",
-                    "country_flag": "🇺🇸",
-                    "importance": "High",
-                    "forecast": "2.5%",
-                    "previous": "2.1%",
-                    "category": "GDP"
-                })
-            
-            # Add European events
-            if day_offset == 1:
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "08:00 GMT",
-                    "event": "UK CPI",
-                    "country": "UK",
-                    "country_flag": "🇬🇧",
-                    "importance": "High",
-                    "forecast": "3.0%",
-                    "previous": "3.2%",
-                    "category": "Inflation"
-                })
-            
-            # Add Asian events
-            if day_offset == 2:
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "09:30 JST",
-                    "event": "Bank of Japan Policy Decision",
-                    "country": "Japan",
-                    "country_flag": "🇯🇵",
-                    "importance": "High",
-                    "forecast": "-0.1%",
-                    "previous": "-0.1%",
-                    "category": "Interest Rates"
-                })
-            
-            # Add more events throughout the 90-day period
-            # Weekly events (every 7 days)
-            if day_offset % 7 == 4 and day_offset > 0:  # Every Thursday after first week
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "08:30 EST",
-                    "event": "Initial Jobless Claims",
-                    "country": "US",
-                    "country_flag": "🇺🇸",
-                    "importance": "Medium",
-                    "forecast": "220K",
-                    "previous": "218K",
-                    "category": "Employment"
-                })
-            
-            # Monthly events (first business day of each month)
-            if day_offset in [30, 60]:  # Approximate monthly intervals
-                events.extend([
-                    {
-                        "date": date_str,
-                        "datetime": event_date,
-                        "time": "08:30 EST",
-                        "event": "Non-Farm Payrolls",
-                        "country": "US",
-                        "country_flag": "🇺🇸",
-                        "importance": "High",
-                        "forecast": "200K",
-                        "previous": "187K",
-                        "category": "Employment"
-                    },
-                    {
-                        "date": date_str,
-                        "datetime": event_date,
-                        "time": "10:00 EST",
-                        "event": "ISM Manufacturing PMI",
-                        "country": "US",
-                        "country_flag": "🇺🇸",
-                        "importance": "High",
-                        "forecast": "52.0",
-                        "previous": "51.5",
-                        "category": "Manufacturing"
-                    }
-                ])
-            
-            # Quarterly events
-            if day_offset in [45, 75]:  # Quarterly intervals
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "08:30 EST",
-                    "event": "GDP Preliminary Release",
-                    "country": "US",
-                    "country_flag": "🇺🇸",
-                    "importance": "High",
-                    "forecast": "2.3%",
-                    "previous": "2.1%",
-                    "category": "GDP"
-                })
-            
-            # FOMC meetings (approximately every 6-8 weeks)
-            if day_offset in [28, 56, 84]:
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "14:00 EST",
-                    "event": "FOMC Interest Rate Decision",
-                    "country": "US",
-                    "country_flag": "🇺🇸",
-                    "importance": "High",
-                    "forecast": "5.25%",
-                    "previous": "5.25%",
-                    "category": "Interest Rates"
-                })
-            
-            # European Central Bank events
-            if day_offset in [14, 44, 74]:
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "08:45 CET",
-                    "event": "ECB Interest Rate Decision",
-                    "country": "EU",
-                    "country_flag": "🇪🇺",
-                    "importance": "High",
-                    "forecast": "4.50%",
-                    "previous": "4.50%",
-                    "category": "Interest Rates"
-                })
-            
-            # China economic data
-            if day_offset in [10, 40, 70]:
-                events.append({
-                    "date": date_str,
-                    "datetime": event_date,
-                    "time": "02:00 CST",
-                    "event": "China GDP Growth Rate",
-                    "country": "China",
-                    "country_flag": "🇨🇳",
-                    "importance": "High",
-                    "forecast": "5.2%",
-                    "previous": "5.0%",
-                    "category": "GDP"
-                })
-        
-        # Sort events by date and time
+            except Exception:
+                continue
+
         events.sort(key=lambda x: (x["datetime"], x["time"]))
-        
         return events
     except Exception as e:
         print(f"Error getting economic calendar: {e}")
@@ -1961,7 +1790,13 @@ def display_economic_events_section():
     """Display economic events and calendar with real-time data"""
     
     st.markdown("#### 📅 Economic Events")
-    
+    st.caption(
+        "**Data source:** Real macro releases from a public Forex Factory–style feed "
+        "(nfs.faireconomy.media). If you set **FINNHUB_API_KEY** in the environment, "
+        "the app uses [Finnhub](https://finnhub.io/)’s economic calendar for the next ~14 days instead. "
+        "Coverage is typically about one week on the free feed—not 90 days of fabricated events."
+    )
+
     # Get economic events
     with st.spinner("Loading economic events..."):
         economic_events = get_economic_calendar()
@@ -1973,7 +1808,11 @@ def display_economic_events_section():
     # Filter options
     col1, col2 = st.columns(2)
     with col1:
-        time_filter = st.selectbox("Filter by Time", ["All (90 Days)", "Today", "This Week", "This Month", "Next 3 Months"], key="time_filter")
+        time_filter = st.selectbox(
+            "Filter by Time",
+            ["All (loaded)", "Today", "This Week", "This Month", "Next 3 Months"],
+            key="time_filter",
+        )
     with col2:
         importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"], key="importance_filter")
     
@@ -1994,7 +1833,7 @@ def display_economic_events_section():
     elif time_filter == "Next 3 Months":
         three_months_end = (current_date + timedelta(days=90)).strftime("%Y-%m-%d")
         filtered_events = [e for e in filtered_events if e["date"] <= three_months_end and e["date"] >= today]
-    # "All (90 Days)" shows all events from the calendar (which generates 90 days of events)
+    # "All (loaded)" = every event returned by the calendar API (typically ~1 week on free feed, or ~14 days with Finnhub)
     
     # Importance filter
     if importance_filter != "All":
