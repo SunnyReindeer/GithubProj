@@ -586,7 +586,7 @@ def display_price_charts(symbols: List[str]):
                         title=f"{symbol} - {timeframe.upper()} Chart (Standard)",
                         xaxis_title="Date",
                         yaxis_title="Price",
-                        height=400,
+                        height=580,
                         showlegend=True
                     )
                     
@@ -635,7 +635,7 @@ def create_trading_panel(symbols: List[str]):
         quantity = st.number_input(
             "Quantity",
             min_value=0.001,
-            max_value=10000.0,
+            max_value=float(INITIAL_BALANCE),
             value=1.0,
             step=0.001,
             format="%.3f"
@@ -1085,19 +1085,12 @@ def main():
             st.session_state.last_update = time.time()
             st.rerun()
 
-    # last_update = end of previous run (used for server-side ETA; sidebar uses JS countdown)
     prev_end = st.session_state.get("last_update")
     with col2:
         if st.session_state.get("auto_refresh_enabled", True):
             if prev_end is not None:
-                elapsed = current_time - prev_end
-                time_until_refresh = max(0.0, float(refresh_sec) - elapsed)
-                mu = int(time_until_refresh // 60)
-                sc = int(time_until_refresh % 60)
-                eta = f"{mu}m {sc}s" if mu > 0 else f"{sc}s"
                 st.caption(
-                    f"Previous run ended: {datetime.fromtimestamp(prev_end).strftime('%H:%M:%S')} · "
-                    f"Server ETA to next reload: ~{eta} (see sidebar for live countdown)"
+                    f"Previous run ended: {datetime.fromtimestamp(prev_end).strftime('%H:%M:%S')}"
                 )
             else:
                 st.caption("Auto-refresh is on — waiting for first timed reload.")

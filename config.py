@@ -17,7 +17,7 @@ SUPPORTED_CRYPTOS = [
 ]
 
 # Trading simulation settings
-INITIAL_BALANCE = 10000  # Starting balance in USD
+INITIAL_BALANCE = 1_000_000  # Starting balance in USD
 TRADING_FEE = 0.001  # 0.1% trading fee
 MAX_POSITION_SIZE = 0.1  # Maximum 10% of portfolio per trade
 
