@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -1681,6 +1681,52 @@ _CCY_TO_REGION = {
     "All": ("Global", "🌍", "GL"),
 }
 
+# Finnhub /calendar/economic uses ISO-3166-style country codes (e.g. US), not currency codes (USD).
+_FINNHUB_COUNTRY_TO_DISPLAY = {
+    "US": ("United States", "🇺🇸"),
+    "EU": ("Eurozone", "🇪🇺"),
+    "GB": ("United Kingdom", "🇬🇧"),
+    "UK": ("United Kingdom", "🇬🇧"),
+    "JP": ("Japan", "🇯🇵"),
+    "AU": ("Australia", "🇦🇺"),
+    "NZ": ("New Zealand", "🇳🇿"),
+    "CA": ("Canada", "🇨🇦"),
+    "CH": ("Switzerland", "🇨🇭"),
+    "CN": ("China", "🇨🇳"),
+    "DE": ("Germany", "🇩🇪"),
+    "FR": ("France", "🇫🇷"),
+    "IT": ("Italy", "🇮🇹"),
+    "KR": ("South Korea", "🇰🇷"),
+    "IN": ("India", "🇮🇳"),
+    "BR": ("Brazil", "🇧🇷"),
+    "MX": ("Mexico", "🇲🇽"),
+    "RU": ("Russia", "🇷🇺"),
+    "ZA": ("South Africa", "🇿🇦"),
+    "SE": ("Sweden", "🇸🇪"),
+    "NO": ("Norway", "🇳🇴"),
+}
+
+
+def _parse_finnhub_event_time(row: dict, default: datetime) -> datetime:
+    """Finnhub returns `time` as Unix seconds (UTC), not an ISO string."""
+    t = row.get("time")
+    if t is None:
+        return default
+    if isinstance(t, (int, float)):
+        ts = float(t)
+        if ts > 1e12:  # milliseconds
+            ts /= 1000.0
+        try:
+            return datetime.fromtimestamp(ts, tz=timezone.utc).replace(tzinfo=None)
+        except (OSError, ValueError, OverflowError):
+            return default
+    if isinstance(t, str) and t.strip():
+        try:
+            return date_parser.parse(t)
+        except (ValueError, TypeError, OverflowError):
+            return default
+    return default
+
 
 def _impact_to_importance(impact: str) -> str:
     imp = (impact or "").strip()
@@ -1729,11 +1775,12 @@ def _fetch_finnhub_economic_calendar() -> List[dict]:
     out = []
     for row in rows:
         try:
-            t = row.get("time") or ""
-            dt = date_parser.parse(t) if t else now
-            cty = (row.get("country") or "US").strip()
+            dt = _parse_finnhub_event_time(row, now)
+            cty = (row.get("country") or "US").strip().upper()
             if cty in _CCY_TO_REGION:
                 name, flag, _ = _CCY_TO_REGION[cty]
+            elif cty in _FINNHUB_COUNTRY_TO_DISPLAY:
+                name, flag = _FINNHUB_COUNTRY_TO_DISPLAY[cty]
             else:
                 name, flag = cty, "🌐"
             imp_raw = row.get("impact")
@@ -1741,11 +1788,12 @@ def _fetch_finnhub_economic_calendar() -> List[dict]:
                 importance = "High" if imp_raw >= 3 else "Medium" if imp_raw >= 2 else "Low"
             else:
                 importance = _impact_to_importance(str(imp_raw or "low"))
+            title = (row.get("event") or row.get("event_name") or row.get("name") or "").strip() or "Economic release"
             out.append({
                 "date": dt.strftime("%Y-%m-%d"),
                 "datetime": dt,
                 "time": dt.strftime("%H:%M"),
-                "event": row.get("event") or "Economic release",
+                "event": title,
                 "country": name,
                 "country_flag": flag,
                 "importance": importance,
