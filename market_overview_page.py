@@ -1671,6 +1671,27 @@ def _impact_to_importance(impact: str) -> str:
     return "Low"
 
 
+def _ensure_naive_local_datetime(dt: datetime) -> datetime:
+    """Strip tzinfo after converting to local, so we can compare with datetime.now() (naive)."""
+    if dt.tzinfo is not None:
+        return dt.astimezone().replace(tzinfo=None)
+    return dt
+
+
+def _event_instant_naive(event: dict) -> datetime:
+    """Comparable instant for Past/Upcoming filters (handles tz-aware parsed dates)."""
+    d = event.get("datetime")
+    if isinstance(d, datetime):
+        return _ensure_naive_local_datetime(d)
+    try:
+        p = date_parser.parse(f"{event.get('date', '')} {event.get('time', '00:00')}")
+        if isinstance(p, datetime):
+            return _ensure_naive_local_datetime(p)
+    except Exception:
+        pass
+    return datetime.min.replace(year=2000, month=1, day=1)
+
+
 @st.cache_data(ttl=1800)
 def _fetch_faireconomy_calendar_json():
     """Live economic calendar (Forex Factory–style JSON). No API key."""
@@ -1702,6 +1723,7 @@ def get_economic_calendar() -> List[dict]:
                 ccy = (item.get("country") or "All").strip()
                 name, flag, _ = _CCY_TO_REGION.get(ccy, (ccy, "🌐", ccy))
                 dt = date_parser.parse(item["date"])
+                dt = _ensure_naive_local_datetime(dt)
                 date_str = dt.strftime("%Y-%m-%d")
                 time_str = dt.strftime("%H:%M")
                 imp = _impact_to_importance(item.get("impact", "Low"))
@@ -1768,11 +1790,11 @@ def display_economic_events_section():
     filtered_events = economic_events.copy()
     
     if time_filter == "Past":
-        filtered_events = [e for e in filtered_events if e["datetime"] < now]
+        filtered_events = [e for e in filtered_events if _event_instant_naive(e) < now]
     elif time_filter == "Today":
         filtered_events = [e for e in filtered_events if e["date"] == today]
     elif time_filter == "Upcoming":
-        filtered_events = [e for e in filtered_events if e["datetime"] >= now]
+        filtered_events = [e for e in filtered_events if _event_instant_naive(e) >= now]
     # "All (loaded)" = full list from the feed
     
     # Importance filter
@@ -1824,8 +1846,8 @@ def display_economic_events_section():
                     "Low": "#27ae60"
                 }.get(event["importance"], "#7f8c8d")
                 
-                # Past vs upcoming relative to now (same clock as filters)
-                is_upcoming = event["datetime"] >= now
+                # Past vs upcoming relative to now (same clock as filters; naive vs aware safe)
+                is_upcoming = _event_instant_naive(event) >= now
                 
                 # Build status badge HTML
                 status_badge_color = "#3498db" if is_upcoming else "#95a5a6"
