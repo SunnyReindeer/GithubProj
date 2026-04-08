@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 import time
+from pathlib import Path
 from typing import Dict, List, Any
 
 try:
@@ -25,6 +26,9 @@ from tradingview_widget import create_tradingview_widget, create_tradingview_adv
 from multi_asset_config import multi_asset_config, AssetClass, AssetRegion, AssetSector
 from multi_asset_data_provider import multi_asset_data_provider, PriceData
 from multi_asset_portfolio import MultiAssetPortfolio, OrderSide as MAOrderSide, OrderType as MAOrderType, OrderStatus as MAOrderStatus
+
+# Persisted simulation state (same folder as this script; survives refresh & restart of `streamlit run` on this machine)
+_SIM_PORTFOLIO_FILE = Path(__file__).resolve().parent / ".unified_sim_portfolio.json"
 
 # Page configuration
 st.set_page_config(
@@ -194,15 +198,33 @@ def map_symbol_to_tradingview(symbol: str) -> str:
             return f"NYSE:{symbol}"
 
 def get_portfolio() -> MultiAssetPortfolio:
-    """One portfolio simulation per Streamlit session (survives reruns & refresh in this tab)."""
+    """Simulation portfolio; loads from disk when a saved file exists."""
     if "sim_portfolio" not in st.session_state:
-        st.session_state.sim_portfolio = MultiAssetPortfolio(initial_balance=float(INITIAL_BALANCE))
+        p = MultiAssetPortfolio(initial_balance=float(INITIAL_BALANCE))
+        if _SIM_PORTFOLIO_FILE.exists():
+            loaded = MultiAssetPortfolio(initial_balance=float(INITIAL_BALANCE))
+            if loaded.load_portfolio(str(_SIM_PORTFOLIO_FILE)):
+                p = loaded
+        st.session_state.sim_portfolio = p
     return st.session_state.sim_portfolio
 
 
+def persist_sim_portfolio() -> None:
+    try:
+        get_portfolio().save_portfolio(str(_SIM_PORTFOLIO_FILE))
+    except Exception:
+        pass
+
+
 def reset_portfolio_simulation() -> None:
-    """Clear positions and restore starting cash for this session."""
+    """Clear positions, restore starting cash, and remove the saved simulation file."""
+    try:
+        if _SIM_PORTFOLIO_FILE.exists():
+            _SIM_PORTFOLIO_FILE.unlink()
+    except Exception:
+        pass
     st.session_state.sim_portfolio = MultiAssetPortfolio(initial_balance=float(INITIAL_BALANCE))
+    persist_sim_portfolio()
 
 
 def _render_multi_asset_equity_metrics(*, show_session_caption: bool = True) -> None:
@@ -215,7 +237,8 @@ def _render_multi_asset_equity_metrics(*, show_session_caption: bool = True) -> 
     metrics = p.get_portfolio_metrics(prices)
     if show_session_caption:
         st.caption(
-            "Simulation persists for this browser session (reruns & page refresh). "
+            f"Simulation is saved to **`{_SIM_PORTFOLIO_FILE.name}`** next to the app — refresh and reopening Streamlit keep your positions on this machine. "
+            "Hosted/cloud instances may not keep files between deploys. "
             "Use **Reset to initial** in the sidebar to restore starting cash and clear trades."
         )
     c1, c2, c3, c4, c5 = st.columns(5)
@@ -942,7 +965,7 @@ def main():
         st.markdown("## 🎛️ Control Panel")
 
         st.markdown("### 🧪 Simulation")
-        st.caption(f"Starting cash **${INITIAL_BALANCE:,.0f}**. Portfolio & trades persist for this session.")
+        st.caption(f"Starting cash **${INITIAL_BALANCE:,.0f}**. Portfolio & trades are saved locally between runs (see Portfolio tab).")
         if st.button("🔁 Reset to initial", key="utp_reset_portfolio_sim", help="Clear positions and restore starting cash"):
             reset_portfolio_simulation()
             st.rerun()
@@ -1050,7 +1073,7 @@ def main():
         display_price_charts(selected_symbols)
     
     with tab3:
-        st.markdown("### 💰 Portfolio (this session)")
+        st.markdown("### 💰 Portfolio")
         try:
             _render_multi_asset_equity_metrics(show_session_caption=False)
         except Exception as e:
@@ -1094,6 +1117,7 @@ def main():
             st.caption(f"Last run: {datetime.fromtimestamp(prev_end).strftime('%H:%M:%S')} · Auto-refresh off")
 
     st.session_state.last_update = time.time()
+    persist_sim_portfolio()
 
 if __name__ == "__main__":
     main()

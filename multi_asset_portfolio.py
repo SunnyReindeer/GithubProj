@@ -540,58 +540,102 @@ class MultiAssetPortfolio:
             })
         
         return pd.DataFrame(data)
-    
+
+    def _order_save_dict(self, order: MultiAssetOrder) -> dict:
+        d = asdict(order)
+        d["side"] = order.side.value
+        d["order_type"] = order.order_type.value
+        d["status"] = order.status.value
+        d["timestamp"] = order.timestamp.isoformat()
+        return d
+
+    def _trade_save_dict(self, trade: MultiAssetTrade) -> dict:
+        d = asdict(trade)
+        d["side"] = trade.side.value
+        d["timestamp"] = trade.timestamp.isoformat()
+        return d
+
     def save_portfolio(self, filename: str):
-        """Save portfolio state to file"""
+        """Save portfolio state to file (JSON round-trips enums and timestamps)."""
         portfolio_data = {
             'initial_balance': self.initial_balance,
             'base_currency': self.base_currency,
             'cash_balances': self.cash_balances,
             'positions': {symbol: asdict(pos) for symbol, pos in self.positions.items()},
-            'orders': [asdict(order) for order in self.orders],
-            'trades': [asdict(trade) for trade in self.trades],
+            'orders': [self._order_save_dict(order) for order in self.orders],
+            'trades': [self._trade_save_dict(trade) for trade in self.trades],
             'order_counter': self.order_counter,
             'trade_counter': self.trade_counter
         }
-        
+
         with open(filename, 'w') as f:
-            json.dump(portfolio_data, f, indent=2, default=str)
-    
-    def load_portfolio(self, filename: str):
-        """Load portfolio state from file"""
+            json.dump(portfolio_data, f, indent=2)
+
+    @staticmethod
+    def _restore_enum(val: Any, enum_cls):
+        if isinstance(val, enum_cls):
+            return val
+        if not isinstance(val, str):
+            raise TypeError(f"Expected str or {enum_cls}, got {type(val)}")
+        try:
+            return enum_cls(val)
+        except ValueError:
+            prefix = enum_cls.__name__ + "."
+            if val.startswith(prefix):
+                return enum_cls[val[len(prefix):]]
+            raise
+
+    @staticmethod
+    def _parse_saved_datetime(val: Any) -> datetime:
+        if isinstance(val, datetime):
+            return val
+        s = str(val).replace("Z", "+00:00")
+        return datetime.fromisoformat(s)
+
+    def load_portfolio(self, filename: str) -> bool:
+        """Load portfolio state from file. Returns True on success; leaves self unchanged on failure."""
         try:
             with open(filename, 'r') as f:
                 portfolio_data = json.load(f)
-            
-            self.initial_balance = portfolio_data['initial_balance']
-            self.base_currency = portfolio_data['base_currency']
-            self.cash_balances = portfolio_data['cash_balances']
-            self.order_counter = portfolio_data['order_counter']
-            self.trade_counter = portfolio_data['trade_counter']
-            
-            # Load positions
-            self.positions = {}
+
+            initial_balance = portfolio_data['initial_balance']
+            base_currency = portfolio_data['base_currency']
+            cash_balances = portfolio_data['cash_balances']
+            order_counter = portfolio_data['order_counter']
+            trade_counter = portfolio_data['trade_counter']
+
+            positions: Dict[str, MultiAssetPosition] = {}
             for symbol, pos_data in portfolio_data['positions'].items():
-                self.positions[symbol] = MultiAssetPosition(**pos_data)
-            
-            # Load orders
-            self.orders = []
-            for order_data in portfolio_data['orders']:
-                order_data['side'] = OrderSide(order_data['side'])
-                order_data['order_type'] = OrderType(order_data['order_type'])
-                order_data['status'] = OrderStatus(order_data['status'])
-                order_data['timestamp'] = datetime.fromisoformat(order_data['timestamp'])
-                self.orders.append(MultiAssetOrder(**order_data))
-            
-            # Load trades
-            self.trades = []
-            for trade_data in portfolio_data['trades']:
-                trade_data['side'] = OrderSide(trade_data['side'])
-                trade_data['timestamp'] = datetime.fromisoformat(trade_data['timestamp'])
-                self.trades.append(MultiAssetTrade(**trade_data))
-                
+                positions[symbol] = MultiAssetPosition(**pos_data)
+
+            orders: List[MultiAssetOrder] = []
+            for raw in portfolio_data['orders']:
+                od = dict(raw)
+                od['side'] = self._restore_enum(od['side'], OrderSide)
+                od['order_type'] = self._restore_enum(od['order_type'], OrderType)
+                od['status'] = self._restore_enum(od['status'], OrderStatus)
+                od['timestamp'] = self._parse_saved_datetime(od['timestamp'])
+                orders.append(MultiAssetOrder(**od))
+
+            trades: List[MultiAssetTrade] = []
+            for raw in portfolio_data['trades']:
+                td = dict(raw)
+                td['side'] = self._restore_enum(td['side'], OrderSide)
+                td['timestamp'] = self._parse_saved_datetime(td['timestamp'])
+                trades.append(MultiAssetTrade(**td))
+
+            self.initial_balance = initial_balance
+            self.base_currency = base_currency
+            self.cash_balances = cash_balances
+            self.order_counter = order_counter
+            self.trade_counter = trade_counter
+            self.positions = positions
+            self.orders = orders
+            self.trades = trades
+            return True
         except Exception as e:
             print(f"Error loading portfolio: {e}")
+            return False
 
 # Global multi-asset portfolio instance
 multi_asset_portfolio = MultiAssetPortfolio()

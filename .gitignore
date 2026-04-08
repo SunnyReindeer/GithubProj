@@ -2,3 +2,6 @@
 .env
 .env.local
 .env.*.local
+
+# Local Streamlit simulation state
+.unified_sim_portfolio.json
