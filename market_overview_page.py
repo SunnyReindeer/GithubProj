@@ -1,61 +1,20 @@
-import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import time
 import requests
 from bs4 import BeautifulSoup
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List
 from collections import Counter
 import yfinance as yf
 import fear_and_greed
 import feedparser
 import re
 from dateutil import parser as date_parser
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
-def _normalize_api_key(value: Optional[str]) -> str:
-    """Strip whitespace and accidental wrapping quotes (common .env / copy-paste issue)."""
-    if value is None:
-        return ""
-    s = str(value).strip()
-    if len(s) >= 2 and s[0] == s[-1] and s[0] in "\"'":
-        s = s[1:-1].strip()
-    return s
-
-
-def _finnhub_key_from_streamlit_secrets() -> str:
-    """Read FINNHUB_API_KEY from st.secrets (flat or under [api])."""
-    try:
-        if not hasattr(st, "secrets") or not st.secrets:
-            return ""
-        sec = st.secrets
-        try:
-            return _normalize_api_key(sec["FINNHUB_API_KEY"])
-        except Exception:
-            pass
-        try:
-            return _normalize_api_key(sec["api"]["FINNHUB_API_KEY"])
-        except Exception:
-            pass
-    except Exception:
-        pass
-    return ""
-
-
-def _resolve_finnhub_api_key() -> str:
-    """Env var FINNHUB_API_KEY, or Streamlit secrets (.streamlit/secrets.toml / Cloud Secrets)."""
-    k = _normalize_api_key(os.getenv("FINNHUB_API_KEY"))
-    if k:
-        return k
-    return _finnhub_key_from_streamlit_secrets()
 
 
 def get_yfinance_data(symbol, period="1d", interval="1d"):
@@ -1705,53 +1664,6 @@ _CCY_TO_REGION = {
     "All": ("Global", "🌍", "GL"),
 }
 
-# Finnhub /calendar/economic uses ISO-3166-style country codes (e.g. US), not currency codes (USD).
-_FINNHUB_COUNTRY_TO_DISPLAY = {
-    "US": ("United States", "🇺🇸"),
-    "EU": ("Eurozone", "🇪🇺"),
-    "GB": ("United Kingdom", "🇬🇧"),
-    "UK": ("United Kingdom", "🇬🇧"),
-    "JP": ("Japan", "🇯🇵"),
-    "AU": ("Australia", "🇦🇺"),
-    "NZ": ("New Zealand", "🇳🇿"),
-    "CA": ("Canada", "🇨🇦"),
-    "CH": ("Switzerland", "🇨🇭"),
-    "CN": ("China", "🇨🇳"),
-    "DE": ("Germany", "🇩🇪"),
-    "FR": ("France", "🇫🇷"),
-    "IT": ("Italy", "🇮🇹"),
-    "KR": ("South Korea", "🇰🇷"),
-    "IN": ("India", "🇮🇳"),
-    "BR": ("Brazil", "🇧🇷"),
-    "MX": ("Mexico", "🇲🇽"),
-    "RU": ("Russia", "🇷🇺"),
-    "ZA": ("South Africa", "🇿🇦"),
-    "SE": ("Sweden", "🇸🇪"),
-    "NO": ("Norway", "🇳🇴"),
-}
-
-
-def _parse_finnhub_event_time(row: dict, default: datetime) -> datetime:
-    """Finnhub returns `time` as Unix seconds (UTC), not an ISO string."""
-    t = row.get("time")
-    if t is None:
-        return default
-    if isinstance(t, (int, float)):
-        ts = float(t)
-        if ts > 1e12:  # milliseconds
-            ts /= 1000.0
-        try:
-            return datetime.fromtimestamp(ts, tz=timezone.utc).replace(tzinfo=None)
-        except (OSError, ValueError, OverflowError):
-            return default
-    if isinstance(t, str) and t.strip():
-        try:
-            return date_parser.parse(t)
-        except (ValueError, TypeError, OverflowError):
-            return default
-    return default
-
-
 def _impact_to_importance(impact: str) -> str:
     imp = (impact or "").strip()
     if imp in ("High", "Medium", "Low"):
@@ -1776,108 +1688,12 @@ def _fetch_faireconomy_calendar_json():
         return []
 
 
-def _fetch_finnhub_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
-    """Optional: Finnhub economic calendar (needs FINNHUB_API_KEY in env or Streamlit secrets).
-
-    Returns (events, debug_meta) with http_status / api_error for UI when the feed falls back.
-    """
-    empty_meta: Dict[str, Any] = {"http_status": None, "api_error": None, "raw_row_count": 0}
-    token = _resolve_finnhub_api_key()
-    if not token:
-        return [], empty_meta
-    now = datetime.now()
-    from_s = now.strftime("%Y-%m-%d")
-    to_s = (now + timedelta(days=14)).strftime("%Y-%m-%d")
+def get_economic_calendar() -> List[dict]:
+    """Economic calendar from the public Fair Economy JSON feed (~this week, no API key)."""
     try:
-        r = requests.get(
-            "https://finnhub.io/api/v1/calendar/economic",
-            params={"from": from_s, "to": to_s, "token": token},
-            timeout=20,
-        )
-        meta: Dict[str, Any] = {"http_status": r.status_code, "api_error": None, "raw_row_count": 0}
-        if r.status_code != 200:
-            try:
-                j = r.json()
-                if isinstance(j, dict) and j.get("error"):
-                    meta["api_error"] = str(j["error"])
-            except Exception:
-                if r.text:
-                    meta["api_error"] = (r.text[:300] + "…") if len(r.text) > 300 else r.text
-            return [], meta
-        body = r.json() or {}
-        rows = body.get("economic") or []
-        if not isinstance(rows, list):
-            rows = []
-        meta["raw_row_count"] = len(rows)
-    except Exception as ex:
-        empty_meta["api_error"] = str(ex)
-        return [], empty_meta
-
-    out = []
-    for row in rows:
-        try:
-            dt = _parse_finnhub_event_time(row, now)
-            cty = (row.get("country") or "US").strip().upper()
-            if cty in _CCY_TO_REGION:
-                name, flag, _ = _CCY_TO_REGION[cty]
-            elif cty in _FINNHUB_COUNTRY_TO_DISPLAY:
-                name, flag = _FINNHUB_COUNTRY_TO_DISPLAY[cty]
-            else:
-                name, flag = cty, "🌐"
-            imp_raw = row.get("impact")
-            if isinstance(imp_raw, (int, float)):
-                importance = "High" if imp_raw >= 3 else "Medium" if imp_raw >= 2 else "Low"
-            else:
-                importance = _impact_to_importance(str(imp_raw or "low"))
-            title = (row.get("event") or row.get("event_name") or row.get("name") or "").strip() or "Economic release"
-            out.append({
-                "date": dt.strftime("%Y-%m-%d"),
-                "datetime": dt,
-                "time": dt.strftime("%H:%M"),
-                "event": title,
-                "country": name,
-                "country_flag": flag,
-                "importance": importance,
-                "forecast": (row.get("estimate") or row.get("forecast") or "") or "—",
-                "previous": (row.get("prev") or row.get("previous") or "") or "—",
-                "category": "Economic",
-            })
-        except Exception:
-            continue
-    meta["parsed_count"] = len(out)
-    return out, meta
-
-
-def get_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
-    """Economic calendar: Finnhub (~14d) when key + data exist; else public Forex Factory–style JSON (~this week).
-
-    Returns (events, meta) where meta includes source flags for the UI.
-    """
-    key_configured = bool(_resolve_finnhub_api_key())
-    try:
-        finnhub_events, fh_meta = _fetch_finnhub_economic_calendar()
-        if finnhub_events:
-            finnhub_events.sort(key=lambda x: (x["datetime"], x["time"]))
-            return finnhub_events, {
-                "using_finnhub": True,
-                "finnhub_key_configured": key_configured,
-                "source_label": "Finnhub API",
-                "approx_window_days": 14,
-                "finnhub_http_status": fh_meta.get("http_status"),
-            }
-
         raw = _fetch_faireconomy_calendar_json()
         if not raw:
-            return [], {
-                "using_finnhub": False,
-                "finnhub_key_configured": key_configured,
-                "source_label": "—",
-                "approx_window_days": 0,
-                "finnhub_fallback": key_configured,
-                "finnhub_http_status": fh_meta.get("http_status"),
-                "finnhub_api_error": fh_meta.get("api_error"),
-                "finnhub_raw_row_count": fh_meta.get("raw_row_count", 0),
-            }
+            return []
 
         events = []
         for item in raw:
@@ -1907,103 +1723,30 @@ def get_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
                 continue
 
         events.sort(key=lambda x: (x["datetime"], x["time"]))
-        return events, {
-            "using_finnhub": False,
-            "finnhub_key_configured": key_configured,
-            "source_label": "Fair Economy (public feed)",
-            "approx_window_days": 7,
-            "finnhub_fallback": key_configured,
-            "finnhub_http_status": fh_meta.get("http_status"),
-            "finnhub_api_error": fh_meta.get("api_error"),
-            "finnhub_raw_row_count": fh_meta.get("raw_row_count", 0),
-            "finnhub_parsed_count": fh_meta.get("parsed_count", 0),
-        }
+        return events
     except Exception as e:
         print(f"Error getting economic calendar: {e}")
-        return [], {
-            "using_finnhub": False,
-            "finnhub_key_configured": key_configured,
-            "source_label": "—",
-            "approx_window_days": 0,
-            "error": str(e),
-        }
+        return []
 
 def display_economic_events_section():
     """Display economic events and calendar with real-time data"""
     
     st.markdown("#### 📅 Economic Events")
     st.caption(
-        "**Default calendar:** the public **Fair Economy** feed (~this week) — no key required. "
-        "**Finnhub’s `/calendar/economic` endpoint** (wider window, structured fields) is **not on the free stock-data API key**: "
-        "Finnhub returns **HTTP 403** unless you subscribe to their **[Economic Data / calendar product](https://finnhub.io/pricing-economic-data-api)**. "
-        "A normal free Finnhub key is still valid; this section simply falls back to the public feed. "
-        "Filters match what each source can actually return (not 90 days)."
+        "**Data:** Public macro calendar from [Fair Economy](https://nfs.faireconomy.media/) "
+        "(Forex Factory–style JSON, typically **about this week**). No API key. "
+        "Time filters match that short horizon—not multi‑month ranges."
     )
 
     # Get economic events
     with st.spinner("Loading economic events..."):
-        economic_events, cal_meta = get_economic_calendar()
+        economic_events = get_economic_calendar()
     
     if not economic_events:
         st.warning("Unable to load economic events. Please try again later.")
         return
-
-    # Visible source status (Finnhub vs public feed)
-    if cal_meta.get("using_finnhub"):
-        st.success(
-            "**Economic calendar: Finnhub API** — you are using your key. "
-            f"Loaded window ≈ **{cal_meta.get('approx_window_days', 14)} days** from today."
-        )
-    elif cal_meta.get("finnhub_fallback"):
-        status = cal_meta.get("finnhub_http_status")
-        err = cal_meta.get("finnhub_api_error")
-        raw_n = cal_meta.get("finnhub_raw_row_count", 0)
-        parsed_n = cal_meta.get("finnhub_parsed_count")
-        detail_parts = []
-        err_l = (err or "").lower()
-        forbidden = status == 403 or "don't have access" in err_l or "access to this resource" in err_l
-        if forbidden:
-            detail_parts.append(
-                "**HTTP 403** means your key is accepted, but **this calendar endpoint is not included in your Finnhub plan** "
-                "(free tier stock/crypto APIs do not unlock the global economic calendar). "
-                "Upgrade Finnhub’s **Economic Data** offering if you need it, or keep using the public feed below. "
-                "[Pricing — Economic Data API](https://finnhub.io/pricing-economic-data-api)"
-            )
-        elif status is not None and status != 200:
-            detail_parts.append(f"Finnhub responded with HTTP **{status}**" + (f": {err}" if err else "."))
-        elif status == 200 and raw_n == 0:
-            detail_parts.append(
-                "Finnhub returned **HTTP 200** but **0** events for the requested window (try widening dates or check your Finnhub plan)."
-            )
-        elif status == 200 and raw_n > 0 and parsed_n == 0:
-            detail_parts.append(
-                f"Finnhub returned **{raw_n}** raw rows, but **0** could be parsed (unexpected API shape)."
-            )
-        elif err:
-            detail_parts.append(str(err))
-        detail = " ".join(detail_parts) if detail_parts else "Request failed or returned no usable rows."
-        box = st.warning if forbidden else st.info
-        box(
-            "**Finnhub key is set**, but the app is using the **public feed**. "
-            f"{detail} Events below ≈ **one week**."
-        )
-        with st.expander("Finnhub key & Streamlit secrets format"):
-            st.markdown(
-                """- **`.streamlit/secrets.toml`** (local) or **Streamlit Cloud → Secrets**: valid TOML, e.g.
-  `FINNHUB_API_KEY = "paste_your_key_here"`
-- **`.env`** (with `load_dotenv`): `FINNHUB_API_KEY=paste_your_key_here` (no quotes needed).
-- Optional nested TOML: section `[api]` with `FINNHUB_API_KEY` inside is also supported.
-- If the key value accidentally includes extra **quotes**, they are stripped automatically.
-- **HTTP 403** on the calendar call usually means **plan limits**, not a typo in the key."""
-            )
-    else:
-        st.info(
-            "**Economic calendar: public feed** (no Finnhub key in env/secrets). "
-            "Even with a free Finnhub key, the **calendar API** often requires a **paid Economic Data** plan — see caption above. "
-            "Below ≈ **one week** of releases."
-        )
     
-    # Filter options — aligned with ~7d public feed vs ~14d Finnhub (not month/quarter)
+    # Filter options — public feed is ~one week; keep windows short
     col1, col2 = st.columns(2)
     with col1:
         time_filter = st.selectbox(
@@ -2011,11 +1754,11 @@ def display_economic_events_section():
             [
                 "All (loaded)",
                 "Today",
+                "Next 3 days",
                 "Next 7 days",
-                "Next 14 days",
             ],
             key="time_filter",
-            help="All loaded events from the active source. Public feed ≈1 week; Finnhub calendar needs a paid Economic Data plan (free keys get 403).",
+            help="“All (loaded)” is everything in the feed (~this week). Other options limit to upcoming dates from today.",
         )
     with col2:
         importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"], key="importance_filter")
@@ -2025,16 +1768,16 @@ def display_economic_events_section():
     today = current_date.strftime("%Y-%m-%d")
     filtered_events = economic_events.copy()
     
-    # Time filter: windows that match actual backend coverage
+    # Time filter: short windows aligned with ~weekly public feed
     if time_filter == "Today":
         filtered_events = [e for e in filtered_events if e["date"] == today]
+    elif time_filter == "Next 3 days":
+        end_3 = (current_date + timedelta(days=2)).strftime("%Y-%m-%d")
+        filtered_events = [e for e in filtered_events if today <= e["date"] <= end_3]
     elif time_filter == "Next 7 days":
         end_7 = (current_date + timedelta(days=6)).strftime("%Y-%m-%d")
         filtered_events = [e for e in filtered_events if today <= e["date"] <= end_7]
-    elif time_filter == "Next 14 days":
-        end_14 = (current_date + timedelta(days=13)).strftime("%Y-%m-%d")
-        filtered_events = [e for e in filtered_events if today <= e["date"] <= end_14]
-    # "All (loaded)" = full list from the active source
+    # "All (loaded)" = full list from the feed
     
     # Importance filter
     if importance_filter != "All":
