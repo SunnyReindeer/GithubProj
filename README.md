@@ -383,6 +383,11 @@ For comprehensive system documentation, see:
 - **USER_FLOW.md**: Complete user interaction flowcharts
 - **SYSTEM_DIAGRAMS.md**: System architecture, data flow, process flows, and component interactions
 - **AI_ROBO_ADVISOR_LOGIC.md**: Detailed explanation of AI Robo Advisor algorithms, risk assessment, and portfolio matching logic
+- **AI_ROBO_ADVISOR_USER_WALKTHROUGH.md**: Step-by-step user walkthrough and Mermaid diagram for the AI Robo Advisor flow
+- **AI_ROBO_ADVISOR_RULES.md**: Detailed specification of all AI Robo Advisor rules (validation, scoring, thresholds, formulas, business logic)
+- **MEETING_PREP_ROBO_ADVISOR.md**: Meeting prep for #1 Processes (rules + user walkthrough) and #2 Filter (scenarios, similarity, stable matching)
+- **ROBO_ADVISOR_CUSTOMER_SCENARIOS.md**: Customer personas (Sarah, Alex, Jordan, Sam) with filter outcomes and suitability numbers
+- **ROBO_ADVISOR_RESEARCH_SUPPORT.md**: Research and literature supporting the AI robo advisor design (why we use this, evidence-based justification)
 
 ## Project Structure
 
@@ -402,9 +407,14 @@ GithubProj/
 ├── tradingview_widget.py            # TradingView integration
 ├── requirements.txt                # Python dependencies
 ├── README.md                       # This file
-├── USER_FLOW.md                    # Detailed user flow charts
-├── SYSTEM_DIAGRAMS.md              # System architecture and process flows
-└── AI_ROBO_ADVISOR_LOGIC.md        # AI Robo Advisor logic and algorithms
+├── USER_FLOW.md                         # Detailed user flow charts
+├── SYSTEM_DIAGRAMS.md                   # System architecture and process flows
+├── AI_ROBO_ADVISOR_LOGIC.md             # AI Robo Advisor logic and algorithms
+├── AI_ROBO_ADVISOR_USER_WALKTHROUGH.md  # AI Robo Advisor user walkthrough
+├── AI_ROBO_ADVISOR_RULES.md             # AI Robo Advisor rules (detailed spec)
+├── MEETING_PREP_ROBO_ADVISOR.md        # Meeting prep (#1 Processes, #2 Filter)
+├── ROBO_ADVISOR_CUSTOMER_SCENARIOS.md  # Customer scenarios & filter outcomes
+└── ROBO_ADVISOR_RESEARCH_SUPPORT.md   # Research support for robo advisor design
 ```
 
 ## License

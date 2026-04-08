@@ -3,12 +3,18 @@ Unified Trading Platform
 Combines crypto and multi-asset trading into one comprehensive platform
 """
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 import time
 from typing import Dict, List, Any
+
+try:
+    from streamlit_autorefresh import st_autorefresh
+except ImportError:
+    st_autorefresh = None  # optional; install streamlit-autorefresh for timed reloads
 
 # Import our modules
 from trading_engine import portfolio, OrderSide, OrderType, OrderStatus
@@ -81,6 +87,32 @@ if 'auto_refresh_enabled' not in st.session_state:
     st.session_state.auto_refresh_enabled = True
 if 'refresh_interval' not in st.session_state:
     st.session_state.refresh_interval = 30
+
+def _render_live_refresh_countdown(seconds: int) -> None:
+    """Client-side countdown (ticks every 1s). Streamlit reruns only on interaction unless autorefresh is used."""
+    sec = max(1, int(seconds))
+    components.html(
+        f"""
+<div style="font-size:0.9rem;padding:0.2rem 0;color:inherit;">
+  <span id="utp_cd">Next refresh in {sec}s</span>
+</div>
+<script>
+(function() {{
+  const el = document.getElementById('utp_cd');
+  if (!el) return;
+  let s = {sec};
+  function tick() {{
+    el.textContent = 'Next refresh in ' + Math.max(0, s) + 's';
+    if (s > 0) s -= 1;
+  }}
+  tick();
+  setInterval(tick, 1000);
+}})();
+</script>
+""",
+        height=40,
+    )
+
 
 def map_symbol_to_tradingview(symbol: str) -> str:
     """Map our symbols to TradingView format"""
@@ -862,6 +894,15 @@ def display_trades():
 
 def main():
     """Main unified trading platform"""
+    # Ensure required session-state keys always exist, even in partial/old sessions
+    st.session_state.setdefault("last_update", None)
+    st.session_state.setdefault("auto_refresh_enabled", True)
+    st.session_state.setdefault("refresh_interval", 30)
+    st.session_state.setdefault("selected_asset_class", AssetClass.STOCKS)
+    st.session_state.setdefault("selected_symbols", [])
+    st.session_state.setdefault("use_multi_asset", True)
+    st.session_state.setdefault("portfolio_initialized", False)
+
     # Initialize components
     initialize_portfolio()
     
@@ -876,7 +917,7 @@ def main():
         st.markdown("### ⚙️ Auto-Refresh Settings")
         auto_refresh = st.checkbox(
             "Enable Auto-Refresh",
-            value=st.session_state.auto_refresh_enabled,
+            value=st.session_state.get("auto_refresh_enabled", True),
             help="Automatically refresh data at specified intervals"
         )
         st.session_state.auto_refresh_enabled = auto_refresh
@@ -886,30 +927,15 @@ def main():
                 "Refresh Interval (seconds)",
                 min_value=5,
                 max_value=300,
-                value=st.session_state.refresh_interval,
+                value=st.session_state.get("refresh_interval", 30),
                 step=5,
                 help="How often to automatically refresh data (5-300 seconds)"
             )
             st.session_state.refresh_interval = refresh_interval
             
-            # Calculate time until next refresh
-            current_time = time.time()
-            if st.session_state.last_update is None:
-                time_until_refresh = refresh_interval
-            else:
-                elapsed = current_time - st.session_state.last_update
-                time_until_refresh = max(0, refresh_interval - elapsed)
-            
-            # Display countdown
-            if time_until_refresh > 0:
-                minutes = int(time_until_refresh // 60)
-                seconds = int(time_until_refresh % 60)
-                if minutes > 0:
-                    st.info(f"⏱️ Next refresh in {minutes}m {seconds}s")
-                else:
-                    st.info(f"⏱️ Next refresh in {seconds}s")
-            else:
-                st.info("🔄 Refreshing now...")
+            # Live countdown runs in the browser (Streamlit does not tick while idle).
+            st.caption("Full page reload on the interval below reloads prices and charts.")
+            _render_live_refresh_countdown(int(refresh_interval))
         
         st.markdown("---")
         
@@ -1026,46 +1052,44 @@ def main():
         with col2:
             display_trades()
     
-    # Auto-refresh logic
+    # Timed reload: Streamlit only reruns on user interaction unless we trigger reload from the client.
     current_time = time.time()
-    
-    # Initialize last_update if not set
-    if st.session_state.last_update is None:
-        st.session_state.last_update = current_time
-    
-    # Check if auto-refresh is enabled and time has elapsed
-    if st.session_state.auto_refresh_enabled:
-        elapsed = current_time - st.session_state.last_update
-        if elapsed >= st.session_state.refresh_interval:
-            # Time to refresh - update timestamp and rerun
-            st.session_state.last_update = current_time
-            # Use a small delay to prevent rapid reruns
-            time.sleep(0.1)
-            st.rerun()
-    
+    refresh_sec = int(st.session_state.get("refresh_interval", 30))
+
+    if st.session_state.get("auto_refresh_enabled", True) and st_autorefresh is not None:
+        interval_ms = refresh_sec * 1000
+        interval_ms = max(5000, min(interval_ms, 3_600_000))  # 5s .. 1h
+        st_autorefresh(interval=interval_ms, limit=None, key="unified_trading_autorefresh")
+    elif st.session_state.get("auto_refresh_enabled", True) and st_autorefresh is None:
+        st.caption("Install `streamlit-autorefresh` for automatic timed reloads, or use **Refresh Data Now**.")
+
     # Manual refresh button and status
     col1, col2 = st.columns([1, 3])
     with col1:
         if st.button("🔄 Refresh Data Now"):
-            st.session_state.last_update = current_time
+            st.session_state.last_update = time.time()
             st.rerun()
-    
-    # Display last update time and next refresh countdown
-    if st.session_state.last_update:
-        last_update_dt = datetime.fromtimestamp(st.session_state.last_update)
-        with col2:
-            if st.session_state.auto_refresh_enabled:
-                elapsed = current_time - st.session_state.last_update
-                time_until_refresh = max(0, st.session_state.refresh_interval - elapsed)
-                minutes = int(time_until_refresh // 60)
-                seconds = int(time_until_refresh % 60)
-                if minutes > 0:
-                    countdown = f"{minutes}m {seconds}s"
-                else:
-                    countdown = f"{seconds}s"
-                st.caption(f"Last updated: {last_update_dt.strftime('%H:%M:%S')} | Next refresh in: {countdown}")
+
+    # last_update = end of previous run (used for server-side ETA; sidebar uses JS countdown)
+    prev_end = st.session_state.get("last_update")
+    with col2:
+        if st.session_state.get("auto_refresh_enabled", True):
+            if prev_end is not None:
+                elapsed = current_time - prev_end
+                time_until_refresh = max(0.0, float(refresh_sec) - elapsed)
+                mu = int(time_until_refresh // 60)
+                sc = int(time_until_refresh % 60)
+                eta = f"{mu}m {sc}s" if mu > 0 else f"{sc}s"
+                st.caption(
+                    f"Previous run ended: {datetime.fromtimestamp(prev_end).strftime('%H:%M:%S')} · "
+                    f"Server ETA to next reload: ~{eta} (see sidebar for live countdown)"
+                )
             else:
-                st.caption(f"Last updated: {last_update_dt.strftime('%H:%M:%S')} | Auto-refresh disabled")
+                st.caption("Auto-refresh is on — waiting for first timed reload.")
+        elif prev_end is not None:
+            st.caption(f"Last run: {datetime.fromtimestamp(prev_end).strftime('%H:%M:%S')} · Auto-refresh off")
+
+    st.session_state.last_update = time.time()
 
 if __name__ == "__main__":
     main()
