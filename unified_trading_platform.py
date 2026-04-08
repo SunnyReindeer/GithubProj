@@ -100,10 +100,15 @@ def _render_live_refresh_countdown(seconds: int) -> None:
 (function() {{
   const el = document.getElementById('utp_cd');
   if (!el) return;
-  let s = {sec};
+  const total = {sec};
+  let s = total;
   function tick() {{
-    el.textContent = 'Next refresh in ' + Math.max(0, s) + 's';
-    if (s > 0) s -= 1;
+    if (s > 0) {{
+      el.textContent = 'Next refresh in ' + s + 's';
+      s -= 1;
+    }} else {{
+      el.textContent = 'Refreshing…';
+    }}
   }}
   tick();
   setInterval(tick, 1000);
