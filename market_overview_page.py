@@ -21,17 +21,41 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def _resolve_finnhub_api_key() -> str:
-    """Env var FINNHUB_API_KEY, or Streamlit Cloud secrets."""
-    k = (os.getenv("FINNHUB_API_KEY") or "").strip()
-    if k:
-        return k
+def _normalize_api_key(value: Optional[str]) -> str:
+    """Strip whitespace and accidental wrapping quotes (common .env / copy-paste issue)."""
+    if value is None:
+        return ""
+    s = str(value).strip()
+    if len(s) >= 2 and s[0] == s[-1] and s[0] in "\"'":
+        s = s[1:-1].strip()
+    return s
+
+
+def _finnhub_key_from_streamlit_secrets() -> str:
+    """Read FINNHUB_API_KEY from st.secrets (flat or under [api])."""
     try:
-        if hasattr(st, "secrets") and st.secrets and "FINNHUB_API_KEY" in st.secrets:
-            return str(st.secrets["FINNHUB_API_KEY"]).strip()
+        if not hasattr(st, "secrets") or not st.secrets:
+            return ""
+        sec = st.secrets
+        try:
+            return _normalize_api_key(sec["FINNHUB_API_KEY"])
+        except Exception:
+            pass
+        try:
+            return _normalize_api_key(sec["api"]["FINNHUB_API_KEY"])
+        except Exception:
+            pass
     except Exception:
         pass
     return ""
+
+
+def _resolve_finnhub_api_key() -> str:
+    """Env var FINNHUB_API_KEY, or Streamlit secrets (.streamlit/secrets.toml / Cloud Secrets)."""
+    k = _normalize_api_key(os.getenv("FINNHUB_API_KEY"))
+    if k:
+        return k
+    return _finnhub_key_from_streamlit_secrets()
 
 
 def get_yfinance_data(symbol, period="1d", interval="1d"):
@@ -1752,11 +1776,15 @@ def _fetch_faireconomy_calendar_json():
         return []
 
 
-def _fetch_finnhub_economic_calendar() -> List[dict]:
-    """Optional: Finnhub economic calendar (needs FINNHUB_API_KEY in env or Streamlit secrets)."""
+def _fetch_finnhub_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
+    """Optional: Finnhub economic calendar (needs FINNHUB_API_KEY in env or Streamlit secrets).
+
+    Returns (events, debug_meta) with http_status / api_error for UI when the feed falls back.
+    """
+    empty_meta: Dict[str, Any] = {"http_status": None, "api_error": None, "raw_row_count": 0}
     token = _resolve_finnhub_api_key()
     if not token:
-        return []
+        return [], empty_meta
     now = datetime.now()
     from_s = now.strftime("%Y-%m-%d")
     to_s = (now + timedelta(days=14)).strftime("%Y-%m-%d")
@@ -1766,11 +1794,24 @@ def _fetch_finnhub_economic_calendar() -> List[dict]:
             params={"from": from_s, "to": to_s, "token": token},
             timeout=20,
         )
+        meta: Dict[str, Any] = {"http_status": r.status_code, "api_error": None, "raw_row_count": 0}
         if r.status_code != 200:
-            return []
-        rows = (r.json() or {}).get("economic") or []
-    except Exception:
-        return []
+            try:
+                j = r.json()
+                if isinstance(j, dict) and j.get("error"):
+                    meta["api_error"] = str(j["error"])
+            except Exception:
+                if r.text:
+                    meta["api_error"] = (r.text[:300] + "…") if len(r.text) > 300 else r.text
+            return [], meta
+        body = r.json() or {}
+        rows = body.get("economic") or []
+        if not isinstance(rows, list):
+            rows = []
+        meta["raw_row_count"] = len(rows)
+    except Exception as ex:
+        empty_meta["api_error"] = str(ex)
+        return [], empty_meta
 
     out = []
     for row in rows:
@@ -1803,7 +1844,8 @@ def _fetch_finnhub_economic_calendar() -> List[dict]:
             })
         except Exception:
             continue
-    return out
+    meta["parsed_count"] = len(out)
+    return out, meta
 
 
 def get_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
@@ -1813,7 +1855,7 @@ def get_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
     """
     key_configured = bool(_resolve_finnhub_api_key())
     try:
-        finnhub_events = _fetch_finnhub_economic_calendar()
+        finnhub_events, fh_meta = _fetch_finnhub_economic_calendar()
         if finnhub_events:
             finnhub_events.sort(key=lambda x: (x["datetime"], x["time"]))
             return finnhub_events, {
@@ -1821,6 +1863,7 @@ def get_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
                 "finnhub_key_configured": key_configured,
                 "source_label": "Finnhub API",
                 "approx_window_days": 14,
+                "finnhub_http_status": fh_meta.get("http_status"),
             }
 
         raw = _fetch_faireconomy_calendar_json()
@@ -1831,6 +1874,9 @@ def get_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
                 "source_label": "—",
                 "approx_window_days": 0,
                 "finnhub_fallback": key_configured,
+                "finnhub_http_status": fh_meta.get("http_status"),
+                "finnhub_api_error": fh_meta.get("api_error"),
+                "finnhub_raw_row_count": fh_meta.get("raw_row_count", 0),
             }
 
         events = []
@@ -1867,6 +1913,10 @@ def get_economic_calendar() -> Tuple[List[dict], Dict[str, Any]]:
             "source_label": "Fair Economy (public feed)",
             "approx_window_days": 7,
             "finnhub_fallback": key_configured,
+            "finnhub_http_status": fh_meta.get("http_status"),
+            "finnhub_api_error": fh_meta.get("api_error"),
+            "finnhub_raw_row_count": fh_meta.get("raw_row_count", 0),
+            "finnhub_parsed_count": fh_meta.get("parsed_count", 0),
         }
     except Exception as e:
         print(f"Error getting economic calendar: {e}")
@@ -1904,11 +1954,36 @@ def display_economic_events_section():
             f"Loaded window ≈ **{cal_meta.get('approx_window_days', 14)} days** from today."
         )
     elif cal_meta.get("finnhub_fallback"):
+        status = cal_meta.get("finnhub_http_status")
+        err = cal_meta.get("finnhub_api_error")
+        raw_n = cal_meta.get("finnhub_raw_row_count", 0)
+        parsed_n = cal_meta.get("finnhub_parsed_count")
+        detail_parts = []
+        if status is not None and status != 200:
+            detail_parts.append(f"Finnhub responded with HTTP **{status}**" + (f": {err}" if err else "."))
+        elif status == 200 and raw_n == 0:
+            detail_parts.append(
+                "Finnhub returned **HTTP 200** but **0** events for the requested window (try widening dates or check your Finnhub plan)."
+            )
+        elif status == 200 and raw_n > 0 and parsed_n == 0:
+            detail_parts.append(
+                f"Finnhub returned **{raw_n}** raw rows, but **0** could be parsed (unexpected API shape)."
+            )
+        elif err:
+            detail_parts.append(str(err))
+        detail = " ".join(detail_parts) if detail_parts else "Request failed or returned no usable rows."
         st.info(
-            "**Finnhub key is set**, but the app is showing the **public feed** "
-            "(Finnhub returned no rows in range or the request failed). "
-            "Events below ≈ **one week**."
+            "**Finnhub key is set**, but the app is using the **public feed**. "
+            f"{detail} Events below ≈ **one week**."
         )
+        with st.expander("Finnhub key & Streamlit secrets format"):
+            st.markdown(
+                "- **`.streamlit/secrets.toml`** (local) or **Streamlit Cloud → Secrets**: valid TOML, e.g.  \n"
+                '  `FINNHUB_API_KEY = "paste_your_key_here"`  \n'
+                "- **`.env`** (with `load_dotenv`): `FINNHUB_API_KEY=paste_your_key_here` (no quotes needed).  \n"
+                "- Optional nested TOML: `[api]` + `FINNHUB_API_KEY = "..."` is also supported.  \n"
+                "- If the key value accidentally includes extra **quotes**, they are stripped automatically."
+            )
     else:
         st.info(
             "**Economic calendar: public feed** (no Finnhub data). "
