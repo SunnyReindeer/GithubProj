@@ -872,9 +872,6 @@ def main():
         3. View portfolio details with AI labels
         4. Download your investment plan
         
-        **References:**  
-        Each fund template lists **design rationale** and **citations** (Brinson, Markowitz, Fama–French, ESG meta-analyses, etc.) so portfolios are grounded in published finance and robo-advisory practice—not invented weights. See **`ROBO_ADVISOR_RESEARCH_SUPPORT.md`** for the full research map.
-        
         **AI Labels:**
         Each investment is automatically labeled with:
         - Sectors (Technology, Healthcare, etc.)
