@@ -1933,10 +1933,11 @@ def display_economic_events_section():
     
     st.markdown("#### 📅 Economic Events")
     st.caption(
-        "**With vs without Finnhub:** The free public feed (no key) loads roughly **this week’s** macro "
-        "calendar from nfs.faireconomy.media. **With a Finnhub API key** (env or Streamlit secrets), the app "
-        "requests **[Finnhub](https://finnhub.io/)’s economic calendar** for about the **next 14 days**—often "
-        "broader coverage and structured fields. Filters below match what each source actually loads (not 90 days)."
+        "**Default calendar:** the public **Fair Economy** feed (~this week) — no key required. "
+        "**Finnhub’s `/calendar/economic` endpoint** (wider window, structured fields) is **not on the free stock-data API key**: "
+        "Finnhub returns **HTTP 403** unless you subscribe to their **[Economic Data / calendar product](https://finnhub.io/pricing-economic-data-api)**. "
+        "A normal free Finnhub key is still valid; this section simply falls back to the public feed. "
+        "Filters match what each source can actually return (not 90 days)."
     )
 
     # Get economic events
@@ -1959,7 +1960,16 @@ def display_economic_events_section():
         raw_n = cal_meta.get("finnhub_raw_row_count", 0)
         parsed_n = cal_meta.get("finnhub_parsed_count")
         detail_parts = []
-        if status is not None and status != 200:
+        err_l = (err or "").lower()
+        forbidden = status == 403 or "don't have access" in err_l or "access to this resource" in err_l
+        if forbidden:
+            detail_parts.append(
+                "**HTTP 403** means your key is accepted, but **this calendar endpoint is not included in your Finnhub plan** "
+                "(free tier stock/crypto APIs do not unlock the global economic calendar). "
+                "Upgrade Finnhub’s **Economic Data** offering if you need it, or keep using the public feed below. "
+                "[Pricing — Economic Data API](https://finnhub.io/pricing-economic-data-api)"
+            )
+        elif status is not None and status != 200:
             detail_parts.append(f"Finnhub responded with HTTP **{status}**" + (f": {err}" if err else "."))
         elif status == 200 and raw_n == 0:
             detail_parts.append(
@@ -1972,7 +1982,8 @@ def display_economic_events_section():
         elif err:
             detail_parts.append(str(err))
         detail = " ".join(detail_parts) if detail_parts else "Request failed or returned no usable rows."
-        st.info(
+        box = st.warning if forbidden else st.info
+        box(
             "**Finnhub key is set**, but the app is using the **public feed**. "
             f"{detail} Events below ≈ **one week**."
         )
@@ -1982,12 +1993,13 @@ def display_economic_events_section():
   `FINNHUB_API_KEY = "paste_your_key_here"`
 - **`.env`** (with `load_dotenv`): `FINNHUB_API_KEY=paste_your_key_here` (no quotes needed).
 - Optional nested TOML: section `[api]` with `FINNHUB_API_KEY` inside is also supported.
-- If the key value accidentally includes extra **quotes**, they are stripped automatically."""
+- If the key value accidentally includes extra **quotes**, they are stripped automatically.
+- **HTTP 403** on the calendar call usually means **plan limits**, not a typo in the key."""
             )
     else:
         st.info(
-            "**Economic calendar: public feed** (no Finnhub data). "
-            "Set **FINNHUB_API_KEY** for ~14 days from [Finnhub](https://finnhub.io/). "
+            "**Economic calendar: public feed** (no Finnhub key in env/secrets). "
+            "Even with a free Finnhub key, the **calendar API** often requires a **paid Economic Data** plan — see caption above. "
             "Below ≈ **one week** of releases."
         )
     
@@ -2003,7 +2015,7 @@ def display_economic_events_section():
                 "Next 14 days",
             ],
             key="time_filter",
-            help="“All (loaded)” is everything returned by the API. Public feed ≈1 week; Finnhub ≈14 days.",
+            help="All loaded events from the active source. Public feed ≈1 week; Finnhub calendar needs a paid Economic Data plan (free keys get 403).",
         )
     with col2:
         importance_filter = st.selectbox("Filter by Importance", ["All", "High", "Medium", "Low"], key="importance_filter")
