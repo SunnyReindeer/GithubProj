@@ -982,13 +982,6 @@ def main():
         # Symbol selection
         selected_symbols = create_symbol_selector(selected_asset_class)
         
-    # Portfolio summary (cash + holdings + equity)
-    st.markdown("## 💰 Portfolio Summary")
-    try:
-        _render_multi_asset_equity_metrics(show_session_caption=True)
-    except Exception as e:
-        st.error(f"Error calculating portfolio metrics: {e}")
-    
     # Main content
     # Create tabs
     tab1, tab2, tab3 = st.tabs([
@@ -998,37 +991,58 @@ def main():
     ])
     
     with tab1:
-        # Portfolio Summary
-        st.markdown("## 💼 Portfolio Summary")
+        st.markdown("## 💼 Portfolio & holdings")
         try:
-            _render_multi_asset_equity_metrics(show_session_caption=False)
+            _render_multi_asset_equity_metrics(show_session_caption=True)
             p = get_portfolio()
             portfolio_symbols = list(p.positions.keys())
-            if portfolio_symbols:
-                portfolio_prices = get_current_prices(portfolio_symbols)
-                if portfolio_prices:
-                    st.markdown("### 📊 Open positions")
-                    portfolio_data = []
-                    for symbol in portfolio_symbols:
-                        if symbol in portfolio_prices:
-                            price_obj = portfolio_prices[symbol]
-                            price = price_obj.price if hasattr(price_obj, "price") else price_obj
-                            change = price_obj.change_percent if hasattr(price_obj, "change_percent") else 0
-                            position = p.positions[symbol]
-                            value = position.quantity * price
-                            portfolio_data.append({
-                                "Symbol": symbol,
-                                "Quantity": position.quantity,
-                                "Price": price,
-                                "Value": value,
-                                "Change": change,
-                            })
-                    if portfolio_data:
-                        st.dataframe(pd.DataFrame(portfolio_data), use_container_width=True)
+            portfolio_prices = get_current_prices(portfolio_symbols) if portfolio_symbols else {}
+            metrics_detail = p.get_portfolio_metrics(portfolio_prices)
+
+            if portfolio_symbols and portfolio_prices:
+                st.markdown("### 📊 Open positions")
+                portfolio_data = []
+                for symbol in portfolio_symbols:
+                    if symbol in portfolio_prices:
+                        price_obj = portfolio_prices[symbol]
+                        price = price_obj.price if hasattr(price_obj, "price") else price_obj
+                        change = price_obj.change_percent if hasattr(price_obj, "change_percent") else 0
+                        position = p.positions[symbol]
+                        value = position.quantity * price
+                        portfolio_data.append({
+                            "Symbol": symbol,
+                            "Quantity": position.quantity,
+                            "Price": price,
+                            "Value": value,
+                            "Change": change,
+                        })
+                if portfolio_data:
+                    st.dataframe(pd.DataFrame(portfolio_data), use_container_width=True)
                 else:
-                    st.warning("Unable to load current prices for open positions.")
+                    st.warning("Unable to build position rows (missing prices).")
+            elif portfolio_symbols:
+                st.warning("Unable to load current prices for open positions.")
             else:
-                st.info("No open positions yet — only **cash** is shown above. Place a trade in the **Trading** tab.")
+                st.info("No open positions yet — only **cash** is in the account. Place trades in the **Trading** tab.")
+
+            if metrics_detail.asset_class_allocation:
+                st.markdown("### 📈 Allocation by asset class")
+                allocation_data = [
+                    {"Asset Class": ac.replace("_", " ").title(), "Allocation %": pct}
+                    for ac, pct in metrics_detail.asset_class_allocation.items()
+                ]
+                df_alloc = pd.DataFrame(allocation_data)
+                fig = px.pie(
+                    df_alloc,
+                    values="Allocation %",
+                    names="Asset Class",
+                    title="Holdings mix (by market value)",
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                st.dataframe(
+                    df_alloc.style.format({"Allocation %": "{:.1f}%"}),
+                    use_container_width=True,
+                )
         except Exception as e:
             st.error(f"Error calculating portfolio metrics: {str(e)}")
     
