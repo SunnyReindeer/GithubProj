@@ -88,17 +88,17 @@ if 'auto_refresh_enabled' not in st.session_state:
 if 'refresh_interval' not in st.session_state:
     st.session_state.refresh_interval = 30
 
-def _render_live_refresh_countdown(seconds: int) -> None:
-    """Client-side countdown (ticks every 1s). Streamlit reruns only on interaction unless autorefresh is used."""
+def _render_live_refresh_countdown(seconds: int, cycle: int = 0) -> None:
+    """Client-side countdown (ticks every 1s). `cycle` should change after each timed reload so the timer remounts."""
     sec = max(1, int(seconds))
-    components.html(
-        f"""
+    cid = int(cycle)
+    html = f"""
 <div style="font-size:0.9rem;padding:0.2rem 0;color:inherit;">
-  <span id="utp_cd">Next refresh in {sec}s</span>
+  <span id="utp_cd_{cid}">Next refresh in {sec}s</span>
 </div>
 <script>
 (function() {{
-  const el = document.getElementById('utp_cd');
+  const el = document.getElementById('utp_cd_{cid}');
   if (!el) return;
   const total = {sec};
   let s = total;
@@ -114,9 +114,11 @@ def _render_live_refresh_countdown(seconds: int) -> None:
   setInterval(tick, 1000);
 }})();
 </script>
-""",
-        height=40,
-    )
+"""
+    try:
+        components.html(html, height=40, key=f"utp_live_cd_{cid}")
+    except TypeError:
+        components.html(html, height=40)
 
 
 def map_symbol_to_tradingview(symbol: str) -> str:
@@ -934,13 +936,23 @@ def main():
                 max_value=300,
                 value=st.session_state.get("refresh_interval", 30),
                 step=5,
-                help="How often to automatically refresh data (5-300 seconds)"
+                help="How often to automatically reload the page (5-300 seconds)"
             )
             st.session_state.refresh_interval = refresh_interval
-            
-            # Live countdown runs in the browser (Streamlit does not tick while idle).
-            st.caption("Full page reload on the interval below reloads prices and charts.")
-            _render_live_refresh_countdown(int(refresh_interval))
+
+            # Timed reload must run before the countdown so we get a new `cycle` after each reload (remount = fresh timer).
+            refresh_sec = int(refresh_interval)
+            interval_ms = max(5000, min(refresh_sec * 1000, 3_600_000))
+            autorefresh_tick = 0
+            if st_autorefresh is not None:
+                autorefresh_tick = st_autorefresh(
+                    interval=interval_ms,
+                    limit=None,
+                    key="unified_trading_autorefresh",
+                )
+
+            st.caption("Full page reload on the interval below reloads prices and charts. Timer resets after each reload.")
+            _render_live_refresh_countdown(refresh_sec, cycle=autorefresh_tick)
         
         st.markdown("---")
         
@@ -1057,15 +1069,13 @@ def main():
         with col2:
             display_trades()
     
-    # Timed reload: Streamlit only reruns on user interaction unless we trigger reload from the client.
     current_time = time.time()
     refresh_sec = int(st.session_state.get("refresh_interval", 30))
 
-    if st.session_state.get("auto_refresh_enabled", True) and st_autorefresh is not None:
-        interval_ms = refresh_sec * 1000
-        interval_ms = max(5000, min(interval_ms, 3_600_000))  # 5s .. 1h
-        st_autorefresh(interval=interval_ms, limit=None, key="unified_trading_autorefresh")
-    elif st.session_state.get("auto_refresh_enabled", True) and st_autorefresh is None:
+    if (
+        st.session_state.get("auto_refresh_enabled", True)
+        and st_autorefresh is None
+    ):
         st.caption("Install `streamlit-autorefresh` for automatic timed reloads, or use **Refresh Data Now**.")
 
     # Manual refresh button and status
