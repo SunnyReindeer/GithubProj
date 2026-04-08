@@ -14,42 +14,6 @@ from typing import Dict, List, Any
 from risk_assessment_engine import risk_engine, RiskProfile, RiskTolerance, InvestmentHorizon, ExperienceLevel
 from fund_portfolio_manager import fund_manager, FundPortfolio, FundHolding, AILabel, PortfolioTheme
 
-
-def render_portfolio_methodology_expander() -> None:
-    """Explain where portfolios come from and cite research (professor-friendly transparency)."""
-    with st.expander("📚 References & methodology — where the portfolios come from", expanded=False):
-        st.markdown(
-            """
-**What you are seeing**
-
-Recommendations are **not** generated ad hoc for each click. The app selects from **six fixed model portfolios**
-(Core, Growth, Dividend, ESG, REITs, Defensive) defined in `fund_portfolio_manager.py` with explicit risk levels,
-illustrative return/volatility, and fund/ETF-style holdings. That mirrors common robo-advisor practice:
-**questionnaire → risk score → map to model portfolios** (see `AI_ROBO_ADVISOR_RULES.md` for exact rules).
-
-**How matching works**
-
-Your answers produce a **0–100 risk score**. Each model portfolio gets a **suitability score** vs. your profile;
-portfolios below **60%** fit are dropped; the **top three** remain. Formulas and thresholds are fully written down
-in the repo (not hidden in the UI).
-
-**Selected academic & industry references**
-
-- Gaspar, R. M., & Oliveira, M. (2024). *Robo Advising and Investor Profiling.* MDPI *FinTech* 3(1):102–115.  
-  https://www.mdpi.com/2674-1032/3/1/7
-- *The Promises and Pitfalls of Robo-Advising* (*Review of Financial Studies*) — behavioral biases and diversification in automated advice.
-- *The diversification and welfare effects of robo-advising* (*Journal of Financial Economics*) — shifts toward diversified, lower-fee portfolios.
-- *How Risk Profiles of Investors Affect Robo-Advised Portfolios* (Frontiers / PMC) — platform algorithms map **risk profile → allocations**.
-
-**More reading (full list)**
-
-See **`ROBO_ADVISOR_RESEARCH_SUPPORT.md`** in the project for the complete bibliography and how each design choice maps to sources.
-
-*Educational demo only — not regulated financial advice.*
-"""
-        )
-
-
 def get_diversified_symbols(profile: RiskProfile) -> List[str]:
     """Get diversified symbols based on risk profile"""
     # Base symbols for different asset classes
@@ -307,8 +271,7 @@ def display_risk_profile(profile: RiskProfile):
 def display_fund_portfolios(portfolios: List[FundPortfolio]):
     """Display recommended fund portfolios"""
     st.markdown("## 💼 Recommended Fund Portfolios")
-    st.markdown("These are **documented model portfolios** from the codebase, ranked for your risk profile—not invented per session.")
-    st.caption("Open **References & methodology** at the top of this page for sources and matching rules.")
+    st.markdown("These are diversified portfolios designed to match your risk profile.")
     
     if not portfolios:
         st.warning("No suitable portfolios found for your risk profile.")
@@ -747,11 +710,7 @@ def main():
     
     st.markdown("# 🤖 AI Robo Advisor")
     st.markdown("Get personalized fund portfolio recommendations with AI-labeled investments based on your risk profile.")
-    st.caption(
-        "Portfolios are **pre-defined templates** matched to your risk score; see References below for academic sources and methodology."
-    )
-    render_portfolio_methodology_expander()
-
+    
     # Show tutorial hints
     show_tutorial_hints()
     
@@ -796,7 +755,6 @@ def main():
     with tab2:
         st.markdown("### Step 2: Fund Portfolio Recommendations")
         st.markdown("Get recommended fund portfolios that match your risk profile. Each portfolio includes AI-labeled investments.")
-        st.caption("Recommendations come from **six model portfolios** in the code; matching uses documented suitability scoring (≥60, top 3).")
         
         if st.session_state.risk_profile:
             profile = st.session_state.risk_profile
@@ -878,10 +836,6 @@ def main():
         - Geographic regions
         - Risk levels
         - Investment styles
-        
-        **Portfolio methodology:**
-        - Fund portfolios are **fixed model portfolios** (Core, Growth, Dividend, ESG, REITs, Defensive), not random picks.
-        - **References & full bibliography:** see `ROBO_ADVISOR_RESEARCH_SUPPORT.md` in the repo; in-app: expand *References & methodology* on the main Robo Advisor page.
         """)
         
         if st.session_state.risk_profile:
