@@ -175,7 +175,15 @@ class RiskAssessmentEngine:
         }
     
     def _initialize_asset_allocations(self) -> Dict[RiskTolerance, Dict[str, float]]:
-        """Initialize recommended asset allocations for different risk profiles"""
+        """Strategic asset-allocation **policy templates** by risk band (sum to 100% per band).
+
+        These weights are **not** optimized mean–variance outputs (no covariance matrix here).
+        They follow standard finance ideas taught in portfolio theory: higher fixed income and
+        broad index (ETF) sleeves for conservative profiles; more equity and alternative
+        sleeves as risk tolerance rises (Markowitz diversification; Brinson et al. on strategic
+        allocation; Ang on risk budgeting). See ``portfolio_theory_references`` and the Robo
+        Advisor UI expander **“Why these weights?”** for full citations shown to users.
+        """
         return {
             RiskTolerance.CONSERVATIVE: {
                 "bonds": 0.35,  # Government and corporate bonds

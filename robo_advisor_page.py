@@ -13,6 +13,11 @@ from typing import Dict, List, Any
 # Import our robo advisor modules
 from risk_assessment_engine import risk_engine, RiskProfile, RiskTolerance, InvestmentHorizon, ExperienceLevel
 from fund_portfolio_manager import fund_manager, FundPortfolio, FundHolding, AILabel, PortfolioTheme
+from portfolio_theory_references import (
+    BIBLIOGRAPHY_MARKDOWN,
+    FUND_BASED_ROBO_RATIONALE,
+    full_portfolio_references_markdown,
+)
 
 def get_diversified_symbols(profile: RiskProfile) -> List[str]:
     """Get diversified symbols based on risk profile"""
@@ -161,7 +166,13 @@ def display_risk_profile(profile: RiskProfile):
     
     # Recommended asset allocation - Show full portfolio first, then stock breakdown
     st.markdown("### 💼 Recommended Portfolio Allocation")
-    
+    st.caption(
+        "Weights are **policy templates** tied to your risk band, with citations—not arbitrary numbers. "
+        "Open the box below for theory and bibliography."
+    )
+    with st.expander("📚 Why these weights? (portfolio theory & references)", expanded=False):
+        st.markdown(full_portfolio_references_markdown(profile.risk_tolerance))
+
     # Full portfolio allocation (all asset classes)
     full_allocation_data = []
     for category, percentage in profile.recommended_asset_allocation.items():
@@ -271,8 +282,15 @@ def display_risk_profile(profile: RiskProfile):
 def display_fund_portfolios(portfolios: List[FundPortfolio]):
     """Display recommended fund portfolios"""
     st.markdown("## 💼 Recommended Fund Portfolios")
-    st.markdown("These are diversified portfolios designed to match your risk profile.")
-    
+    st.markdown(
+        "These are **pre-defined** diversified fund/ETF-style baskets, matched to your score—aligned with "
+        "how academic and industry work describes robo-advisory (indexed sleeves, profile → portfolio)."
+    )
+    with st.expander("📚 References: fund-based portfolios & research", expanded=False):
+        st.markdown(FUND_BASED_ROBO_RATIONALE)
+        st.markdown("\n---\n")
+        st.markdown(BIBLIOGRAPHY_MARKDOWN)
+
     if not portfolios:
         st.warning("No suitable portfolios found for your risk profile.")
         return
@@ -579,7 +597,20 @@ def display_investment_plan(profile: RiskProfile, portfolios: List[FundPortfolio
     
     # Portfolio allocation summary
     st.markdown("### 💼 Portfolio Allocation Summary")
-    
+    st.caption(
+        "Holdings come from a **named fund portfolio** (themes, risk level, stated return/vol assumptions)—"
+        "not ad hoc picks. Strategic mix by asset class was explained in the Risk Assessment tab."
+    )
+    with st.expander("📚 Evidence base (strategic weights + fund-based robo advice)", expanded=False):
+        st.markdown(
+            "**Strategic asset-class weights** for your profile follow the cited policy templates in the Risk Assessment tab. "
+            "**This table** lists the specific fund portfolio’s holdings after suitability matching."
+        )
+        st.markdown("\n")
+        st.markdown(FUND_BASED_ROBO_RATIONALE)
+        st.markdown("\n---\n")
+        st.markdown(BIBLIOGRAPHY_MARKDOWN)
+
     allocation_summary = []
     for holding in recommended_portfolio.holdings:
         allocation_summary.append({
