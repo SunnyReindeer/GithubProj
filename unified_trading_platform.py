@@ -227,7 +227,7 @@ def reset_portfolio_simulation() -> None:
     persist_sim_portfolio()
 
 
-def _render_multi_asset_equity_metrics(*, show_session_caption: bool = True) -> None:
+def _render_multi_asset_equity_metrics() -> None:
     """Cash available, mark-to-market position value, total equity, and P&L."""
     p = get_portfolio()
     syms = list(p.positions.keys())
@@ -235,12 +235,6 @@ def _render_multi_asset_equity_metrics(*, show_session_caption: bool = True) -> 
     cash = p.get_cash_balance_base()
     pos_mv = p.get_positions_market_value(prices)
     metrics = p.get_portfolio_metrics(prices)
-    if show_session_caption:
-        st.caption(
-            f"Simulation is saved to **`{_SIM_PORTFOLIO_FILE.name}`** next to the app — refresh and reopening Streamlit keep your positions on this machine. "
-            "Hosted/cloud instances may not keep files between deploys. "
-            "Use **Reset to initial** in the sidebar to restore starting cash and clear trades."
-        )
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Cash (available)", f"${cash:,.2f}")
     c2.metric("Positions value", f"${pos_mv:,.2f}")
@@ -812,7 +806,7 @@ def display_portfolio_summary():
     st.markdown("## 💰 Portfolio Summary")
     
     if st.session_state.get('use_multi_asset', True):
-        _render_multi_asset_equity_metrics(show_session_caption=True)
+        _render_multi_asset_equity_metrics()
         p = get_portfolio()
         symbols = list(p.positions.keys())
         if symbols:
@@ -1016,7 +1010,7 @@ def main():
     with tab1:
         st.markdown("## 💼 Portfolio & holdings")
         try:
-            _render_multi_asset_equity_metrics(show_session_caption=True)
+            _render_multi_asset_equity_metrics()
             p = get_portfolio()
             portfolio_symbols = list(p.positions.keys())
             portfolio_prices = get_current_prices(portfolio_symbols) if portfolio_symbols else {}
@@ -1075,7 +1069,7 @@ def main():
     with tab3:
         st.markdown("### 💰 Portfolio")
         try:
-            _render_multi_asset_equity_metrics(show_session_caption=False)
+            _render_multi_asset_equity_metrics()
         except Exception as e:
             st.error(str(e))
         st.markdown("---")
