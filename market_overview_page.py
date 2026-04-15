@@ -1753,11 +1753,6 @@ def display_economic_events_section():
     """Display economic events and calendar with real-time data"""
     
     st.markdown("#### 📅 Economic Events")
-    st.caption(
-        "**Data:** Public macro calendar from [Fair Economy](https://nfs.faireconomy.media/) "
-        "(Forex Factory–style JSON, typically **about this week**). No API key. "
-        "Filters use **UTC+8** (same zone as the clock below). **Past** / **Today** / **Upcoming** compare to “now” in UTC+8."
-    )
 
     # Get economic events
     with st.spinner("Loading economic events..."):

@@ -2,6 +2,64 @@
 
 This document contains additional system diagrams for the project report, including system architecture, data flow, and key process flows.
 
+## 0. High-Level Architecture (Updated — PPT / report)
+
+Use this diagram when you need a **single overview** similar to a classic “boxes and arrows” slide. It updates older figures that showed a **SQL user database** or only **REST** news APIs.
+
+**What changed vs. outdated diagrams**
+
+| Topic | Older assumption | Current system |
+|--------|------------------|----------------|
+| Storage | “User DB (JSON/SQL)” as one opaque box | **Streamlit `session_state`** plus **JSON files** on disk (e.g. plan export, persisted paper portfolio) — **no SQL database** in this codebase |
+| News | “Reuters / Bloomberg” as generic APIs | **RSS feeds** (Reuters, CNBC, Bloomberg, Yahoo, etc.) via `feedparser` in `market_overview_page.py` |
+| Market data | Generic “APIs” | **Live prices:** almost all configured symbols use **Yahoo Finance via `yfinance`** (`multi_asset_data_provider.py`). See note below on Alpha Vantage / FRED. |
+| Robo Advisor | “Recommendation engine” only | Explicit pipeline: **questionnaire → weighted risk score (0–100) → suitability → filter (≥60) → top 3** |
+| Cross-module | Implied integration | **Robo Advisor** and **Trading Platform** are separate areas of the same Streamlit app; users verify strategies manually in the simulator. |
+
+**Alpha Vantage and FRED — where they appear in code (and whether they run)**
+
+- **Configuration only:** `multi_asset_config.py` defines provider metadata for `"alpha_vantage"` and `"federal_reserve"` (FRED API host) under `_initialize_data_providers()`.
+- **Routing:** `multi_asset_data_provider.py` maps those keys to `_alpha_vantage_provider` and `_fred_provider` when an asset’s `data_provider` field selects them (`_group_symbols_by_provider`).
+- **Default runtime:** every `Asset` in `multi_asset_config` is created with **`data_provider="yahoo"`**, so **no symbol currently selects Alpha Vantage or FRED** in normal use.
+- **If invoked:** both `_alpha_vantage_provider` and `_fred_provider` (for `"current"` prices) return **`_get_mock_price_data(...)`** — they are **not wired to live Alpha Vantage / FRED HTTP calls** in the current implementation.
+
+```mermaid
+flowchart TB
+    User((User))
+
+    App["Investment Web Application<br/>(Streamlit)"]
+
+    subgraph FM["Functional modules"]
+        direction TB
+        MO["Market Overview<br/>Indices · heatmap · calendar · RSS news"]
+        TP["Trading Platform<br/>TradingView charts · paper orders · simulated P/L"]
+        RA["AI Robo Advisor<br/>10 Q → risk score → suitability → ≥60 → top 3 funds"]
+    end
+
+    subgraph EXT["External data"]
+        MD["Market data<br/>Yahoo Finance via yfinance"]
+        NW["News + macro context<br/>RSS feeds · public economic calendar"]
+    end
+
+    subgraph STO["Persistence (v1)"]
+        PS["Session state + JSON files<br/>Risk profile · recommendations · trade history · plan export"]
+    end
+
+    User --> App
+    App --> MO
+    App --> TP
+    App --> RA
+
+    MO --> MD
+    MO --> NW
+    TP --> MD
+
+    RA <--> PS
+    TP <--> PS
+```
+
+**How to use in PowerPoint:** render at [mermaid.live](https://mermaid.live) or paste into any Mermaid-capable plugin, export **SVG/PNG**, then place on your architecture slide.
+
 ## 1. System Architecture Diagram
 
 ```mermaid
